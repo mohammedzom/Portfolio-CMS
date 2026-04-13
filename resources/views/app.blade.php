@@ -1,409 +1,744 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Patrick Moz - Front-end Developer portfolio. Expert in web development, UI/UX design, and modern web technologies.">
-
-    <!--=============== FAVICON ===============-->
+    <meta name="description" content="Patrick Moz — Front-end Developer crafting beautiful digital experiences.">
     <link rel="shortcut icon" href="{{ asset('assets/img/favicon.png') }}" type="image/x-icon">
 
-    <!--=============== REMIXICONS ===============-->
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.0.0/fonts/remixicon.css" rel="stylesheet">
+    {{-- Remixicons --}}
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
 
-    <!--=============== CSS ===============-->
-    <link rel="stylesheet" href="{{ asset('assets/css/styles.css') }}">
+    {{-- Vite (Tailwind) --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <title>Patrick Moz - Front-end Developer</title>
+    <title>Patrick Moz — Front-end Developer</title>
+
+    <style>
+        /* Mesh gradient blobs */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+        }
+        .blob-1 {
+            width: 500px; height: 500px;
+            background: oklch(0.66 0.17 195 / 0.12);
+            top: -150px; left: -100px;
+        }
+        .blob-2 {
+            width: 400px; height: 400px;
+            background: oklch(0.60 0.15 220 / 0.10);
+            top: 200px; right: -80px;
+        }
+        .blob-3 {
+            width: 300px; height: 300px;
+            background: oklch(0.66 0.17 195 / 0.08);
+            bottom: 0; left: 30%;
+        }
+
+        /* Typing cursor */
+        .cursor::after {
+            content: '|';
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Skill bar */
+        .skill-bar-fill {
+            height: 4px;
+            border-radius: 99px;
+            background: linear-gradient(90deg, oklch(0.66 0.17 195), oklch(0.60 0.15 220));
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 8px oklch(0.66 0.17 195 / 0.5);
+        }
+
+        /* Nav active */
+        .nav-link.active {
+            color: oklch(0.66 0.17 195);
+        }
+        .nav-link.active::after {
+            width: 100%;
+        }
+        .nav-link::after {
+            content: '';
+            display: block;
+            height: 2px;
+            background: oklch(0.66 0.17 195);
+            width: 0;
+            transition: width 0.3s ease;
+            border-radius: 99px;
+            box-shadow: 0 0 6px oklch(0.66 0.17 195 / 0.6);
+        }
+        .nav-link:hover::after { width: 100%; }
+
+        /* Project card overlay */
+        .project-card:hover .project-overlay { opacity: 1; }
+        .project-card:hover .project-img { transform: scale(1.05); }
+        .project-overlay {
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            background: linear-gradient(to top, oklch(0.10 0.01 255 / 0.95) 0%, oklch(0.10 0.01 255 / 0.5) 60%, transparent 100%);
+        }
+        .project-img { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* Section reveal */
+        .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        /* Mobile menu */
+        #mobile-menu { display: none; }
+        #mobile-menu.open { display: flex; }
+
+        /* Glowing button */
+        .btn-neon {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-neon::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, oklch(0.66 0.17 195), oklch(0.60 0.15 220));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+        .btn-neon:hover::before { opacity: 1; }
+        .btn-neon > * { position: relative; z-index: 1; }
+
+        /* Timeline dot */
+        .timeline-dot::before {
+            content: '';
+            position: absolute;
+            left: -8px; top: 6px;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: oklch(0.66 0.17 195);
+            box-shadow: 0 0 12px oklch(0.66 0.17 195 / 0.6);
+        }
+    </style>
 </head>
+<body class="antialiased selection:bg-neon-500/20 selection:text-neon-300">
 
-<body>
-    <!--==================== HEADER ====================-->
-    <header class="header" id="header">
-        <nav class="nav container">
-            <a href="#" class="nav__logo">
-                Patrick <span>Moz</span>
+{{-- ===================== NAVBAR ===================== --}}
+<header id="navbar" class="fixed top-0 inset-x-0 z-50 transition-all duration-500">
+    <div class="container-custom">
+        <nav class="flex items-center justify-between h-16 md:h-20">
+            {{-- Logo --}}
+            <a href="#home" class="font-display font-bold text-xl text-dark-100 tracking-tight group">
+                Patrick<span class="text-neon-500 group-hover:text-neon-400 transition-colors">.dev</span>
             </a>
 
-            <div class="nav__menu" id="nav-menu">
-                <ul class="nav__list">
-                    <li class="nav__item">
-                        <a href="#home" class="nav__link active-link">Home</a>
-                    </li>
-                    <li class="nav__item">
-                        <a href="#about" class="nav__link">About</a>
-                    </li>
-                    <li class="nav__item">
-                        <a href="#services" class="nav__link">Services</a>
-                    </li>
-                    <li class="nav__item">
-                        <a href="#projects" class="nav__link">Projects</a>
-                    </li>
-                    <li class="nav__item">
-                        <a href="#contact" class="nav__link">Contact</a>
-                    </li>
-                </ul>
+            {{-- Desktop Links --}}
+            <ul class="hidden md:flex items-center gap-8">
+                @foreach([['#home','Home'],['#about','About'],['#skills','Skills'],['#services','Services'],['#projects','Projects'],['#contact','Contact']] as [$href,$label])
+                <li>
+                    <a href="{{ $href }}" class="nav-link text-sm font-medium text-dark-300 hover:text-dark-100 transition-colors">{{ $label }}</a>
+                </li>
+                @endforeach
+            </ul>
 
-                <div class="nav__close" id="nav-close">
-                    <i class="ri-close-line"></i>
-                </div>
-            </div>
-
-            <div class="nav__toggle" id="nav-toggle">
-                <i class="ri-menu-line"></i>
+            {{-- CTA + Hamburger --}}
+            <div class="flex items-center gap-4">
+                <a href="#contact" class="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-dark-950 gradient-neon neon-glow hover:scale-105 transition-transform duration-300">
+                    Hire Me <i class="ri-arrow-right-up-line text-base"></i>
+                </a>
+                <button id="hamburger" class="md:hidden text-dark-300 hover:text-neon-500 transition-colors p-1">
+                    <i id="hamburger-icon" class="ri-menu-3-line text-2xl"></i>
+                </button>
             </div>
         </nav>
-    </header>
 
-    <!--==================== MAIN ====================-->
-    <main class="main">
-        <!--==================== HOME ====================-->
-        <section class="home section" id="home">
-            <div class="home__container container grid">
-                <div class="home__content grid">
-                    <div class="home__data">
-                        <span class="home__subtitle">Hello, <span>I'm</span></span>
-                        <h1 class="home__title">Patrick Moz</h1>
-                        <span class="home__education">Front-end Developer</span>
-                        <p class="home__description">
-                            With knowledge in web development and
-                            design, I offer the best projects resulting
-                            in quality work.
-                        </p>
-                        <a href="#contact" class="button">Let's Talk</a>
-                    </div>
+        {{-- Mobile Menu --}}
+        <div id="mobile-menu" class="flex-col gap-1 pb-4 md:hidden">
+            @foreach([['#home','Home'],['#about','About'],['#skills','Skills'],['#services','Services'],['#projects','Projects'],['#contact','Contact']] as [$href,$label])
+            <a href="{{ $href }}" class="mobile-nav-link block px-4 py-3 rounded-xl text-dark-300 hover:text-neon-500 hover:bg-neon-500/5 font-medium transition-all text-sm">{{ $label }}</a>
+            @endforeach
+        </div>
+    </div>
+</header>
 
-                    <div class="home__social">
-                        <a href="https://github.com/" target="_blank" class="home__social-link">
-                            <i class="ri-github-fill"></i>
-                        </a>
-                        <a href="https://dribbble.com/" target="_blank" class="home__social-link">
-                            <i class="ri-dribbble-line"></i>
-                        </a>
-                        <a href="https://www.linkedin.com/" target="_blank" class="home__social-link">
-                            <i class="ri-linkedin-box-fill"></i>
-                        </a>
-                    </div>
+{{-- ===================== HERO ===================== --}}
+<section id="home" class="relative min-h-screen flex items-center overflow-hidden">
+    {{-- Blobs --}}
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    {{-- Grid texture --}}
+    <div class="absolute inset-0 opacity-[0.03]" style="background-image: linear-gradient(oklch(0.80 0.004 255) 1px, transparent 1px), linear-gradient(90deg, oklch(0.80 0.004 255) 1px, transparent 1px); background-size: 60px 60px;"></div>
+
+    <div class="container-custom relative z-10 pt-24 pb-16">
+        <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {{-- Left --}}
+            <div class="space-y-8 animate-[fade-up_0.8s_ease_both]">
+                {{-- Badge --}}
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass neon-border text-neon-400 text-sm font-medium">
+                    <span class="w-2 h-2 rounded-full bg-neon-500 animate-pulse"></span>
+                    Available for freelance work
                 </div>
 
-                <div class="home__image">
-                    <svg class="home__blob" viewBox="0 0 550 591" xmlns="http://www.w3.org/2000/svg">
-                        <mask id="maskBlob" mask-type="alpha">
-                            <path d="M263 47.1782C270.426 42.891 279.574 42.891 287 47.1782L501.214 
-                                     169.322C508.64 173.609 513.214 181.591 513.214 
-                                     190.165V434.835C513.214 443.409 508.64 451.391 501.214 
-                                     455.678L287 577.822C279.574 582.109 270.426 582.109 263 
-                                     577.822L48.786 455.678C41.3596 451.391 36.786 443.409 36.786 
-                                     434.835V190.165C36.786 181.591 41.3596 173.609 48.786 
-                                     169.322L263 47.1782Z"/>
-                        </mask>
-
-                        <g mask="url(#maskBlob)">
-                            <path d="M263 47.1782C270.426 42.891 279.574 42.891 287 47.1782L501.214 
-                                     169.322C508.64 173.609 513.214 181.591 513.214 
-                                     190.165V434.835C513.214 443.409 508.64 451.391 501.214 
-                                     455.678L287 577.822C279.574 582.109 270.426 582.109 263 
-                                     577.822L48.786 455.678C41.3596 451.391 36.786 443.409 36.786 
-                                     434.835V190.165C36.786 181.591 41.3596 173.609 48.786 
-                                     169.322L263 47.1782Z"/>
-
-                            <rect x="37" width="476" height="630" fill="url(#patternBlob)"/>
-                        </g>
-
-                        <defs>
-                            <pattern id="patternBlob" patternContentUnits="objectBoundingBox" width="1" height="1">
-                                <use href="#imageBlob" transform="matrix(0.00143057 0 0 0.00143057 0.0404062 0)"/>
-                            </pattern>
-
-                            <image style="width: 700px; height: 700px;" id="imageBlob" href="{{ asset('assets/img/perfil.png') }}"/>
-                        </defs>
-                    </svg>
-                </div>
-            </div>
-        </section>
-
-        <!--==================== ABOUT ====================-->
-        <section class="about section" id="about">
-            <div class="about__container container grid">
-                <div class="about__image">
-                    <svg class="about__blob" viewBox="0 0 550 592" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <mask id="maskBorder" mask-type="alpha">
-                            <path d="M263 48.1782C270.426 43.891 279.574 43.891 287 48.1782L501.214 
-                                     170.322C508.64 174.609 513.214 182.591 513.214 
-                                     191.165V435.835C513.214 444.409 508.64 452.391 501.214 
-                                     456.678L287 578.822C279.574 583.109 270.426 583.109 263 
-                                     578.822L48.786 456.678C41.3596 452.391 36.786 444.409 36.786 
-                                     435.835V191.165C36.786 182.591 41.3596 174.609 48.786 
-                                     170.322L263 48.1782Z"/>
-                        </mask>
-
-                        <g mask="url(#maskBorder)">
-                            <rect x="37" width="476" height="630" fill="url(#patternBorder)"/>
-                        </g>
-
-                        <path d="M263 48.1782C270.426 43.891 279.574 43.891 287 48.1782L501.214 
-                                 170.322C508.64 174.609 513.214 182.591 513.214 
-                                 191.165V435.835C513.214 444.409 508.64 452.391 501.214 
-                                 456.678L287 578.822C279.574 583.109 270.426 583.109 263 
-                                 578.822L48.786 456.678C41.3596 452.391 36.786 444.409 36.786 
-                                 435.835V191.165C36.786 182.591 41.3596 174.609 48.786 
-                                 170.322L263 48.1782Z" stroke-width="5"/>
-
-                        <defs>
-                            <pattern id="patternBorder" patternContentUnits="objectBoundingBox" width="1" height="1">
-                                <use href="#imageBorder" transform="matrix(0.00143057 0 0 0.00143057 0.0404062 0)"/>
-                            </pattern>
-
-                            <image style="width: 700px; height: 700px;" id="imageBorder" href="{{ asset('assets/img/perfil.png') }}"/>
-                        </defs>
-                    </svg>
-                </div>
-
-                <div class="about__data">
-                    <span class="section__subtitle">My <span>Intro</span></span>
-                    <h2 class="section__title">About Me</h2>
-
-                    <div class="about__info grid">
-                        <div class="about__box">
-                            <i class='bx bx-award about__icon ri-award-fill'></i>
-                            <h3 class="about__title">Experience</h3>
-                            <span class="about__subtitle">5+ Years</span>
-                        </div>
-                        <div class="about__box">
-                            <i class='bx bx-briefcase-alt about__icon ri-briefcase-fill'></i>
-                            <h3 class="about__title">Completed</h3>
-                            <span class="about__subtitle">20+ Projects</span>
-                        </div>
-                        <div class="about__box">
-                            <i class='bx bx-support about__icon ri-customer-service-2-fill'></i>
-                            <h3 class="about__title">Support</h3>
-                            <span class="about__subtitle">Online 24/7</span>
-                        </div>
-                    </div>
-
-                    <p class="about__description">
-                        Frontend developer, I create web pages with
-                        UI / UX user interface, I have years of
-                        experience and many clients are happy with the
-                        projects carried out.
-                    </p>
-
-                    <a href="#contact" class="button">Contact Me</a>
-                </div>
-            </div>
-        </section>
-
-        <!--==================== SKILLS ====================-->
-        <section class="skills section" id="skills">
-            <div class="skills__container container grid">
-                <div class="skills__data">
-                    <span class="section__subtitle">Favorite <span>Skills</span></span>
-                    <h2 class="section__title">My Skills</h2>
-                    <p class="skills__description">
-                        See fully what skills I have and perform,
-                        to develop the projects for you.
-                    </p>
-                    <a href="#projects" class="button">See Projects</a>
-                </div>
-
-                <div class="skills__content grid">
-                    <ol class="skills__group">
-                        <li class="skills__item">HTML &amp; CSS</li>
-                        <li class="skills__item">JavaScript</li>
-                        <li class="skills__item">Bootstrap</li>
-                        <li class="skills__item">React</li>
-                    </ol>
-                    <ol class="skills__group">
-                        <li class="skills__item">Git &amp; GitHub</li>
-                        <li class="skills__item">Figma</li>
-                        <li class="skills__item">Sketch</li>
-                    </ol>
-                </div>
-            </div>
-        </section>
-
-        <!--==================== SERVICES ====================-->
-        <section class="services section" id="services">
-            <span class="section__subtitle">My <span>Services</span></span>
-            <h2 class="section__title">What I Do</h2>
-
-            <div class="services__container container grid">
-                <div class="services__card">
-                    <i class="ri-code-box-line services__icon"></i>
-                    <h3 class="services__title">Web Developer</h3>
-                    <p class="services__description">
-                        Development of custom web pages.
-                        Using current technologies and
-                        libraries of the labor field.
+                {{-- Headline --}}
+                <div class="space-y-3">
+                    <p class="text-dark-300 font-medium tracking-widest uppercase text-sm">Hello, I'm</p>
+                    <h1 class="font-display font-bold leading-none text-5xl sm:text-6xl lg:text-7xl">
+                        <span class="gradient-text-white">Patrick</span><br>
+                        <span class="gradient-text">Moz</span>
+                    </h1>
+                    <p class="text-dark-300 text-xl font-medium">
+                        Front-end Developer &amp; UI Designer
                     </p>
                 </div>
 
-                <div class="services__card">
-                    <i class="ri-layout-4-line services__icon"></i>
-                    <h3 class="services__title">UI/UX Designer</h3>
-                    <p class="services__description">
-                        I offer design of web interfaces and
-                        mobile applications, design made in
-                        Figma, Adobe XD and Sketch.
-                    </p>
+                {{-- Description --}}
+                <p class="text-dark-400 text-base leading-relaxed max-w-md">
+                    I craft beautiful, high-performance web experiences using modern technologies. Turning ideas into elegant digital products that users love.
+                </p>
+
+                {{-- CTAs --}}
+                <div class="flex flex-wrap gap-4">
+                    <a href="#projects" class="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-dark-950 gradient-neon neon-glow hover:scale-105 transition-transform duration-300">
+                        View My Work <i class="ri-arrow-right-line"></i>
+                    </a>
+                    <a href="#contact" class="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-dark-100 glass neon-border hover:border-neon-500/50 hover:text-neon-400 transition-all duration-300">
+                        Get In Touch <i class="ri-send-plane-line"></i>
+                    </a>
                 </div>
 
-                <div class="services__card">
-                    <i class="ri-pen-nib-line services__icon"></i>
-                    <h3 class="services__title">Graphic Design</h3>
-                    <p class="services__description">
-                        I make designs at the client's request,
-                        banner design, posters, digital
-                        designs among others.
-                    </p>
+                {{-- Social --}}
+                <div class="flex items-center gap-4 pt-2">
+                    @foreach([
+                        ['https://github.com/','ri-github-fill'],
+                        ['https://www.linkedin.com/','ri-linkedin-box-fill'],
+                        ['https://dribbble.com/','ri-dribbble-line'],
+                        ['https://twitter.com/','ri-twitter-x-fill'],
+                    ] as [$url,$icon])
+                    <a href="{{ $url }}" target="_blank" class="w-10 h-10 rounded-xl glass neon-border flex items-center justify-center text-dark-400 hover:text-neon-500 hover:border-neon-500/40 hover:scale-110 transition-all duration-300">
+                        <i class="{{ $icon }} text-lg"></i>
+                    </a>
+                    @endforeach
                 </div>
             </div>
-        </section>
 
-        <!--==================== PROJECTS ====================-->
-        <section class="projects section" id="projects">
-            <span class="section__subtitle">My <span>Jobs</span></span>
-            <h2 class="section__title">Recent Projects</h2>
+            {{-- Right — Profile card --}}
+            <div class="relative flex justify-center items-center animate-[fade-up_0.8s_0.2s_ease_both]">
+                {{-- Rotating ring --}}
+                <div class="absolute w-80 h-80 lg:w-96 lg:h-96 border border-neon-500/20 rounded-full animate-spin" style="animation-duration: 20s;"></div>
+                <div class="absolute w-72 h-72 lg:w-88 lg:h-88 border border-neon-500/10 rounded-full animate-spin" style="animation-duration: 15s; animation-direction: reverse;"></div>
 
-            <div class="projects__container container grid">
-                <article class="projects__card">
-                    <img src="{{ asset('assets/img/project-img-1.jpg') }}" alt="Modern Website" class="projects__img">
-                    <div class="projects__modal">
-                        <span class="projects__subtitle">Web</span>
-                        <h3 class="projects__title">Modern Website</h3>
-                        <a href="#" class="projects__button" target="_blank">
-                            View Demo <i class="ri-external-link-line"></i>
-                        </a>
+                {{-- Profile image wrapper --}}
+                <div class="relative w-64 h-64 lg:w-72 lg:h-72 animate-[float_6s_ease-in-out_infinite]">
+                    {{-- Glow --}}
+                    <div class="absolute inset-0 rounded-3xl" style="background: radial-gradient(circle at center, oklch(0.66 0.17 195 / 0.3) 0%, transparent 70%); filter: blur(20px);"></div>
+
+                    {{-- Image --}}
+                    <div class="relative w-full h-full rounded-3xl overflow-hidden glass-strong neon-border">
+                        <img src="{{ asset('assets/img/perfil.png') }}" alt="Patrick Moz" class="w-full h-full object-cover object-top">
                     </div>
-                </article>
 
-                <article class="projects__card">
-                    <img src="{{ asset('assets/img/project-img-2.jpg') }}" alt="Landing Page" class="projects__img">
-                    <div class="projects__modal">
-                        <span class="projects__subtitle">Web</span>
-                        <h3 class="projects__title">Landing Page</h3>
-                        <a href="#" class="projects__button" target="_blank">
-                            View Demo <i class="ri-external-link-line"></i>
-                        </a>
-                    </div>
-                </article>
-
-                <article class="projects__card">
-                    <img src="{{ asset('assets/img/project-img-3.jpg') }}" alt="E-commerce" class="projects__img">
-                    <div class="projects__modal">
-                        <span class="projects__subtitle">Web</span>
-                        <h3 class="projects__title">E-commerce</h3>
-                        <a href="#" class="projects__button" target="_blank">
-                            View Demo <i class="ri-external-link-line"></i>
-                        </a>
-                    </div>
-                </article>
-
-                <article class="projects__card">
-                    <img src="{{ asset('assets/img/project-img-4.jpg') }}" alt="Mobile App UI" class="projects__img">
-                    <div class="projects__modal">
-                        <span class="projects__subtitle">App</span>
-                        <h3 class="projects__title">Mobile App UI</h3>
-                        <a href="#" class="projects__button" target="_blank">
-                            View Demo <i class="ri-external-link-line"></i>
-                        </a>
-                    </div>
-                </article>
-
-                <article class="projects__card">
-                    <img src="{{ asset('assets/img/project-img-5.jpg') }}" alt="Dashboard Design" class="projects__img">
-                    <div class="projects__modal">
-                        <span class="projects__subtitle">Web</span>
-                        <h3 class="projects__title">Dashboard Design</h3>
-                        <a href="#" class="projects__button" target="_blank">
-                            View Demo <i class="ri-external-link-line"></i>
-                        </a>
-                    </div>
-                </article>
-
-                <article class="projects__card">
-                    <img src="{{ asset('assets/img/project-img-6.jpg') }}" alt="Portfolio Website" class="projects__img">
-                    <div class="projects__modal">
-                        <span class="projects__subtitle">Web</span>
-                        <h3 class="projects__title">Portfolio Website</h3>
-                        <a href="#" class="projects__button" target="_blank">
-                            View Demo <i class="ri-external-link-line"></i>
-                        </a>
-                    </div>
-                </article>
-            </div>
-        </section>
-
-        <!--==================== CONTACT ====================-->
-        <section class="contact section" id="contact">
-            <span class="section__subtitle">Get In <span>Touch</span></span>
-            <h2 class="section__title">Contact Me</h2>
-
-            <div class="contact__container container grid">
-                <form action="" class="contact__form" id="contact-form">
-                    <div class="contact__group grid">
-                        <div class="contact__form-div">
-                            <label class="contact__form-tag">Name</label>
-                            <input type="text" name="user_name" placeholder="Enter your name" class="contact__form-input">
-                        </div>
-                        <div class="contact__form-div">
-                            <label class="contact__form-tag">Email</label>
-                            <input type="email" name="user_email" placeholder="Enter your email" class="contact__form-input">
+                    {{-- Floating cards --}}
+                    <div class="absolute -bottom-4 -left-8 glass neon-border rounded-2xl px-4 py-3 animate-[fade-up_1s_0.5s_ease_both]">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg gradient-neon flex items-center justify-center">
+                                <i class="ri-code-line text-dark-950 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-dark-100 text-xs font-bold">5+ Years</p>
+                                <p class="text-dark-400 text-xs">Experience</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="contact__form-div contact__form-area">
-                        <label class="contact__form-tag">Message</label>
-                        <textarea name="user_project" placeholder="Enter your message" class="contact__form-input"></textarea>
+                    <div class="absolute -top-4 -right-8 glass neon-border rounded-2xl px-4 py-3 animate-[fade-up_1s_0.4s_ease_both]">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg gradient-neon flex items-center justify-center">
+                                <i class="ri-award-line text-dark-950 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-dark-100 text-xs font-bold">20+ Projects</p>
+                                <p class="text-dark-400 text-xs">Completed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Scroll indicator --}}
+        <div class="flex justify-center mt-20 animate-[fade-up_1s_1s_ease_both]">
+            <a href="#about" class="flex flex-col items-center gap-2 text-dark-500 hover:text-neon-500 transition-colors group">
+                <span class="text-xs tracking-widest uppercase">Scroll</span>
+                <div class="w-px h-10 bg-gradient-to-b from-neon-500 to-transparent group-hover:h-14 transition-all duration-300"></div>
+            </a>
+        </div>
+    </div>
+</section>
+
+{{-- ===================== ABOUT ===================== --}}
+<section id="about" class="section-padding relative overflow-hidden">
+    <div class="blob" style="width:400px;height:400px;background:oklch(0.66 0.17 195 / 0.07);bottom:-100px;right:-80px;filter:blur(80px);position:absolute;border-radius:50%;pointer-events:none;"></div>
+
+    <div class="container-custom">
+        {{-- Section header --}}
+        <div class="text-center mb-16 reveal">
+            <span class="text-neon-500 text-sm font-semibold tracking-widest uppercase">About Me</span>
+            <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl mt-2 gradient-text-white">Who I Am</h2>
+            <p class="text-dark-400 mt-4 max-w-xl mx-auto">Passionate developer with a love for clean code and beautiful interfaces.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+            {{-- Image side --}}
+            <div class="reveal">
+                <div class="relative">
+                    {{-- Decorative --}}
+                    <div class="absolute -inset-4 rounded-3xl" style="background: linear-gradient(135deg, oklch(0.66 0.17 195 / 0.1), transparent); border-radius: 1.5rem;"></div>
+                    <div class="relative rounded-3xl overflow-hidden glass neon-border aspect-[4/5]">
+                        <img src="{{ asset('assets/img/perfil.png') }}" alt="Patrick Moz" class="w-full h-full object-cover object-top">
+                        {{-- Overlay gradient --}}
+                        <div class="absolute inset-0" style="background: linear-gradient(to top, oklch(0.10 0.01 255 / 0.4) 0%, transparent 60%);"></div>
                     </div>
 
-                    <p class="contact__form-message" id="contact-message"></p>
+                    {{-- Stats card --}}
+                    <div class="absolute -bottom-6 -right-6 glass-strong neon-border rounded-2xl p-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            @foreach([['5+','Years Exp.'],['20+','Projects'],['15+','Clients'],['100%','Satisfaction']] as [$num,$label])
+                            <div class="text-center">
+                                <p class="font-display font-bold text-xl text-neon-400">{{ $num }}</p>
+                                <p class="text-dark-400 text-xs">{{ $label }}</p>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    <button type="submit" class="button contact__button">Send Message</button>
+            {{-- Text side --}}
+            <div class="space-y-8 reveal">
+                <div class="space-y-4">
+                    <h3 class="font-display font-bold text-2xl text-dark-100">
+                        Front-end Developer &amp; <span class="text-neon-500">UI/UX Enthusiast</span>
+                    </h3>
+                    <p class="text-dark-400 leading-relaxed">
+                        I'm a passionate front-end developer with 5+ years of experience creating stunning web interfaces. I specialize in turning complex ideas into clean, intuitive, and high-performance digital experiences.
+                    </p>
+                    <p class="text-dark-400 leading-relaxed">
+                        When I'm not coding, I'm exploring new design trends, contributing to open source, or mentoring aspiring developers in the community.
+                    </p>
+                </div>
+
+                {{-- Info grid --}}
+                <div class="grid grid-cols-2 gap-3">
+                    @foreach([
+                        ['ri-map-pin-line','Location','Casablanca, MA'],
+                        ['ri-mail-line','Email','patrick@dev.io'],
+                        ['ri-briefcase-line','Freelance','Available'],
+                        ['ri-translate-2','Languages','EN, FR, AR'],
+                    ] as [$icon,$key,$val])
+                    <div class="flex items-center gap-3 glass rounded-xl p-3">
+                        <div class="w-8 h-8 rounded-lg bg-neon-500/10 flex items-center justify-center shrink-0">
+                            <i class="{{ $icon }} text-neon-500 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-dark-500 text-xs">{{ $key }}</p>
+                            <p class="text-dark-200 text-sm font-medium">{{ $val }}</p>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+                {{-- CTA --}}
+                <div class="flex gap-4">
+                    <a href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-dark-950 gradient-neon neon-glow hover:scale-105 transition-transform duration-300">
+                        <i class="ri-download-line"></i> Download CV
+                    </a>
+                    <a href="#contact" class="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-dark-100 glass neon-border hover:text-neon-400 transition-all duration-300">
+                        Let's Talk
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- ===================== SKILLS ===================== --}}
+<section id="skills" class="section-padding relative">
+    <div class="container-custom">
+        <div class="text-center mb-16 reveal">
+            <span class="text-neon-500 text-sm font-semibold tracking-widest uppercase">My Skills</span>
+            <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl mt-2 gradient-text-white">What I Work With</h2>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-16 items-start">
+            {{-- Technical skills --}}
+            <div class="space-y-6 reveal">
+                <h3 class="font-display font-semibold text-lg text-dark-200 mb-6">Technical Skills</h3>
+                @foreach([
+                    ['HTML & CSS','ri-html5-line',95],
+                    ['JavaScript / TypeScript','ri-javascript-line',90],
+                    ['React / Vue.js','ri-reactjs-line',85],
+                    ['Tailwind CSS','ri-layout-4-line',92],
+                    ['Node.js / PHP','ri-server-line',75],
+                    ['Figma / UI Design','ri-pen-nib-line',80],
+                ] as [$name,$icon,$percent])
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="{{ $icon }} text-neon-500 text-base"></i>
+                            <span class="text-dark-200 font-medium text-sm">{{ $name }}</span>
+                        </div>
+                        <span class="text-neon-500 text-sm font-semibold">{{ $percent }}%</span>
+                    </div>
+                    <div class="h-1 rounded-full bg-dark-700">
+                        <div class="skill-bar-fill" style="width: {{ $percent }}%;"></div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+
+            {{-- Tools & Tech --}}
+            <div class="space-y-8 reveal">
+                <h3 class="font-display font-semibold text-lg text-dark-200">Tools & Technologies</h3>
+                <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    @foreach([
+                        ['ri-html5-fill','HTML5','#e34f26'],
+                        ['ri-css3-fill','CSS3','#1572b6'],
+                        ['ri-javascript-fill','JavaScript','#f7df1e'],
+                        ['ri-reactjs-fill','React','#61dafb'],
+                        ['ri-vuejs-fill','Vue','#42b883'],
+                        ['ri-git-branch-line','Git','#f05032'],
+                        ['ri-github-fill','GitHub','#fff'],
+                        ['ri-figma-line','Figma','#f24e1e'],
+                        ['ri-database-2-line','MySQL','#4479a1'],
+                        ['ri-server-2-line','Laravel','#ff2d20'],
+                        ['ri-layout-masonry-line','Tailwind','#06b6d4'],
+                        ['ri-terminal-box-line','CLI','#00d1b2'],
+                    ] as [$icon,$label,$color])
+                    <div class="group glass rounded-2xl p-3 flex flex-col items-center gap-2 hover:neon-border hover:scale-105 transition-all duration-300 cursor-default">
+                        <i class="{{ $icon }} text-2xl" style="color: {{ $color }};"></i>
+                        <span class="text-dark-400 text-xs group-hover:text-dark-200 transition-colors">{{ $label }}</span>
+                    </div>
+                    @endforeach
+                </div>
+
+                {{-- Experience timeline --}}
+                <div class="glass rounded-2xl p-6 space-y-4">
+                    <h4 class="text-dark-200 font-semibold text-sm">Experience</h4>
+                    @foreach([
+                        ['2023 – Present','Senior Front-end Dev','Acme Studio'],
+                        ['2021 – 2023','Front-end Developer','WebCraft Co.'],
+                        ['2019 – 2021','Junior Developer','Freelance'],
+                    ] as [$years,$role,$company])
+                    <div class="flex gap-4 items-start">
+                        <div class="w-2 h-2 rounded-full bg-neon-500 mt-2 shrink-0" style="box-shadow: 0 0 8px oklch(0.66 0.17 195 / 0.7);"></div>
+                        <div>
+                            <p class="text-dark-200 font-medium text-sm">{{ $role }}</p>
+                            <p class="text-dark-400 text-xs">{{ $company }} · {{ $years }}</p>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- ===================== SERVICES ===================== --}}
+<section id="services" class="section-padding relative overflow-hidden">
+    <div class="blob" style="width:350px;height:350px;background:oklch(0.60 0.15 220 / 0.08);top:50%;left:-80px;transform:translateY(-50%);filter:blur(80px);position:absolute;border-radius:50%;pointer-events:none;"></div>
+
+    <div class="container-custom relative z-10">
+        <div class="text-center mb-16 reveal">
+            <span class="text-neon-500 text-sm font-semibold tracking-widest uppercase">Services</span>
+            <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl mt-2 gradient-text-white">What I Do</h2>
+            <p class="text-dark-400 mt-4 max-w-xl mx-auto">Comprehensive digital services tailored to your needs.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach([
+                ['ri-code-box-line','Web Development','Building fast, responsive, and accessible websites using the latest technologies and best practices.', ['React','Next.js','Vue','Laravel']],
+                ['ri-layout-4-line','UI/UX Design','Creating intuitive and visually stunning user interfaces with a focus on user experience and conversion.', ['Figma','Prototyping','Design Systems','Wireframing']],
+                ['ri-smartphone-line','Mobile-First Design','Every project is built mobile-first ensuring perfect experience across all devices and screen sizes.', ['Responsive','PWA','Performance','Accessibility']],
+                ['ri-speed-line','Performance Optimization','Analyzing and optimizing web performance for lightning-fast load times and smooth interactions.', ['Core Web Vitals','SEO','Caching','Compression']],
+                ['ri-github-line','Open Source','Contributing to the community through open source projects and sharing knowledge with other developers.', ['npm packages','GitHub','Documentation','Tutorials']],
+                ['ri-customer-service-2-line','Ongoing Support','Providing continuous maintenance, updates, and support to keep your digital products running smoothly.', ['Monitoring','Updates','Hotfixes','Consulting']],
+            ] as [$icon,$title,$desc,$tags])
+            <div class="group glass rounded-2xl p-6 hover:neon-border hover:scale-[1.02] transition-all duration-300 reveal">
+                <div class="w-12 h-12 rounded-xl gradient-neon flex items-center justify-center mb-4 group-hover:neon-glow transition-all duration-300">
+                    <i class="{{ $icon }} text-dark-950 text-xl"></i>
+                </div>
+                <h3 class="font-display font-semibold text-dark-100 text-lg mb-2">{{ $title }}</h3>
+                <p class="text-dark-400 text-sm leading-relaxed mb-4">{{ $desc }}</p>
+                <div class="flex flex-wrap gap-2">
+                    @foreach($tags as $tag)
+                    <span class="text-xs px-2 py-1 rounded-full bg-neon-500/10 text-neon-400 font-medium">{{ $tag }}</span>
+                    @endforeach
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+{{-- ===================== PROJECTS ===================== --}}
+<section id="projects" class="section-padding relative">
+    <div class="container-custom">
+        <div class="text-center mb-16 reveal">
+            <span class="text-neon-500 text-sm font-semibold tracking-widest uppercase">Portfolio</span>
+            <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl mt-2 gradient-text-white">Recent Projects</h2>
+            <p class="text-dark-400 mt-4 max-w-xl mx-auto">A selection of my best work across different industries.</p>
+        </div>
+
+        {{-- Filter tabs --}}
+        <div class="flex justify-center gap-2 mb-10 flex-wrap reveal">
+            @foreach(['All','Web','App','Design','UI/UX'] as $filter)
+            <button class="filter-btn px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 {{ $filter === 'All' ? 'gradient-neon text-dark-950' : 'glass text-dark-400 hover:text-dark-100 hover:neon-border' }}" data-filter="{{ $filter }}">
+                {{ $filter }}
+            </button>
+            @endforeach
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" id="projects-grid">
+            @foreach([
+                [1,'Modern Website','Web','React + Tailwind','A sleek corporate website with smooth animations.'],
+                [2,'Landing Page','Web','Next.js + Framer','High-converting landing page with a/b testing.'],
+                [3,'E-commerce Store','Web','Vue + Laravel','Full-stack shop with cart and payment integration.'],
+                [4,'Mobile App UI','App','React Native','Cross-platform mobile app with clean interface.'],
+                [5,'Analytics Dashboard','UI/UX','Figma','Data visualization dashboard design system.'],
+                [6,'Portfolio Design','Design','Figma + CSS','Custom portfolio template for creatives.'],
+            ] as [$n,$title,$category,$tech,$desc])
+            <article class="project-card group relative rounded-2xl overflow-hidden glass neon-border reveal" data-category="{{ $category }}">
+                <div class="overflow-hidden">
+                    <img src="{{ asset('assets/img/project-img-'.$n.'.jpg') }}" alt="{{ $title }}" class="project-img w-full h-52 object-cover">
+                </div>
+                <div class="project-overlay absolute inset-0 flex flex-col justify-end p-5">
+                    <span class="text-neon-400 text-xs font-semibold uppercase tracking-wider mb-1">{{ $category }}</span>
+                    <h3 class="text-dark-100 font-display font-bold text-lg">{{ $title }}</h3>
+                    <p class="text-dark-300 text-xs mt-1 mb-3">{{ $desc }}</p>
+                    <div class="flex items-center gap-3">
+                        <a href="#" class="inline-flex items-center gap-1 text-xs font-semibold text-dark-950 gradient-neon px-3 py-1.5 rounded-full hover:scale-105 transition-transform">
+                            Live Demo <i class="ri-external-link-line"></i>
+                        </a>
+                        <a href="#" class="inline-flex items-center gap-1 text-xs font-medium text-dark-200 glass px-3 py-1.5 rounded-full hover:text-neon-400 transition-colors">
+                            <i class="ri-github-line"></i> Code
+                        </a>
+                    </div>
+                </div>
+                {{-- Tech badge --}}
+                <div class="absolute top-3 right-3 glass rounded-lg px-2 py-1">
+                    <span class="text-dark-300 text-xs">{{ $tech }}</span>
+                </div>
+            </article>
+            @endforeach
+        </div>
+
+        <div class="text-center mt-12 reveal">
+            <a href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-dark-100 glass neon-border hover:text-neon-400 hover:neon-glow transition-all duration-300">
+                View All Projects <i class="ri-arrow-right-line"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+{{-- ===================== CONTACT ===================== --}}
+<section id="contact" class="section-padding relative overflow-hidden">
+    <div class="blob" style="width:400px;height:400px;background:oklch(0.66 0.17 195 / 0.08);top:0;right:-80px;filter:blur(80px);position:absolute;border-radius:50%;pointer-events:none;"></div>
+
+    <div class="container-custom relative z-10">
+        <div class="text-center mb-16 reveal">
+            <span class="text-neon-500 text-sm font-semibold tracking-widest uppercase">Contact</span>
+            <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl mt-2 gradient-text-white">Let's Work Together</h2>
+            <p class="text-dark-400 mt-4 max-w-xl mx-auto">Have a project in mind? I'd love to hear about it. Let's create something amazing together.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-5 gap-12 items-start max-w-5xl mx-auto">
+            {{-- Contact info --}}
+            <div class="lg:col-span-2 space-y-6 reveal">
+                @foreach([
+                    ['ri-mail-send-line','Email','patrick@dev.io','mailto:patrick@dev.io'],
+                    ['ri-phone-line','Phone','+1 (555) 000-0000','tel:+15550000000'],
+                    ['ri-map-pin-2-line','Location','Casablanca, Morocco','#'],
+                ]) as [$icon,$label,$value,$link])
+                <a href="{{ $link }}" class="flex items-center gap-4 glass rounded-2xl p-4 group hover:neon-border transition-all duration-300">
+                    <div class="w-11 h-11 rounded-xl gradient-neon flex items-center justify-center shrink-0 group-hover:neon-glow transition-all">
+                        <i class="{{ $icon }} text-dark-950 text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-dark-500 text-xs">{{ $label }}</p>
+                        <p class="text-dark-100 font-medium text-sm">{{ $value }}</p>
+                    </div>
+                </a>
+                @endforeach
+
+                {{-- Socials --}}
+                <div class="glass rounded-2xl p-5">
+                    <p class="text-dark-400 text-sm mb-4">Follow me on</p>
+                    <div class="flex gap-3">
+                        @foreach([['ri-github-fill','GitHub','https://github.com/'],['ri-linkedin-box-fill','LinkedIn','https://linkedin.com/'],['ri-dribbble-line','Dribbble','https://dribbble.com/'],['ri-twitter-x-fill','X','https://twitter.com/']] as [$icon,$name,$url])
+                        <a href="{{ $url }}" target="_blank" class="flex-1 flex flex-col items-center gap-1 glass rounded-xl p-3 text-dark-400 hover:text-neon-500 hover:neon-border transition-all duration-300 group">
+                            <i class="{{ $icon }} text-xl"></i>
+                            <span class="text-xs">{{ $name }}</span>
+                        </a>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- Form --}}
+            <div class="lg:col-span-3 reveal">
+                <form id="contact-form" class="glass-strong rounded-2xl p-8 space-y-5">
+                    <div class="grid sm:grid-cols-2 gap-5">
+                        <div class="space-y-2">
+                            <label class="text-dark-300 text-sm font-medium">Your Name</label>
+                            <input type="text" placeholder="John Doe" class="w-full bg-dark-800 border border-dark-600 rounded-xl px-4 py-3 text-dark-100 text-sm placeholder:text-dark-600 focus:outline-none focus:border-neon-500/60 focus:ring-1 focus:ring-neon-500/30 transition-all duration-300">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-dark-300 text-sm font-medium">Email Address</label>
+                            <input type="email" placeholder="john@example.com" class="w-full bg-dark-800 border border-dark-600 rounded-xl px-4 py-3 text-dark-100 text-sm placeholder:text-dark-600 focus:outline-none focus:border-neon-500/60 focus:ring-1 focus:ring-neon-500/30 transition-all duration-300">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-dark-300 text-sm font-medium">Subject</label>
+                        <input type="text" placeholder="Project inquiry" class="w-full bg-dark-800 border border-dark-600 rounded-xl px-4 py-3 text-dark-100 text-sm placeholder:text-dark-600 focus:outline-none focus:border-neon-500/60 focus:ring-1 focus:ring-neon-500/30 transition-all duration-300">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-dark-300 text-sm font-medium">Message</label>
+                        <textarea rows="5" placeholder="Tell me about your project..." class="w-full bg-dark-800 border border-dark-600 rounded-xl px-4 py-3 text-dark-100 text-sm placeholder:text-dark-600 focus:outline-none focus:border-neon-500/60 focus:ring-1 focus:ring-neon-500/30 transition-all duration-300 resize-none"></textarea>
+                    </div>
+                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-dark-950 gradient-neon neon-glow hover:scale-[1.02] transition-transform duration-300">
+                        Send Message <i class="ri-send-plane-fill text-base"></i>
+                    </button>
                 </form>
             </div>
-        </section>
-    </main>
-
-    <!--==================== FOOTER ====================-->
-    <footer class="footer">
-        <div class="footer__container container grid">
-            <div>
-                <a href="#" class="footer__title">
-                    Patrick <span>Moz</span>
-                </a>
-                <span class="footer__education">Front-end Developer</span>
-            </div>
-
-            <div class="footer__social">
-                <a href="https://www.facebook.com/" target="_blank" class="footer__social-link">
-                    <i class="ri-facebook-circle-fill"></i>
-                </a>
-                <a href="https://www.instagram.com/" target="_blank" class="footer__social-link">
-                    <i class="ri-instagram-fill"></i>
-                </a>
-                <a href="https://twitter.com/" target="_blank" class="footer__social-link">
-                    <i class="ri-twitter-x-fill"></i>
-                </a>
-            </div>
-
-            <span class="footer__copy">
-                &copy; Copyright Bedimcode. All rights reserved
-            </span>
         </div>
-    </footer>
+    </div>
+</section>
 
-    <!--========== SCROLL UP ==========-->
-    <a href="#" class="scrollup" id="scroll-up">
-        <i class="ri-arrow-up-line"></i>
-    </a>
+{{-- ===================== FOOTER ===================== --}}
+<footer class="border-t border-dark-700 py-10">
+    <div class="container-custom">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <a href="#home" class="font-display font-bold text-xl text-dark-100">
+                Patrick<span class="text-neon-500">.dev</span>
+            </a>
+            <div class="flex items-center gap-6">
+                {{-- @foreach([['#home','Home'],['#about','About'],['#projects','Projects'],['#contact','Contact']] as [$href,$label]) --}}
+                <a href="#" class="text-dark-400 hover:text-neon-500 text-sm transition-colors">Home</a>
+                <a href="#" class="text-dark-400 hover:text-neon-500 text-sm transition-colors">About</a>
+                <a href="#" class="text-dark-400 hover:text-neon-500 text-sm transition-colors">Projects</a>
+                <a href="#" class="text-dark-400 hover:text-neon-500 text-sm transition-colors">Contact</a>
+                {{-- @endforeach --}}
+            </div>
+            <p class="text-dark-500 text-sm">&copy; {{ date('Y') }} Patrick Moz. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
 
-    <!--=============== SCROLLREVEAL ===============-->
-    <script src="{{ asset('assets/js/scrollreveal.min.js') }}"></script>
+{{-- ===================== SCROLL UP ===================== --}}
+<a href="#home" id="scroll-up" class="fixed bottom-6 right-6 w-11 h-11 rounded-xl gradient-neon neon-glow flex items-center justify-center text-dark-950 font-bold opacity-0 pointer-events-none transition-all duration-300 z-40 hover:scale-110">
+    <i class="ri-arrow-up-line text-lg"></i>
+</a>
 
-    <!--=============== MAIN JS ===============-->
-    <script src="{{ asset('assets/js/main.js') }}"></script>
+{{-- ===================== SCRIPTS ===================== --}}
+<script>
+(function() {
+    /* ── Navbar scroll effect ── */
+    const navbar = document.getElementById('navbar');
+    const onScroll = () => {
+        if (window.scrollY > 40) {
+            navbar.style.cssText = 'background:oklch(0.13 0.01 255 / 0.85);backdrop-filter:blur(24px);border-bottom:1px solid oklch(0.66 0.17 195 / 0.1);';
+        } else {
+            navbar.style.cssText = '';
+        }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    /* ── Scroll-up button ── */
+    const scrollUp = document.getElementById('scroll-up');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 400) {
+            scrollUp.style.opacity = '1';
+            scrollUp.style.pointerEvents = 'auto';
+        } else {
+            scrollUp.style.opacity = '0';
+            scrollUp.style.pointerEvents = 'none';
+        }
+    }, { passive: true });
+
+    /* ── Mobile menu ── */
+    const hamburger = document.getElementById('hamburger');
+    const hamburgerIcon = document.getElementById('hamburger-icon');
+    const mobileMenu = document.getElementById('mobile-menu');
+    hamburger.addEventListener('click', () => {
+        const isOpen = mobileMenu.classList.toggle('open');
+        hamburgerIcon.className = isOpen ? 'ri-close-line text-2xl text-neon-500' : 'ri-menu-3-line text-2xl';
+    });
+    mobileMenu.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', () => {
+            mobileMenu.classList.remove('open');
+            hamburgerIcon.className = 'ri-menu-3-line text-2xl';
+        });
+    });
+
+    /* ── Active nav link ── */
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(l => l.classList.remove('active'));
+                const active = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+                if (active) active.classList.add('active');
+            }
+        });
+    }, { threshold: 0.4 });
+    sections.forEach(s => observer.observe(s));
+
+    /* ── Reveal on scroll ── */
+    const revealObs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                revealObs.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+    /* ── Project filter ── */
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const projectCards = document.querySelectorAll('#projects-grid article');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const filter = btn.dataset.filter;
+            filterBtns.forEach(b => {
+                b.className = b.className.replace('gradient-neon text-dark-950', 'glass text-dark-400 hover:text-dark-100 hover:neon-border');
+            });
+            btn.className = btn.className.replace('glass text-dark-400 hover:text-dark-100 hover:neon-border', 'gradient-neon text-dark-950');
+            projectCards.forEach(card => {
+                const show = filter === 'All' || card.dataset.category === filter;
+                card.style.display = show ? '' : 'none';
+            });
+        });
+    });
+
+    /* ── Smooth contact form ── */
+    const form = document.getElementById('contact-form');
+    if (form) {
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const btn = form.querySelector('button[type=submit]');
+            btn.innerHTML = '<i class="ri-check-line text-base"></i> Message Sent!';
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.innerHTML = 'Send Message <i class="ri-send-plane-fill text-base"></i>';
+                btn.disabled = false;
+                form.reset();
+            }, 3000);
+        });
+    }
+})();
+</script>
 </body>
-
 </html>
