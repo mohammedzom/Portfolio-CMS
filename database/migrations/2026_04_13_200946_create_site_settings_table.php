@@ -12,12 +12,17 @@ return new class extends Migration
             $table->id();
 
             // Personal
-            $table->string('full_name')->default('Mohamed Zomlot');
+            $table->string('first_name')->default('Mohamed');
+            $table->string('last_name')->default('Zomlot');
             $table->string('tagline')->nullable();
             $table->text('bio')->nullable();
+            $table->text('about_me')->nullable();
             $table->string('avatar')->nullable();
             $table->string('cv_file')->nullable();
             $table->string('cv_file_name')->nullable();
+            $table->string('url_prefix')->nullable();
+            $table->string('url_suffix')->nullable();
+            $table->json('languages')->nullable();
 
             // Contact
             $table->string('email')->nullable();

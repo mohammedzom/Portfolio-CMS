@@ -15,8 +15,8 @@ class ProjectSeeder extends Seeder
             ['Landing Page',         'Web',    'Next.js + Framer',   'High-converting landing page with A/B testing and integrated analytics.',                            false, 2],
             ['E-commerce Store',     'Web',    'Vue + Laravel',      'Full-stack shop with cart, payment integration via Stripe, and admin panel.',                        true,  3],
             ['Mobile App UI',        'App',    'React Native',       'Cross-platform mobile app with clean interface and offline-first architecture.',                      false, 4],
-            ['Analytics Dashboard',  'UI/UX',  'Figma',              'Data visualization dashboard design system with 40+ components ready for handoff.',                  true,  5],
-            ['Portfolio Design',     'Design', 'Figma + CSS',        'Custom portfolio template for creatives — fully responsive with dark mode support.',                  false, 6],
+            ['Analytics Dashboard',  'App',  'Figma',              'Data visualization dashboard design system with 40+ components ready for handoff.',                  true,  5],
+            ['Portfolio Design',     'Web', 'Figma + CSS',        'Custom portfolio template for creatives — fully responsive with dark mode support.',                  false, 6],
         ];
 
         foreach ($projects as [$title, $category, $tech, $description, $featured, $order]) {
@@ -26,6 +26,7 @@ class ProjectSeeder extends Seeder
                 'description' => $description,
                 'category' => $category,
                 'tech_stack' => $tech,
+                'image' => 'assets/img/project-img-'.$order.'.jpg',
                 'is_featured' => $featured,
                 'sort_order' => $order,
             ]);

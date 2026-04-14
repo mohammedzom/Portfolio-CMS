@@ -13,13 +13,14 @@ return new class extends Migration
             $table->string('title');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
-            $table->json('category');
+            $table->enum('category', ['Web', 'App', 'Mobile', 'Script', 'Other'])->default('Web');
             $table->json('tech_stack')->nullable();
             $table->string('image')->nullable();
             $table->string('live_url')->nullable();
             $table->string('repo_url')->nullable();
             $table->boolean('is_featured')->default(false);
-            $table->unsignedSmallInteger('sort_order')->default(0);
+            $table->smallInteger('sort_order')->default(0);
+            $table->softDeletes();
             $table->timestamps();
 
             $table->index(['category', 'sort_order']);
