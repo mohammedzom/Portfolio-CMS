@@ -104,16 +104,21 @@
             </div>
         </nav>
 
-        {{-- User profile --}}
+        {{-- User profile / logout --}}
         <div class="px-3 pb-4 shrink-0 border-t border-dark-700 pt-3">
-            <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-dark-800 transition-all cursor-pointer group">
-                <div class="w-8 h-8 rounded-full gradient-neon flex items-center justify-center text-dark-950 font-bold text-sm shrink-0">P</div>
-                <div class="sidebar-label flex-1 min-w-0">
-                    <p class="text-dark-100 text-sm font-medium truncate">Patrick Moz</p>
-                    <p class="text-dark-500 text-xs truncate">Admin</p>
-                </div>
-                <i class="sidebar-label ri-logout-box-r-line text-dark-500 group-hover:text-neon-500 transition-colors"></i>
-            </div>
+            <form method="POST" action="{{ route('admin.logout') }}">
+                @csrf
+                <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-dark-800 transition-all cursor-pointer group text-left">
+                    <div class="w-8 h-8 rounded-full gradient-neon flex items-center justify-center text-dark-950 font-bold text-sm shrink-0">
+                        {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
+                    </div>
+                    <div class="sidebar-label flex-1 min-w-0">
+                        <p class="text-dark-100 text-sm font-medium truncate">{{ auth()->user()->name ?? 'Admin' }}</p>
+                        <p class="text-dark-500 text-xs truncate">{{ auth()->user()->email ?? '' }}</p>
+                    </div>
+                    <i class="sidebar-label ri-logout-box-r-line text-dark-500 group-hover:text-neon-500 transition-colors"></i>
+                </button>
+            </form>
         </div>
     </aside>
 

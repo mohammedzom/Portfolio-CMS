@@ -1,21 +1,20 @@
 <?php
 
+use App\Http\Controllers\Admin\Login;
+use App\Http\Controllers\Admin\Logout;
 use App\Http\Controllers\PortfolioController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Public Portfolio
-|--------------------------------------------------------------------------
-*/
 Route::get('/', [PortfolioController::class, 'index'])->name('home');
 
-/*
-|--------------------------------------------------------------------------
-| Admin Dashboard (Frontend-only stubs — add auth middleware when ready)
-|--------------------------------------------------------------------------
-*/
 Route::prefix('admin')->name('admin.')->group(function () {
+    Route::view('/login', 'admin.login')->name('login');
+    Route::post('/login', Login::class)->name('login.store');
+})->middleware('guest');
+
+Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
+    Route::post('/logout', Logout::class)->name('logout');
+
     Route::get('/', fn () => view('admin.dashboard'))->name('dashboard');
     Route::get('/projects', fn () => view('admin.projects'))->name('projects');
     Route::get('/skills', fn () => view('admin.skills'))->name('skills');
