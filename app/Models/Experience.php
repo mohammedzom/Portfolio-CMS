@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable('job_title', 'company', 'years', 'description', 'start_date', 'end_date')]
+#[Fillable('job_title', 'company', 'description', 'start_date', 'end_date', 'is_current')]
 class Experience extends Model
 {
     use HasFactory, SoftDeletes;
@@ -17,6 +17,7 @@ class Experience extends Model
         return [
             'start_date' => 'integer',
             'end_date' => 'integer',
+            'is_current' => 'boolean',
             'deleted_at' => 'datetime',
         ];
     }

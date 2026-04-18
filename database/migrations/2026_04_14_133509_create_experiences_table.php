@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('description');
             $table->year('start_date');
             $table->year('end_date')->nullable();
+            $table->boolean('is_current')->default(false);
             $table->softDeletes();
             $table->timestamps();
         });

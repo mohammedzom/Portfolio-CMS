@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\Login;
 use App\Http\Controllers\Admin\Logout;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\ProjectController;
@@ -36,4 +37,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::patch('messages/{message}/restore', [MessageController::class, 'restore'])->name('messages.restore');
 
     Route::resource('settings', SiteSettingsController::class)->names('settings');
+
+    Route::resource('experience', ExperienceController::class)->names('experience');
+    Route::patch('experience/{experience}/restore', [ExperienceController::class, 'restore'])->name('experience.restore');
 });

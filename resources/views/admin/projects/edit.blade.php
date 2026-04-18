@@ -165,16 +165,62 @@
                         <label for="images" class="text-sm font-medium text-dark-300">Project Images</label>
                         
                         @if ($project->images && is_array($project->images) && count($project->images) > 0)
-                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-5 bg-dark-900/30 rounded-xl border border-dark-700 mb-4">
-                                @foreach ($project->images as $index => $image)
-                                    <div class="relative group aspect-video rounded-xl overflow-hidden border border-dark-700 bg-dark-950">
-                                        <img src="{{ Storage::url($image) }}" alt="Image {{ $index + 1 }}"
-                                            class="w-full h-full object-cover">
-                                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 translate-y-full group-hover:translate-y-0 transition-transform">
-                                            <p class="text-white text-xs font-medium">Existing Image {{ $index + 1 }}</p>
+                            <div x-data="{
+                                deletedImages: [],
+                                mainImage: '{{ $project->main_image ?? '' }}',
+                                deleteImage(image) {
+                                    if (!this.deletedImages.includes(image)) {
+                                        this.deletedImages.push(image);
+                                    }
+                                    if (this.mainImage === image) {
+                                        this.mainImage = '';
+                                    }
+                                },
+                                setMainImage(image) {
+                                    this.mainImage = image;
+                                }
+                            }" class="mb-4">
+                                
+                                {{-- Hidden inputs for deleted images --}}
+                                <template x-for="image in deletedImages" :key="image">
+                                    <input type="hidden" name="deleted_images[]" :value="image">
+                                </template>
+                                
+                                {{-- Hidden input for main image --}}
+                                <input type="hidden" name="main_image" :value="mainImage">
+
+                                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-5 bg-dark-900/30 rounded-xl border border-dark-700">
+                                    @foreach ($project->images as $index => $image)
+                                        <div x-show="!deletedImages.includes('{{ $image }}')" x-transition
+                                            class="relative group aspect-video rounded-xl overflow-hidden border border-dark-700 bg-dark-950">
+                                            <img src="{{ Storage::url($image) }}" alt="Image {{ $index + 1 }}"
+                                                class="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500">
+                                            
+                                            {{-- Top Actions --}}
+                                            <div class="absolute top-2 right-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                                {{-- Main Image Button --}}
+                                                <button type="button" @click.stop="setMainImage('{{ $image }}')" title="Set as main image"
+                                                    class="w-8 h-8 flex items-center justify-center rounded-full backdrop-blur-md transition-all border"
+                                                    :class="mainImage === '{{ $image }}' 
+                                                        ? 'bg-neon-500/20 border-neon-500 text-neon-400 shadow-[0_0_10px_oklch(0.66_0.17_195/0.3)]' 
+                                                        : 'bg-black/50 border-white/10 text-white/70 hover:bg-black/70 hover:text-white'">
+                                                    <i class="text-sm transition-transform" :class="mainImage === '{{ $image }}' ? 'ri-star-fill scale-110' : 'ri-star-line'"></i>
+                                                </button>
+                                                
+                                                {{-- Delete Button --}}
+                                                <button type="button" @click.stop="deleteImage('{{ $image }}')" title="Delete image"
+                                                    class="w-8 h-8 flex items-center justify-center rounded-full bg-black/50 border border-white/10 text-white/70 hover:bg-red-500/90 hover:text-white hover:border-red-500 backdrop-blur-md transition-all">
+                                                    <i class="ri-delete-bin-line text-sm"></i>
+                                                </button>
+                                            </div>
+
+                                            {{-- Bottom Label --}}
+                                            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 translate-y-full group-hover:translate-y-0 transition-transform">
+                                                <p class="text-white text-xs font-medium">Existing Image {{ $index + 1 }}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                @endforeach
+                                    @endforeach
+                                </div>
                             </div>
                         @endif
 
