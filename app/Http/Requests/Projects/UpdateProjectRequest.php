@@ -2,19 +2,28 @@
 
 namespace App\Http\Requests\Projects;
 
+use App\Models\Project;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-class StoreProjectRequest extends FormRequest
+class UpdateProjectRequest extends FormRequest
 {
     public function rules(): array
     {
         return [
             'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:projects,slug',
+            'slug' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique(Project::class)->ignore($this->project?->id),
+            ],
             'description' => 'required|string',
             'category' => 'required|in:Web,App,Mobile,Script,Other',
             'tech_stack' => 'nullable|array',
             'images' => 'nullable|array',
+            'deleted_images' => 'nullable|array',
+            'cover_image' => 'nullable|string',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:15360',
             'live_url' => 'nullable|url',
             'repo_url' => 'nullable|url',
@@ -39,11 +48,11 @@ class StoreProjectRequest extends FormRequest
 
             // * Description validation
             'description.required' => 'Description is required.',
-            'description.max' => 'Description cannot exceed 255 characters.',
             'description.string' => 'Description must be a string.',
 
             // * Category validation
             'category.required' => 'Category is required.',
+            'category.in' => 'The selected category is invalid. Allowed categories are: Web, App, Mobile, Script, Other.',
 
             // * Live URL validation
             'live_url.url' => 'Live URL must be a valid URL.',
@@ -51,12 +60,15 @@ class StoreProjectRequest extends FormRequest
             // * Repository URL validation
             'repo_url.url' => 'Repository URL must be a valid URL.',
 
-            // * Image validation
+            // * Images validation
             'images.*.mimes' => 'Image must be a valid image file format like: (jpeg, png, jpg, gif, webp).',
             'images.*.max' => 'Image size must not exceed 15MB.',
 
             // * Sort Order validation
             'sort_order.integer' => 'Sort Order must be a valid number.',
+
+            // * Tech Stack validation
+            'tech_stack.array' => 'Tech stack must be a valid list of items.',
         ];
     }
 }

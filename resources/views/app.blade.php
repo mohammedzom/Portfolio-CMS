@@ -603,8 +603,8 @@
                     <article class="project-card group relative rounded-2xl overflow-hidden glass neon-border reveal"
                         data-category="{{ $project->category }}">
                         <div class="overflow-hidden">
-                            <img src="{{ $project->image }}" alt="{{ $project->title }}"
-                                class="project-img w-full h-52 object-cover">
+                            <img src="{{ !empty($project->images) ? Storage::url($project->images[0]) : '' }}"
+                                alt="{{ $project->title }}" class="project-img w-full h-52 object-cover bg-dark-900">
                         </div>
                         <div class="project-overlay absolute inset-0 flex flex-col justify-end p-5">
                             <span

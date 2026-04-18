@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable('title', 'slug', 'description', 'category', 'tech_stack', 'image', 'live_url', 'repo_url', 'is_featured', 'sort_order')]
+#[Fillable('title', 'slug', 'description', 'category', 'tech_stack', 'images', 'live_url', 'repo_url', 'is_featured', 'sort_order')]
 class Project extends Model
 {
     use HasFactory, SoftDeletes;
@@ -16,6 +16,7 @@ class Project extends Model
     {
         return [
             'tech_stack' => 'array',
+            'images' => 'array',
             'is_featured' => 'boolean',
             'sort_order' => 'integer',
             'deleted_at' => 'datetime',

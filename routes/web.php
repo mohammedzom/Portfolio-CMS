@@ -16,15 +16,24 @@ Route::get('/', [PortfolioController::class, 'index'])->name('home');
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::view('/login', 'admin.login')->name('login');
     Route::post('/login', Login::class)->name('login.store');
-})->middleware('guest');
+});
 
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('/logout', Logout::class)->name('logout');
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
     Route::resource('projects', ProjectController::class)->names('projects');
+    Route::patch('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore');
+
     Route::resource('skills', SkillController::class)->names('skills');
+    Route::patch('skills/{skill}/restore', [SkillController::class, 'restore'])->name('skills.restore');
+
     Route::resource('services', ServiceController::class)->names('services');
+    Route::patch('services/{service}/restore', [ServiceController::class, 'restore'])->name('services.restore');
+
     Route::resource('messages', MessageController::class)->names('messages');
+    Route::patch('messages/{message}/restore', [MessageController::class, 'restore'])->name('messages.restore');
+
     Route::resource('settings', SiteSettingsController::class)->names('settings');
 });

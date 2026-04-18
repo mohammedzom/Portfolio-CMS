@@ -15,7 +15,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->enum('category', ['Web', 'App', 'Mobile', 'Script', 'Other'])->default('Web');
             $table->json('tech_stack')->nullable();
-            $table->string('image')->nullable();
+            $table->json('images')->nullable();
             $table->string('live_url')->nullable();
             $table->string('repo_url')->nullable();
             $table->boolean('is_featured')->default(false);

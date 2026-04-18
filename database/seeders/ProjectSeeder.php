@@ -26,7 +26,6 @@ class ProjectSeeder extends Seeder
                 'description' => $description,
                 'category' => $category,
                 'tech_stack' => $tech,
-                'image' => 'assets/img/project-img-'.$order.'.jpg',
                 'is_featured' => $featured,
                 'sort_order' => $order,
             ]);

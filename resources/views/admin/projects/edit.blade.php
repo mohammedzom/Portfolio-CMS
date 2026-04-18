@@ -1,7 +1,7 @@
 @extends('admin.layout')
-@section('title', 'Add Project')
-@section('page-title', 'Add New Project')
-@section('page-subtitle', 'Create a new portfolio project')
+@section('title', 'Edit ' . $project->title)
+@section('page-title', 'Edit ' . $project->title)
+@section('page-subtitle', 'Edit Project')
 
 @section('content')
     <div class="mb-6">
@@ -12,8 +12,9 @@
     </div>
 
     <div class="glass rounded-2xl border border-dark-700 overflow-hidden shadow-xl">
-        <form action="{{ route('admin.projects.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('admin.projects.update', $project) }}" method="POST" enctype="multipart/form-data">
             @csrf
+            @method('PUT')
 
             {{-- ── SECTION 1: Identity ── --}}
             <div class="p-6 md:p-8 border-b border-dark-700">
@@ -33,7 +34,7 @@
                     <div class="space-y-2">
                         <label for="title" class="text-sm font-medium text-dark-300">Project Title <span
                                 class="text-neon-500">*</span></label>
-                        <input type="text" name="title" id="title" value="{{ old('title') }}"
+                        <input type="text" name="title" id="title" value="{{ old('title', $project->title) }}"
                             class="w-full bg-dark-900/50 rounded-xl border border-dark-700 px-4 py-3 text-dark-100 focus:border-neon-500/50 focus:ring-1 focus:ring-neon-500/50 outline-none transition-all placeholder:text-dark-600"
                             placeholder="e.g. E-Commerce Platform" required>
                         @error('title')
@@ -44,7 +45,7 @@
                     {{-- Slug --}}
                     <div class="space-y-2">
                         <label for="slug" class="text-sm font-medium text-dark-300">Slug</label>
-                        <input type="text" name="slug" id="slug" value="{{ old('slug') }}"
+                        <input type="text" name="slug" id="slug" value="{{ old('slug', $project->slug) }}"
                             class="w-full bg-dark-900/50 rounded-xl border border-dark-700 px-4 py-3 text-dark-100 focus:border-neon-500/50 focus:ring-1 focus:ring-neon-500/50 outline-none transition-all placeholder:text-dark-600"
                             placeholder="e-commerce-platform">
                         <p class="text-dark-500 text-xs mt-1">Leave empty to auto-generate from title</p>
@@ -61,7 +62,7 @@
                             @foreach (['Web' => ['ri-global-line', '🌐'], 'App' => ['ri-window-line', '🖥️'], 'Mobile' => ['ri-smartphone-line', '📱'], 'Script' => ['ri-terminal-line', '⚡'], 'Other' => ['ri-box-3-line', '📦']] as $cat => [$icon, $emoji])
                                 <label class="relative cursor-pointer group">
                                     <input type="radio" name="category" value="{{ $cat }}" class="peer sr-only"
-                                        {{ old('category') == $cat ? 'checked' : '' }} required>
+                                        {{ old('category', $project->category) == $cat ? 'checked' : '' }} required>
                                     <div
                                         class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-dark-900/50 border border-dark-700 transition-all peer-checked:border-neon-500 peer-checked:bg-neon-500/10 hover:border-dark-500 select-none">
                                         <span class="text-2xl">{{ $emoji }}</span>
@@ -77,8 +78,11 @@
                     </div>
 
                     {{-- Tech Stack (Alpine Tag Input) --}}
+                    @php
+                        $techStack = old('tech_stack', is_array($project->tech_stack) ? $project->tech_stack : (is_string($project->tech_stack) ? array_map('trim', explode(',', $project->tech_stack)) : []));
+                    @endphp
                     <div class="space-y-2 lg:col-span-2 mt-2" x-data="{
-                        tags: {{ old('tech_stack') ? json_encode(old('tech_stack')) : '[]' }},
+                        tags: {{ json_encode($techStack) }},
                         newTag: '',
                         addTag() {
                             const val = this.newTag.trim().replace(/,$/, '');
@@ -137,7 +141,7 @@
                     {{-- Live URL --}}
                     <div class="space-y-2">
                         <label for="live_url" class="text-sm font-medium text-dark-300">Live URL</label>
-                        <input type="url" name="live_url" id="live_url" value="{{ old('live_url') }}"
+                        <input type="url" name="live_url" id="live_url" value="{{ old('live_url', $project->live_url) }}"
                             class="w-full bg-dark-900/50 rounded-xl border border-dark-700 px-4 py-3 text-dark-100 focus:border-neon-500/50 focus:ring-1 focus:ring-neon-500/50 outline-none transition-all placeholder:text-dark-600"
                             placeholder="https://example.com">
                         @error('live_url')
@@ -148,7 +152,7 @@
                     {{-- Repo URL --}}
                     <div class="space-y-2">
                         <label for="repo_url" class="text-sm font-medium text-dark-300">Repository URL</label>
-                        <input type="url" name="repo_url" id="repo_url" value="{{ old('repo_url') }}"
+                        <input type="url" name="repo_url" id="repo_url" value="{{ old('repo_url', $project->repo_url) }}"
                             class="w-full bg-dark-900/50 rounded-xl border border-dark-700 px-4 py-3 text-dark-100 focus:border-neon-500/50 focus:ring-1 focus:ring-neon-500/50 outline-none transition-all placeholder:text-dark-600"
                             placeholder="https://github.com/username/repo">
                         @error('repo_url')
@@ -159,6 +163,21 @@
                     {{-- Images --}}
                     <div class="space-y-3 lg:col-span-2 mt-2">
                         <label for="images" class="text-sm font-medium text-dark-300">Project Images</label>
+                        
+                        @if ($project->images && is_array($project->images) && count($project->images) > 0)
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-5 bg-dark-900/30 rounded-xl border border-dark-700 mb-4">
+                                @foreach ($project->images as $index => $image)
+                                    <div class="relative group aspect-video rounded-xl overflow-hidden border border-dark-700 bg-dark-950">
+                                        <img src="{{ Storage::url($image) }}" alt="Image {{ $index + 1 }}"
+                                            class="w-full h-full object-cover">
+                                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 translate-y-full group-hover:translate-y-0 transition-transform">
+                                            <p class="text-white text-xs font-medium">Existing Image {{ $index + 1 }}</p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
                         <div x-data="{
                             showPreview: false,
                             files: [],
@@ -185,17 +204,14 @@
                             <div
                                 class="relative border-2 border-dashed border-dark-700 hover:border-neon-500/50 bg-dark-900/30 hover:bg-neon-500/5 rounded-2xl p-8 text-center transition-all cursor-pointer group">
                                 <input type="file" name="images[]" id="images" accept="image/*" multiple
-                                    @change="handleFiles"
-                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                    @change="handleFiles" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     x-ref="imagesInput">
 
-                                <div
-                                    class="w-14 h-14 rounded-full bg-dark-800 border border-dark-600 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                                    <i
-                                        class="ri-upload-cloud-2-line text-2xl text-dark-400 group-hover:text-neon-500 transition-colors"></i>
+                                <div class="w-14 h-14 rounded-full bg-dark-800 border border-dark-600 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                    <i class="ri-upload-cloud-2-line text-2xl text-dark-400 group-hover:text-neon-500 transition-colors"></i>
                                 </div>
-                                <h3 class="text-dark-100 font-display font-bold mb-1">Click to browse or drop images</h3>
-                                <p class="text-dark-500 text-xs">Supports JPG, PNG, WebP (Max 15MB each)</p>
+                                <h3 class="text-dark-100 font-display font-bold mb-1">Upload additional images</h3>
+                                <p class="text-dark-500 text-xs">Supports JPG, PNG, WebP (Max 15MB each). New images will be appended to existing ones.</p>
                             </div>
 
                             {{-- Previews Grid --}}
@@ -203,15 +219,12 @@
                                 class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-5 bg-dark-900/30 rounded-xl border border-dark-700 mt-4"
                                 style="display: none;">
                                 <template x-for="(file, index) in files" :key="index">
-                                    <div
-                                        class="relative group aspect-video rounded-xl overflow-hidden border border-dark-700 bg-dark-950">
+                                    <div class="relative group aspect-video rounded-xl overflow-hidden border border-dark-700 bg-dark-950">
                                         <img :src="URL.createObjectURL(file)" :alt="'Preview ' + (index + 1)"
                                             class="w-full h-full object-cover">
-                                        <div
-                                            class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 translate-y-full group-hover:translate-y-0 transition-transform">
+                                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 translate-y-full group-hover:translate-y-0 transition-transform">
                                             <p class="text-white text-xs truncate font-medium" x-text="file.name"></p>
-                                            <p class="text-dark-400 text-[10px]"
-                                                x-text="(file.size/1024/1024).toFixed(2) + ' MB'"></p>
+                                            <p class="text-dark-400 text-[10px]" x-text="(file.size/1024/1024).toFixed(2) + ' MB'"></p>
                                         </div>
                                         <button type="button" @click.stop="removeFile(index)" title="Remove image"
                                             class="absolute top-2 right-2 bg-black/50 hover:bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-20">
@@ -253,7 +266,7 @@
                         <textarea x-ref="desc" name="description" id="description" rows="5"
                             @input="count = $event.target.value.length"
                             class="w-full bg-dark-900/50 rounded-xl border border-dark-700 px-4 py-3 text-dark-100 focus:border-neon-500/50 focus:ring-1 focus:ring-neon-500/50 outline-none transition-all placeholder:text-dark-600 resize-y leading-relaxed"
-                            placeholder="Describe the project — what it does, who it's for, and what makes it special…" required>{{ old('description') }}</textarea>
+                            placeholder="Describe the project — what it does, who it's for, and what makes it special…" required>{{ old('description', $project->description) }}</textarea>
                         @error('description')
                             <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -265,9 +278,8 @@
                         <div class="flex flex-wrap gap-2">
                             @for ($i = 1; $i <= $projectsCount + 1; $i++)
                                 <label class="relative cursor-pointer">
-                                    <input type="radio" name="sort_order" value="{{ $i }}"
-                                        class="peer sr-only"
-                                        {{ old('sort_order', $projectsCount + 1) == $i ? 'checked' : '' }} required>
+                                    <input type="radio" name="sort_order" value="{{ $i }}" class="peer sr-only"
+                                        {{ old('sort_order', $project->sort_order) == $i ? 'checked' : '' }} required>
                                     <div
                                         class="w-11 h-11 rounded-xl bg-dark-900/50 border border-dark-700 flex items-center justify-center text-sm font-display font-bold text-dark-400 peer-checked:border-neon-500 peer-checked:bg-neon-500/10 peer-checked:text-neon-400 hover:border-dark-500 transition-all select-none">
                                         {{ $i == $projectsCount + 1 ? $i . '★' : $i }}
@@ -287,14 +299,13 @@
                         <div class="relative flex items-center shrink-0">
                             <input type="hidden" name="is_featured" value="0">
                             <input type="checkbox" name="is_featured" value="1"
-                                {{ old('is_featured') ? 'checked' : '' }} class="peer sr-only">
+                                {{ old('is_featured', $project->is_featured) ? 'checked' : '' }} class="peer sr-only">
                             <div
                                 class="w-12 h-6 bg-dark-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neon-500">
                             </div>
                         </div>
                         <div class="flex-1">
-                            <p
-                                class="text-sm font-bold font-display text-dark-100 group-hover:text-white transition-colors">
+                            <p class="text-sm font-bold font-display text-dark-100 group-hover:text-white transition-colors">
                                 Feature on homepage</p>
                             <p class="text-xs text-dark-500 mt-0.5">Pins this project in the portfolio hero section</p>
                         </div>
@@ -322,7 +333,7 @@
                     <button type="submit"
                         class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-neon-500 text-dark-950 hover:bg-neon-400 transition-all font-bold font-display tracking-wide text-sm"
                         style="box-shadow: 0 0 20px oklch(0.66 0.17 195 / 0.4);">
-                        Save Project <i class="ri-arrow-right-line"></i>
+                        Update Project <i class="ri-arrow-right-line"></i>
                     </button>
                 </div>
             </div>
