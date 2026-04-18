@@ -18,10 +18,7 @@ class PortfolioController extends Controller
         $experiences = Experience::orderBy('start_date', 'desc')->get();
         $settings = SiteSettings::firstOrFail();
 
-        $languages = ! empty($settings->languages)
-            ? implode(', ', $settings->languages)
-            : 'N/A';
-
+        $languages = $settings->languages ?? [];
         $social_links = $settings->social_links ?? [];
 
         return view('app', compact('projects', 'skills', 'services', 'settings', 'social_links', 'languages', 'experiences'));

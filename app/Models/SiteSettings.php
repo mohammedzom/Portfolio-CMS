@@ -11,7 +11,7 @@ class SiteSettings extends Model
     protected function casts(): array
     {
         return [
-            'languages' => 'array',
+            'languages' => 'json',
             'years_experience' => 'integer',
             'projects_count' => 'integer',
             'clients_count' => 'integer',

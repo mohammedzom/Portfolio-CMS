@@ -279,7 +279,7 @@
                             <a href="{{ $link['url'] }}" target="_blank"
                                 class="w-10 h-10 rounded-xl glass neon-border flex items-center justify-center text-dark-400 hover:text-neon-500 hover:border-neon-500/40 hover:scale-110 transition-all duration-300">
                                 {{-- Todo: Add social icons --}}
-                                <i class="{{ $link['icon'] }} text-xl"></i>
+                                {{-- <i class="{{ $link['icon'] }} text-xl"></i> --}}
 
                                 {{-- <img src="{{ $link['icon'] }}" alt="{{ $link['url'] }}" class="w-6 h-6"> --}}
                             </a>
@@ -456,7 +456,12 @@
                             </div>
                             <div>
                                 <p class="text-dark-500 text-xs">Languages</p>
-                                <p class="text-dark-200 text-sm font-medium">{{ $languages }}</p>
+                                @forelse ($languages as $language)
+                                    <p class="text-dark-200 text-sm font-medium">{{ $language['name'] }} level :
+                                        {{ $language['level'] }}</p>
+                                @empty
+                                    <p class="text-dark-200 text-sm font-medium">No languages found</p>
+                                @endforelse
                             </div>
                         </div>
                     </div>
@@ -701,7 +706,7 @@
                             @foreach ($social_links as $link)
                                 <a href="{{ $link['url'] }}" target="_blank"
                                     class="flex-1 flex flex-col items-center gap-1 glass rounded-xl p-3 text-dark-400 hover:text-neon-500 hover:neon-border transition-all duration-300 group">
-                                    <i class="{{ $link['icon'] }} text-xl"></i>
+                                    {{-- <i class="{{ $link['icon'] }} text-xl"></i> --}}
                                     @if (isset($link['name']))
                                         <span class="text-xs">{{ $link['name'] }}</span>
                                     @endif
