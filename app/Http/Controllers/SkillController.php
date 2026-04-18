@@ -25,7 +25,7 @@ class SkillController extends Controller
             $query->where('name', 'like', '%'.request()->search.'%');
         }
 
-        $skills = $query->latest()->paginate(10);
+        $skills = $query->orderBy('proficiency', 'desc')->paginate(10);
 
         return view('admin.skills.index', compact('skills'));
     }
