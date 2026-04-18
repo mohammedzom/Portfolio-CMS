@@ -11,12 +11,12 @@ class SiteSettings extends Model
     protected function casts(): array
     {
         return [
-            'languages' => 'json',
+            'languages' => 'array',
             'years_experience' => 'integer',
             'projects_count' => 'integer',
             'clients_count' => 'integer',
             'available_for_freelance' => 'boolean',
-            'social_links' => 'json',
+            'social_links' => 'array',
         ];
     }
 }

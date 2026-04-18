@@ -22,9 +22,7 @@ class DashboardController extends Controller
 
         $skillsCount = Skill::whereNotNull('deleted_at')->count();
 
-        $languages = ! empty($settings->languages)
-            ? implode(', ', $settings->languages)
-            : 'N/A';
+        $languages = $settings->languages ?? [];
 
         $social_links = $settings->social_links ?? [];
 

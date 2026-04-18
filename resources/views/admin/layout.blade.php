@@ -1,3 +1,13 @@
+<?php
+use App\Models\Project;
+use App\Models\Message;
+use App\Models\Skill;
+use App\Models\Service;
+$projectsCount = Project::withoutTrashed()->count();
+$messagesCount = Message::withoutTrashed()->where('is_read', false)->count();
+$skillsCount = Skill::withoutTrashed()->count();
+$servicesCount = Service::withoutTrashed()->count();
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -122,19 +132,19 @@
                             'route' => 'admin.projects.index',
                             'icon' => 'ri-folder-4-line',
                             'label' => 'Projects',
-                            'badge' => '6',
+                            'badge' => $projectsCount,
                         ],
                         [
                             'route' => 'admin.skills.index',
                             'icon' => 'ri-bar-chart-2-line',
                             'label' => 'Skills',
-                            'badge' => null,
+                            'badge' => $skillsCount,
                         ],
                         [
                             'route' => 'admin.services.index',
                             'icon' => 'ri-service-line',
                             'label' => 'Services',
-                            'badge' => null,
+                            'badge' => $servicesCount,
                         ],
                     ];
                     $bottomItems = [
@@ -142,7 +152,7 @@
                             'route' => 'admin.messages.index',
                             'icon' => 'ri-mail-line',
                             'label' => 'Messages',
-                            'badge' => '3',
+                            'badge' => $messagesCount,
                         ],
                         [
                             'route' => 'admin.settings.index',
