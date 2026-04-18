@@ -1,0 +1,170 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+/*=============== FONTS ===============*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@theme {
+    /* ── Typography ── */
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+
+    /* ── Neon Cyan Palette (calm, easy on eyes) ── */
+    --color-neon-50:  oklch(0.97 0.03 195);
+    --color-neon-100: oklch(0.93 0.06 195);
+    --color-neon-200: oklch(0.87 0.10 195);
+    --color-neon-300: oklch(0.79 0.14 195);
+    --color-neon-400: oklch(0.72 0.16 195);
+    --color-neon-500: oklch(0.66 0.17 195);   /* primary accent */
+    --color-neon-600: oklch(0.57 0.15 195);
+    --color-neon-700: oklch(0.47 0.12 195);
+    --color-neon-800: oklch(0.37 0.09 195);
+    --color-neon-900: oklch(0.27 0.06 195);
+
+    /* ── Dark Background Palette ── */
+    --color-dark-950: oklch(0.10 0.01 255);   /* deepest bg */
+    --color-dark-900: oklch(0.13 0.01 255);   /* main bg */
+    --color-dark-800: oklch(0.16 0.015 255);  /* card bg */
+    --color-dark-700: oklch(0.20 0.015 255);  /* elevated card */
+    --color-dark-600: oklch(0.25 0.012 255);  /* borders */
+    --color-dark-500: oklch(0.35 0.010 255);  /* muted borders */
+    --color-dark-400: oklch(0.50 0.008 255);  /* muted text */
+    --color-dark-300: oklch(0.65 0.006 255);  /* secondary text */
+    --color-dark-200: oklch(0.80 0.004 255);  /* primary text */
+    --color-dark-100: oklch(0.93 0.002 255);  /* bright text */
+
+    /* ── Animations ── */
+    --animate-fade-up:    fade-up 0.6s ease both;
+    --animate-fade-in:    fade-in 0.5s ease both;
+    --animate-slide-left: slide-left 0.6s ease both;
+    --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
+    --animate-float:      float 6s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes slide-left {
+    from { opacity: 0; transform: translateX(-24px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 20px oklch(0.66 0.17 195 / 0.3); }
+    50%       { box-shadow: 0 0 40px oklch(0.66 0.17 195 / 0.6); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-12px); }
+}
+
+/* ── Base ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.66 0.17 195 / 0.4) transparent;
+}
+
+body {
+    background-color: oklch(0.13 0.01 255);
+    color: oklch(0.80 0.004 255);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar              { width: 6px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: oklch(0.66 0.17 195 / 0.4); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover  { background: oklch(0.66 0.17 195 / 0.7); }
+
+/* ── Utility Classes ── */
+@utility glass {
+    background: oklch(0.16 0.015 255 / 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid oklch(0.66 0.17 195 / 0.12);
+}
+
+@utility glass-strong {
+    background: oklch(0.16 0.015 255 / 0.85);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid oklch(0.66 0.17 195 / 0.2);
+}
+
+@utility neon-glow {
+    box-shadow: 0 0 24px oklch(0.66 0.17 195 / 0.35),
+                0 0 48px oklch(0.66 0.17 195 / 0.12);
+}
+
+@utility neon-glow-text {
+    text-shadow: 0 0 30px oklch(0.66 0.17 195 / 0.7);
+}
+
+@utility neon-border {
+    border: 1px solid oklch(0.66 0.17 195 / 0.4);
+    box-shadow: 0 0 12px oklch(0.66 0.17 195 / 0.15),
+                inset 0 0 12px oklch(0.66 0.17 195 / 0.04);
+}
+
+@utility section-padding {
+    padding-block: 6rem;
+}
+
+@utility container-custom {
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+}
+
+/* ── Gradient utilities ── */
+@utility gradient-neon {
+    background: linear-gradient(135deg,
+        oklch(0.66 0.17 195) 0%,
+        oklch(0.60 0.15 220) 100%);
+}
+
+@utility gradient-text {
+    background: linear-gradient(135deg,
+        oklch(0.93 0.06 195) 0%,
+        oklch(0.66 0.17 195) 50%,
+        oklch(0.60 0.15 220) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+@utility gradient-text-white {
+    background: linear-gradient(135deg,
+        oklch(0.97 0.005 255) 0%,
+        oklch(0.80 0.004 255) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+
+
+/* ── Animations delay utilities ── */
+@utility delay-100 { animation-delay: 100ms; }
+@utility delay-200 { animation-delay: 200ms; }
+@utility delay-300 { animation-delay: 300ms; }
+@utility delay-400 { animation-delay: 400ms; }
+@utility delay-500 { animation-delay: 500ms; }
+@utility delay-600 { animation-delay: 600ms; }
+@utility delay-700 { animation-delay: 700ms; }
+@utility delay-800 { animation-delay: 800ms; }

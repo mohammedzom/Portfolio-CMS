@@ -1,147 +1,101 @@
-@extends('admin.layout')
+@extends('layouts.admin')
+
 @section('title', 'Services')
-@section('page-title', 'Services Management')
-@section('page-subtitle', 'Manage your professional services and offerings')
+@section('page-title', 'Offered Services')
+@section('page-subtitle', 'Manage the services you offer to clients')
 
 @section('content')
-    {{-- Flash Messages --}}
-    @if (session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-            class="mb-6 p-4 rounded-xl border border-green-500/30 bg-green-500/10 flex items-center gap-3">
-            <i class="ri-checkbox-circle-line text-green-400 text-xl"></i>
-            <span class="text-green-300 text-sm font-medium">{{ session('success') }}</span>
-            <button @click="show = false" class="ml-auto text-green-400 hover:text-green-300">
-                <i class="ri-close-line"></i>
-            </button>
-        </div>
-    @endif
-
-    {{-- Action Bar --}}
-    <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <form action="{{ route('admin.services.index') }}" method="GET" class="flex items-center gap-3 w-full sm:w-auto">
-            <div class="relative flex-1 sm:flex-initial">
-                <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-dark-500"></i>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search services..."
-                    class="w-full sm:w-64 glass rounded-xl border border-dark-700 pl-10 pr-4 py-2.5 text-sm focus:border-neon-500/40 transition-colors">
+    <div class="space-y-8">
+        {{-- HEADER ACTIONS --}}
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="flex flex-wrap items-center gap-3">
+                <x-button variant="{{ !request('archived') ? 'neon' : 'secondary' }}" size="sm" href="{{ route('admin.services.index') }}">
+                    Active <span class="ml-2 text-[10px] font-black opacity-50">{{ \App\Models\Service::withoutTrashed()->count() }}</span>
+                </x-button>
+                <x-button variant="{{ request('archived') ? 'neon' : 'secondary' }}" size="sm" href="{{ route('admin.services.index', ['archived' => 'true']) }}">
+                    Archived <span class="ml-2 text-[10px] font-black opacity-50">{{ \App\Models\Service::onlyTrashed()->count() }}</span>
+                </x-button>
             </div>
-            <button type="submit" class="p-2.5 rounded-xl glass border border-dark-700 text-neon-500 hover:bg-neon-500/10 transition-all">
-                <i class="ri-filter-3-line"></i>
-            </button>
-        </form>
 
-        <div class="flex items-center gap-3">
-            <a href="{{ route('admin.services.index', ['archived' => request('archived') ? '0' : '1']) }}"
-                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl glass border border-dark-700 text-sm font-medium hover:border-neon-500/40 transition-all">
-                <i class="ri-archive-line"></i>
-                {{ request('archived') ? 'View Active' : 'View Archived' }}
-            </a>
-            <a href="{{ route('admin.services.create') }}"
-                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-neon text-dark-950 text-sm font-bold hover:neon-glow transition-all">
-                <i class="ri-add-line"></i> Add Service
-            </a>
+            <div class="flex items-center gap-4">
+                <form action="{{ route('admin.services.index') }}" method="GET" class="relative group">
+                    <i class="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-dark-500 group-focus-within:text-neon-500 transition-colors"></i>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search services..." class="bg-dark-900 border-dark-800 text-dark-100 text-sm rounded-xl pl-10 pr-4 py-2.5 placeholder:text-dark-600 focus:outline-none focus:border-neon-500/50 focus:ring-1 focus:ring-neon-500/20 transition-all w-64">
+                </form>
+                <x-button variant="neon" size="md" href="{{ route('admin.services.create') }}">
+                    <i class="ri-add-line"></i> New Service
+                </x-button>
+            </div>
         </div>
-    </div>
 
-    {{-- Services Grid --}}
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        @forelse ($services as $service)
-            <div class="group glass rounded-2xl border border-dark-700 p-5 hover:border-neon-500/30 transition-all duration-300 hover:-translate-y-1">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        @if ($service->icon)
-                            <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-neon-500/10">
-                                <img src="{{ $service->icon }}" alt="{{ $service->title }}" class="w-6 h-6 object-contain">
+        {{-- SERVICES GRID --}}
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @forelse ($services as $service)
+                <x-card padding="p-6" hover="true" class="group relative overflow-hidden">
+                    <div class="space-y-6">
+                        <div class="flex items-start justify-between">
+                            <div class="w-14 h-14 rounded-2xl bg-dark-800 border border-dark-700 flex items-center justify-center text-neon-400 text-3xl group-hover:bg-neon-500 group-hover:text-dark-950 group-hover:scale-110 transition-all duration-500">
+                                <i class="{{ $service->icon ?? 'ri-stack-line' }}"></i>
                             </div>
-                        @else
-                            <div class="w-12 h-12 rounded-xl flex items-center justify-center gradient-neon">
-                                <i class="ri-service-line text-dark-950 text-lg"></i>
+                            <div class="flex items-center gap-2">
+                                @if($service->trashed())
+                                    <form action="{{ route('admin.services.restore', $service->id) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="p-2 rounded-lg bg-neon-500/10 text-neon-400 border border-neon-500/20 hover:bg-neon-500 hover:text-dark-950 transition-all">
+                                            <i class="ri-refresh-line"></i>
+                                        </button>
+                                    </form>
+                                @else
+                                    <x-button variant="ghost" size="sm" href="{{ route('admin.services.edit', $service) }}" class="p-2">
+                                        <i class="ri-edit-line"></i>
+                                    </x-button>
+                                    <form action="{{ route('admin.services.destroy', $service) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="p-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
-                        @endif
-                        <div>
-                            <h3 class="font-display font-semibold text-dark-100">{{ $service->title }}</h3>
-                            <span class="text-xs text-dark-500">Order: {{ $service->sort_order }}</span>
                         </div>
-                    </div>
-                    @if ($service->trashed())
-                        <span class="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-400 font-medium">Archived</span>
-                    @endif
-                </div>
 
-                {{-- Description Preview --}}
-                <p class="text-dark-400 text-sm mb-4 line-clamp-2">{{ $service->description }}</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-xl font-bold text-dark-100 group-hover:text-neon-400 transition-colors">{{ $service->title }}</h3>
+                                <span class="text-[10px] font-mono text-dark-500">#{{ str_pad($service->sort_order, 2, '0', STR_PAD_LEFT) }}</span>
+                            </div>
+                            <p class="text-dark-400 text-sm leading-relaxed line-clamp-3">{{ $service->description }}</p>
+                        </div>
 
-                {{-- Tags --}}
-                @if ($service->tags && count($service->tags) > 0)
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        @foreach (array_slice($service->tags, 0, 3) as $tag)
-                            <span class="text-xs px-2 py-1 rounded-full bg-dark-700 text-dark-300">{{ $tag }}</span>
-                        @endforeach
-                        @if (count($service->tags) > 3)
-                            <span class="text-xs px-2 py-1 rounded-full bg-dark-700 text-dark-400">+{{ count($service->tags) - 3 }}</span>
+                        @if($service->tags)
+                            <div class="flex flex-wrap gap-2 pt-2 border-t border-dark-800">
+                                @foreach(is_array($service->tags) ? $service->tags : explode(',', $service->tags) as $tag)
+                                    <span class="text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg bg-dark-950 text-dark-500 border border-dark-800">{{ trim($tag) }}</span>
+                                @endforeach
+                            </div>
                         @endif
                     </div>
-                @endif
-
-                {{-- Actions --}}
-                <div class="flex items-center gap-2 pt-4 border-t border-dark-700">
-                    @if ($service->trashed())
-                        <form action="{{ route('admin.services.restore', $service) }}" method="POST" class="flex-1">
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit"
-                                class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-all">
-                                <i class="ri-refresh-line"></i> Restore
-                            </button>
-                        </form>
-                        <form action="{{ route('admin.services.destroy', $service) }}" method="POST"
-                            onsubmit="return confirm('Permanently delete this service?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                class="p-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-all">
-                                <i class="ri-delete-bin-line"></i>
-                            </button>
-                        </form>
-                    @else
-                        <a href="{{ route('admin.services.edit', $service) }}"
-                            class="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-neon-500/10 text-neon-400 hover:bg-neon-500/20 transition-all">
-                            <i class="ri-pencil-line"></i> Edit
-                        </a>
-                        <a href="{{ route('admin.services.show', $service) }}"
-                            class="p-2 rounded-lg text-dark-400 hover:text-neon-400 hover:bg-neon-500/10 transition-all">
-                            <i class="ri-eye-line"></i>
-                        </a>
-                        <form action="{{ route('admin.services.destroy', $service) }}" method="POST"
-                            onsubmit="return confirm('Archive this service?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                class="p-2 rounded-lg text-dark-400 hover:text-red-400 hover:bg-red-500/10 transition-all">
-                                <i class="ri-archive-line"></i>
-                            </button>
-                        </form>
-                    @endif
+                </x-card>
+            @empty
+                <div class="col-span-full text-center py-24 bg-dark-900/50 border border-dark-800 rounded-2xl">
+                    <div class="w-16 h-16 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-dark-600 mx-auto mb-4">
+                        <i class="ri-service-line text-3xl"></i>
+                    </div>
+                    <p class="text-dark-300 font-bold">No services listed yet</p>
+                    <p class="text-dark-500 text-sm mt-1">Start by adding your first service to your professional profile.</p>
+                    <x-button variant="neon" size="md" href="{{ route('admin.services.create') }}" class="mt-6">
+                        <i class="ri-add-line"></i> Add Service
+                    </x-button>
                 </div>
-            </div>
-        @empty
-            <div class="col-span-full">
-                <div class="glass rounded-2xl border border-dark-700 p-12 text-center">
-                    <i class="ri-service-line text-5xl text-dark-600 mb-4"></i>
-                    <p class="text-dark-400 font-medium">No services found</p>
-                    <p class="text-dark-600 text-sm mt-1">Start by adding your first service</p>
-                    <a href="{{ route('admin.services.create') }}"
-                        class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl gradient-neon text-dark-950 text-sm font-bold hover:neon-glow transition-all">
-                        <i class="ri-add-line"></i> Add Your First Service
-                    </a>
-                </div>
-            </div>
-        @endforelse
-    </div>
-
-    {{-- Pagination --}}
-    @if ($services->hasPages())
-        <div class="mt-8 flex justify-center">
-            {{ $services->links() }}
+            @endforelse
         </div>
-    @endif
+
+        @if($services->hasPages())
+            <div class="px-6 py-4 border-t border-dark-800 bg-dark-950/30 rounded-2xl">
+                {{ $services->links() }}
+            </div>
+        @endif
+    </div>
 @endsection
