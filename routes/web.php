@@ -35,8 +35,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     Route::resource('messages', MessageController::class)->names('messages');
     Route::patch('messages/{message}/restore', [MessageController::class, 'restore'])->name('messages.restore');
+    Route::patch('messages/{message}/mark-as-unread', [MessageController::class, 'markAsUnread'])->name('messages.mark-as-unread');
+    Route::patch('messages/{message}/mark-as-read', [MessageController::class, 'markAsRead'])->name('messages.mark-as-read');
 
-    Route::resource('settings', SiteSettingsController::class)->only(['index', 'update'])->names('settings');
+    Route::resource('settings', SiteSettingsController::class)->names('settings');
 
     Route::resource('experience', ExperienceController::class)->names('experience');
     Route::patch('experience/{experience}/restore', [ExperienceController::class, 'restore'])->name('experience.restore');
