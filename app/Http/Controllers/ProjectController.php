@@ -77,6 +77,18 @@ class ProjectController extends Controller
         $validated = $request->validated();
 
         $paths = is_array($project->images) ? $project->images : [];
+        
+        // Handle image deletions
+        if ($request->has('delete_images')) {
+            foreach ($request->delete_images as $imageToDelete) {
+                if (($key = array_search($imageToDelete, $paths)) !== false) {
+                    unset($paths[$key]);
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($imageToDelete);
+                }
+            }
+            $paths = array_values($paths); // Re-index array
+        }
+
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
                 $fileOriginalName = explode('.', $file->getClientOriginalName())[0];

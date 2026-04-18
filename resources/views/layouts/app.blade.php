@@ -10,7 +10,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Icons -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
@@ -19,20 +19,31 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
-<body class="antialiased bg-dark-950 text-dark-200 selection:bg-neon-500/20 selection:text-neon-400">
-    <div class="min-h-screen flex flex-col relative overflow-hidden">
-        <!-- Background Grid Decoration -->
-        <div class="absolute inset-0 bg-cyber-grid bg-[length:32px_32px] pointer-events-none opacity-40"></div>
-        
-        @include('partials.header')
+<body class="antialiased bg-dark-950 text-dark-200 selection:bg-neon-500/20 selection:text-neon-400 overflow-x-hidden">
+    {{-- Header --}}
+    @include('partials.header')
 
-        <main class="flex-grow relative z-10">
-            @yield('content')
-        </main>
+    {{-- Main Content --}}
+    <main class="relative z-10">
+        @yield('content')
+    </main>
 
-        @include('partials.footer')
-    </div>
+    {{-- Footer --}}
+    @include('partials.footer')
 
     @stack('scripts')
+    
+    <script>
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('bg-dark-950/80', 'backdrop-blur-md', 'border-dark-600/50');
+                navbar.classList.remove('border-transparent');
+            } else {
+                navbar.classList.remove('bg-dark-950/80', 'backdrop-blur-md', 'border-dark-600/50');
+                navbar.classList.add('border-transparent');
+            }
+        });
+    </script>
 </body>
 </html>

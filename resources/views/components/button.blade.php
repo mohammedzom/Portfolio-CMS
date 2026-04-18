@@ -6,14 +6,14 @@
 ])
 
 @php
-    $baseClasses = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-950';
+    $baseClasses = 'inline-flex items-center justify-center font-bold rounded-xl transition-all duration-300 focus:outline-none active:scale-95';
     
     $variants = [
-        'primary' => 'bg-dark-800 text-dark-100 hover:bg-dark-700 border border-dark-700 focus:ring-dark-600',
-        'secondary' => 'bg-dark-900 text-dark-400 hover:text-dark-100 border border-dark-800 hover:border-dark-700 focus:ring-dark-800',
-        'neon' => 'bg-neon-500 text-dark-950 hover:bg-neon-400 hover:shadow-neon-md focus:ring-neon-500',
-        'ghost' => 'bg-transparent text-dark-400 hover:text-neon-400 hover:bg-neon-500/5 focus:ring-neon-500/20',
-        'danger' => 'bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 focus:ring-red-500',
+        'primary' => 'bg-neon-500 text-dark-950 hover:bg-neon-400 hover:shadow-[0_0_20px_oklch(0.66_0.17_195_/_0.4)]',
+        'secondary' => 'bg-dark-800 text-dark-100 hover:bg-dark-700 border border-dark-600',
+        'neon' => 'bg-neon-500 text-dark-950 hover:bg-neon-400 hover:shadow-[0_0_30px_oklch(0.66_0.17_195_/_0.6)]',
+        'ghost' => 'bg-transparent text-dark-300 hover:bg-dark-800 hover:text-neon-400',
+        'danger' => 'bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20',
     ];
 
     $sizes = [
