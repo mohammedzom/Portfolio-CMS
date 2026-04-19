@@ -36,8 +36,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::resource('messages', MessageController::class)->names('messages');
     Route::patch('messages/{message}/restore', [MessageController::class, 'restore'])->name('messages.restore');
 
-    Route::resource('settings', SiteSettingsController::class)->only(['index', 'update'])->names('settings');
-
     Route::resource('experience', ExperienceController::class)->names('experience');
     Route::patch('experience/{experience}/restore', [ExperienceController::class, 'restore'])->name('experience.restore');
+
+    Route::get('settings', [SiteSettingsController::class, 'index'])->name('settings.index');
+    Route::put('settings', [SiteSettingsController::class, 'update'])->name('settings.update');
 });
