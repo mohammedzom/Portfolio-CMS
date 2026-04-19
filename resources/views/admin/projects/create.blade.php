@@ -1,332 +1,113 @@
-@extends('admin.layout')
-@section('title', 'Add Project')
-@section('page-title', 'Add New Project')
-@section('page-subtitle', 'Create a new portfolio project')
+@extends('layouts.admin')
+
+@section('page-title', 'Create Project')
 
 @section('content')
-    <div class="mb-6">
-        <a href="{{ route('admin.projects.index') }}"
-            class="text-dark-400 hover:text-neon-500 transition-colors text-sm flex items-center gap-2 w-fit font-medium">
-            <i class="ri-arrow-left-line"></i> Back to Projects
-        </a>
-    </div>
+<div class="max-w-4xl mx-auto">
+    <form action="{{ route('admin.projects.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
+        @csrf
 
-    <div class="glass rounded-2xl border border-dark-700 overflow-hidden shadow-xl">
-        <form action="{{ route('admin.projects.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div class="lg:col-span-2 space-y-6">
+                {{-- Basic Information --}}
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 space-y-6">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-indigo-600 border-b border-slate-100 pb-4">Basic Information</h3>
+                    
+                    <x-admin.input label="Project Title" name="title" placeholder="E-commerce Platform, Portfolio Site..." required="true" :error="$errors->first('title')" />
+                    
+                    <x-admin.input label="Custom Slug (Optional)" name="slug" placeholder="my-awesome-project" :error="$errors->first('slug')" />
 
-            {{-- ── SECTION 1: Identity ── --}}
-            <div class="p-6 md:p-8 border-b border-dark-700">
-                <div class="flex items-center gap-4 mb-6">
-                    <div
-                        class="w-12 h-12 rounded-xl bg-neon-500/10 border border-neon-500/20 flex items-center justify-center shrink-0">
-                        <i class="ri-file-text-line text-neon-500 text-xl"></i>
-                    </div>
-                    <div>
-                        <h2 class="font-display font-bold text-dark-100 text-lg tracking-wide">Identity</h2>
-                        <p class="text-dark-500 text-sm">Title, slug and category</p>
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-500 px-1">Description <span class="text-red-500">*</span></label>
+                        <textarea name="description" rows="5" required class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-indigo-500 focus:ring-indigo-500/20 placeholder:text-slate-400 resize-none {{ $errors->has('description') ? 'border-red-300' : '' }}">{{ old('description') }}</textarea>
+                        @error('description') <p class="mt-1 text-xs font-bold text-red-500 px-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {{-- Title --}}
-                    <div class="space-y-2">
-                        <label for="title" class="text-sm font-medium text-dark-300">Project Title <span
-                                class="text-neon-500">*</span></label>
-                        <input type="text" name="title" id="title" value="{{ old('title') }}"
-                            class="w-full bg-dark-900/50 rounded-xl border border-dark-700 px-4 py-3 text-dark-100 focus:border-neon-500/50 focus:ring-1 focus:ring-neon-500/50 outline-none transition-all placeholder:text-dark-600"
-                            placeholder="e.g. E-Commerce Platform" required>
-                        @error('title')
-                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- Slug --}}
-                    <div class="space-y-2">
-                        <label for="slug" class="text-sm font-medium text-dark-300">Slug</label>
-                        <input type="text" name="slug" id="slug" value="{{ old('slug') }}"
-                            class="w-full bg-dark-900/50 rounded-xl border border-dark-700 px-4 py-3 text-dark-100 focus:border-neon-500/50 focus:ring-1 focus:ring-neon-500/50 outline-none transition-all placeholder:text-dark-600"
-                            placeholder="e-commerce-platform">
-                        <p class="text-dark-500 text-xs mt-1">Leave empty to auto-generate from title</p>
-                        @error('slug')
-                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- Category --}}
-                    <div class="space-y-3 lg:col-span-2 mt-2">
-                        <label class="text-sm font-medium text-dark-300">Category <span
-                                class="text-neon-500">*</span></label>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                            @foreach (['Web' => ['ri-global-line', '🌐'], 'App' => ['ri-window-line', '🖥️'], 'Mobile' => ['ri-smartphone-line', '📱'], 'Script' => ['ri-terminal-line', '⚡'], 'Other' => ['ri-box-3-line', '📦']] as $cat => [$icon, $emoji])
-                                <label class="relative cursor-pointer group">
-                                    <input type="radio" name="category" value="{{ $cat }}" class="peer sr-only"
-                                        {{ old('category') == $cat ? 'checked' : '' }} required>
-                                    <div
-                                        class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-dark-900/50 border border-dark-700 transition-all peer-checked:border-neon-500 peer-checked:bg-neon-500/10 hover:border-dark-500 select-none">
-                                        <span class="text-2xl">{{ $emoji }}</span>
-                                        <span
-                                            class="text-xs font-display font-bold text-dark-400 peer-checked:text-neon-400 group-hover:text-dark-200 transition-colors uppercase tracking-wider">{{ $cat }}</span>
-                                    </div>
-                                </label>
-                            @endforeach
-                        </div>
-                        @error('category')
-                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- Tech Stack (Alpine Tag Input) --}}
-                    <div class="space-y-2 lg:col-span-2 mt-2" x-data="{
-                        tags: {{ old('tech_stack') ? json_encode(old('tech_stack')) : '[]' }},
-                        newTag: '',
-                        addTag() {
-                            const val = this.newTag.trim().replace(/,$/, '');
-                            if (val && !this.tags.includes(val)) {
-                                this.tags.push(val);
-                            }
-                            this.newTag = '';
-                        },
-                        removeTag(index) {
-                            this.tags.splice(index, 1);
-                        }
-                    }">
-                        <label class="text-sm font-medium text-dark-300">Tech Stack</label>
-                        <div class="min-h-[50px] w-full bg-dark-900/50 rounded-xl border border-dark-700 p-2.5 flex flex-wrap gap-2 focus-within:border-neon-500/50 focus-within:ring-1 focus-within:ring-neon-500/50 transition-all cursor-text"
-                            @click="$refs.tagInput.focus()">
+                {{-- Technical Details --}}
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 space-y-6">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-indigo-600 border-b border-slate-100 pb-4">Technical Details</h3>
+                    
+                    <div class="space-y-1.5" x-data="{ tags: {{ json_encode(old('tech_stack', [])) }}, newTag: '' }">
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-500 px-1">Tech Stack</label>
+                        <div class="flex flex-wrap gap-2 mb-3">
                             <template x-for="(tag, index) in tags" :key="index">
-                                <span
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neon-500/10 border border-neon-500/20 text-neon-400 text-xs font-semibold font-display tracking-wide">
+                                <span class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2 py-1 text-xs font-bold text-indigo-600 border border-indigo-100">
                                     <span x-text="tag"></span>
-                                    <input type="hidden" name="tech_stack[]" :value="tag">
-                                    <button type="button" @click.stop="removeTag(index)"
-                                        class="hover:text-neon-300 transition-colors ml-1">
+                                    <button type="button" @click="tags.splice(index, 1)" class="hover:text-indigo-800">
                                         <i class="ri-close-line"></i>
                                     </button>
+                                    <input type="hidden" name="tech_stack[]" :value="tag">
                                 </span>
                             </template>
-                            <input x-ref="tagInput" type="text" x-model="newTag" @keydown.enter.prevent="addTag"
-                                @keydown.comma.prevent="addTag"
-                                @keydown.backspace="if(newTag === '' && tags.length > 0) removeTag(tags.length - 1)"
-                                class="flex-1 bg-transparent border-none outline-none text-dark-100 text-sm min-w-[140px] p-1 placeholder:text-dark-600"
-                                placeholder="Type a technology and press Enter...">
                         </div>
-                        <p class="text-dark-500 text-xs mt-1">Press Enter or comma to add tags. Backspace to remove last.
-                        </p>
-                        @error('tech_stack')
-                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
-                        @enderror
+                        <div class="flex gap-2">
+                            <input type="text" x-model="newTag" @keydown.enter.prevent="if(newTag.trim()) { tags.push(newTag.trim()); newTag = ''; }" class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-indigo-500 focus:ring-indigo-500/20 placeholder:text-slate-400" placeholder="Add a technology (Press Enter)...">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <x-admin.input label="Live URL" name="live_url" type="url" placeholder="https://..." :error="$errors->first('live_url')" />
+                        <x-admin.input label="Repository URL" name="repo_url" type="url" placeholder="https://github.com/..." :error="$errors->first('repo_url')" />
                     </div>
                 </div>
             </div>
 
-            {{-- ── SECTION 2: Links & Media ── --}}
-            <div class="p-6 md:p-8 border-b border-dark-700 bg-dark-900/10">
-                <div class="flex items-center gap-4 mb-6">
-                    <div
-                        class="w-12 h-12 rounded-xl bg-neon-500/10 border border-neon-500/20 flex items-center justify-center shrink-0">
-                        <i class="ri-links-line text-neon-500 text-xl"></i>
-                    </div>
-                    <div>
-                        <h2 class="font-display font-bold text-dark-100 text-lg tracking-wide">Links & Media</h2>
-                        <p class="text-dark-500 text-sm">Live URL, repository and project images</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {{-- Live URL --}}
-                    <div class="space-y-2">
-                        <label for="live_url" class="text-sm font-medium text-dark-300">Live URL</label>
-                        <input type="url" name="live_url" id="live_url" value="{{ old('live_url') }}"
-                            class="w-full bg-dark-900/50 rounded-xl border border-dark-700 px-4 py-3 text-dark-100 focus:border-neon-500/50 focus:ring-1 focus:ring-neon-500/50 outline-none transition-all placeholder:text-dark-600"
-                            placeholder="https://example.com">
-                        @error('live_url')
-                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
-                        @enderror
+            <div class="space-y-6">
+                {{-- Configuration --}}
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 space-y-6">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-indigo-600 border-b border-slate-100 pb-4">Settings</h3>
+                    
+                    <div class="space-y-1.5">
+                        <label class="block text-xs font-black uppercase tracking-widest text-slate-500 px-1">Category <span class="text-red-500">*</span></label>
+                        <select name="category" required class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-all focus:border-indigo-500 focus:ring-indigo-500/20">
+                            @foreach(['Web', 'App', 'Mobile', 'Script', 'Other'] as $cat)
+                                <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
-                    {{-- Repo URL --}}
-                    <div class="space-y-2">
-                        <label for="repo_url" class="text-sm font-medium text-dark-300">Repository URL</label>
-                        <input type="url" name="repo_url" id="repo_url" value="{{ old('repo_url') }}"
-                            class="w-full bg-dark-900/50 rounded-xl border border-dark-700 px-4 py-3 text-dark-100 focus:border-neon-500/50 focus:ring-1 focus:ring-neon-500/50 outline-none transition-all placeholder:text-dark-600"
-                            placeholder="https://github.com/username/repo">
-                        @error('repo_url')
-                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    <x-admin.input label="Sort Order" name="sort_order" type="number" value="{{ old('sort_order', 0) }}" :error="$errors->first('sort_order')" />
 
-                    {{-- Images --}}
-                    <div class="space-y-3 lg:col-span-2 mt-2">
-                        <label for="images" class="text-sm font-medium text-dark-300">Project Images</label>
-                        <div x-data="{
-                            showPreview: false,
-                            files: [],
-                            handleFiles(e) {
-                                // Add new files to the existing ones
-                                const newFiles = Array.from(e.target.files);
-                                if (!newFiles.length) return;
-                        
-                                this.files = [...this.files, ...newFiles];
-                                this.updateInput();
-                            },
-                            removeFile(index) {
-                                this.files.splice(index, 1);
-                                this.updateInput();
-                            },
-                            updateInput() {
-                                const dt = new DataTransfer();
-                                this.files.forEach(f => dt.items.add(f));
-                                this.$refs.imagesInput.files = dt.files;
-                                this.showPreview = this.files.length > 0;
-                            }
-                        }">
-                            {{-- Dropzone styling for input --}}
-                            <div
-                                class="relative border-2 border-dashed border-dark-700 hover:border-neon-500/50 bg-dark-900/30 hover:bg-neon-500/5 rounded-2xl p-8 text-center transition-all cursor-pointer group">
-                                <input type="file" name="images[]" id="images" accept="image/*" multiple
-                                    @change="handleFiles"
-                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                    x-ref="imagesInput">
-
-                                <div
-                                    class="w-14 h-14 rounded-full bg-dark-800 border border-dark-600 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                                    <i
-                                        class="ri-upload-cloud-2-line text-2xl text-dark-400 group-hover:text-neon-500 transition-colors"></i>
-                                </div>
-                                <h3 class="text-dark-100 font-display font-bold mb-1">Click to browse or drop images</h3>
-                                <p class="text-dark-500 text-xs">Supports JPG, PNG, WebP (Max 15MB each)</p>
-                            </div>
-
-                            {{-- Previews Grid --}}
-                            <div x-show="showPreview" x-transition
-                                class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 p-5 bg-dark-900/30 rounded-xl border border-dark-700 mt-4"
-                                style="display: none;">
-                                <template x-for="(file, index) in files" :key="index">
-                                    <div
-                                        class="relative group aspect-video rounded-xl overflow-hidden border border-dark-700 bg-dark-950">
-                                        <img :src="URL.createObjectURL(file)" :alt="'Preview ' + (index + 1)"
-                                            class="w-full h-full object-cover">
-                                        <div
-                                            class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 translate-y-full group-hover:translate-y-0 transition-transform">
-                                            <p class="text-white text-xs truncate font-medium" x-text="file.name"></p>
-                                            <p class="text-dark-400 text-[10px]"
-                                                x-text="(file.size/1024/1024).toFixed(2) + ' MB'"></p>
-                                        </div>
-                                        <button type="button" @click.stop="removeFile(index)" title="Remove image"
-                                            class="absolute top-2 right-2 bg-black/50 hover:bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-20">
-                                            <i class="ri-close-line"></i>
-                                        </button>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                        @error('images.*')
-                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-            </div>
-
-            {{-- ── SECTION 3: Details ── --}}
-            <div class="p-6 md:p-8">
-                <div class="flex items-center gap-4 mb-6">
-                    <div
-                        class="w-12 h-12 rounded-xl bg-neon-500/10 border border-neon-500/20 flex items-center justify-center shrink-0">
-                        <i class="ri-align-left text-neon-500 text-xl"></i>
-                    </div>
-                    <div>
-                        <h2 class="font-display font-bold text-dark-100 text-lg tracking-wide">Details</h2>
-                        <p class="text-dark-500 text-sm">Description, ordering and visibility</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                    {{-- Description --}}
-                    <div class="space-y-2 lg:col-span-2" x-data="{ count: 0 }" x-init="count = $refs.desc.value.length">
-                        <div class="flex items-center justify-between">
-                            <label for="description" class="text-sm font-medium text-dark-300">Description <span
-                                    class="text-neon-500">*</span></label>
-                            <span class="text-xs text-dark-500 font-medium" x-text="count + ' / 800'"></span>
-                        </div>
-                        <textarea x-ref="desc" name="description" id="description" rows="5"
-                            @input="count = $event.target.value.length"
-                            class="w-full bg-dark-900/50 rounded-xl border border-dark-700 px-4 py-3 text-dark-100 focus:border-neon-500/50 focus:ring-1 focus:ring-neon-500/50 outline-none transition-all placeholder:text-dark-600 resize-y leading-relaxed"
-                            placeholder="Describe the project — what it does, who it's for, and what makes it special…" required>{{ old('description') }}</textarea>
-                        @error('description')
-                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- Sort Order --}}
-                    <div class="space-y-3 lg:col-span-2 mt-2">
-                        <label class="text-sm font-medium text-dark-300">Sort Order</label>
-                        <div class="flex flex-wrap gap-2">
-                            @for ($i = 1; $i <= $projectsCount + 1; $i++)
-                                <label class="relative cursor-pointer">
-                                    <input type="radio" name="sort_order" value="{{ $i }}"
-                                        class="peer sr-only"
-                                        {{ old('sort_order', $projectsCount + 1) == $i ? 'checked' : '' }} required>
-                                    <div
-                                        class="w-11 h-11 rounded-xl bg-dark-900/50 border border-dark-700 flex items-center justify-center text-sm font-display font-bold text-dark-400 peer-checked:border-neon-500 peer-checked:bg-neon-500/10 peer-checked:text-neon-400 hover:border-dark-500 transition-all select-none">
-                                        {{ $i == $projectsCount + 1 ? $i . '★' : $i }}
-                                    </div>
-                                </label>
-                            @endfor
-                        </div>
-                        <p class="text-dark-500 text-xs mt-1">Lower numbers appear first. Default is last (newest).</p>
-                        @error('sort_order')
-                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- Is Featured Checkbox --}}
-                    <label
-                        class="flex items-center gap-4 bg-dark-900/40 hover:bg-dark-900/60 p-5 rounded-xl border border-dark-700 hover:border-dark-600 transition-all cursor-pointer group lg:col-span-2 mt-2">
-                        <div class="relative flex items-center shrink-0">
-                            <input type="hidden" name="is_featured" value="0">
-                            <input type="checkbox" name="is_featured" value="1"
-                                {{ old('is_featured') ? 'checked' : '' }} class="peer sr-only">
-                            <div
-                                class="w-12 h-6 bg-dark-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neon-500">
-                            </div>
-                        </div>
-                        <div class="flex-1">
-                            <p
-                                class="text-sm font-bold font-display text-dark-100 group-hover:text-white transition-colors">
-                                Feature on homepage</p>
-                            <p class="text-xs text-dark-500 mt-0.5">Pins this project in the portfolio hero section</p>
-                        </div>
-                        <div class="hidden sm:block">
-                            <span
-                                class="px-3 py-1 rounded-md bg-neon-500/10 border border-neon-500/20 text-neon-500 text-[10px] font-bold tracking-widest uppercase opacity-50 peer-checked:opacity-100 transition-opacity">Featured</span>
-                        </div>
+                    <label class="flex items-center gap-3 p-4 rounded-xl border border-slate-100 bg-slate-50 cursor-pointer hover:bg-indigo-50 transition-colors">
+                        <input type="checkbox" name="is_featured" value="1" {{ old('is_featured') ? 'checked' : '' }} class="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm font-bold text-slate-700">Feature this project</span>
                     </label>
+                </div>
 
+                {{-- Images --}}
+                <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 space-y-6">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-indigo-600 border-b border-slate-100 pb-4">Project Media</h3>
+                    
+                    <div class="space-y-4" x-data="{ files: [] }">
+                        <div class="relative group cursor-pointer">
+                            <input type="file" name="images[]" multiple @change="files = Array.from($event.target.files)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                            <div class="p-6 rounded-2xl border-2 border-dashed border-slate-200 group-hover:border-indigo-400 transition-all flex flex-col items-center gap-2">
+                                <i class="ri-upload-cloud-2-line text-3xl text-slate-400 group-hover:text-indigo-500"></i>
+                                <span class="text-xs font-bold text-slate-500 group-hover:text-indigo-600">Click to upload images</span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <template x-for="file in files">
+                                <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100">
+                                    <i class="ri-image-line text-slate-400"></i>
+                                    <span class="text-xs font-medium text-slate-600 truncate" x-text="file.name"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            {{-- ── ACTIONS ── --}}
-            <div
-                class="p-6 md:p-8 bg-dark-900/30 border-t border-dark-700 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="text-dark-500 text-xs hidden sm:flex items-center gap-2">
-                    <i class="ri-information-line text-lg"></i>
-                    All fields marked with <span class="text-neon-500 text-base leading-none">*</span> are required
-                </div>
-                <div class="flex items-center gap-3 w-full sm:w-auto">
-                    <a href="{{ route('admin.projects.index') }}"
-                        class="flex-1 sm:flex-none text-center px-6 py-3 rounded-xl border border-dark-700 text-dark-300 hover:text-dark-100 hover:bg-dark-800 transition-all font-medium text-sm">
-                        Cancel
-                    </a>
-                    <button type="submit"
-                        class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-neon-500 text-dark-950 hover:bg-neon-400 transition-all font-bold font-display tracking-wide text-sm"
-                        style="box-shadow: 0 0 20px oklch(0.66 0.17 195 / 0.4);">
-                        Save Project <i class="ri-arrow-right-line"></i>
-                    </button>
-                </div>
-            </div>
-
-        </form>
-    </div>
+        <div class="flex items-center justify-end gap-4 pt-6 border-t border-slate-200">
+            <a href="{{ route('admin.projects.index') }}" class="px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors">Cancel</a>
+            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-8 py-3 text-sm font-bold text-white shadow-lg hover:bg-indigo-500 transition-all">
+                <i class="ri-save-line"></i>
+                Create Project
+            </button>
+        </div>
+    </form>
+</div>
 @endsection

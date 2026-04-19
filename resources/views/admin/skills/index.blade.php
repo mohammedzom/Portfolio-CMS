@@ -1,159 +1,94 @@
-@extends('admin.layout')
-@section('title', 'Skills')
-@section('page-title', 'Skills Management')
-@section('page-subtitle', 'Manage your technical skills and proficiencies')
+@extends('layouts.admin')
+
+@section('page-title', 'Skills')
 
 @section('content')
-    {{-- Flash Messages --}}
-    @if (session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-            class="mb-6 p-4 rounded-xl border border-green-500/30 bg-green-500/10 flex items-center gap-3">
-            <i class="ri-checkbox-circle-line text-green-400 text-xl"></i>
-            <span class="text-green-300 text-sm font-medium">{{ session('success') }}</span>
-            <button @click="show = false" class="ml-auto text-green-400 hover:text-green-300">
-                <i class="ri-close-line"></i>
-            </button>
-        </div>
-    @endif
-
-    {{-- Action Bar --}}
-    <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <form action="{{ route('admin.skills.index') }}" method="GET" class="flex items-center gap-3 w-full sm:w-auto">
-            <div class="relative flex-1 sm:flex-initial">
-                <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-dark-500"></i>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search skills..."
-                    class="w-full sm:w-64 glass rounded-xl border border-dark-700 pl-10 pr-4 py-2.5 text-sm focus:border-neon-500/40 transition-colors">
-            </div>
-            <select name="category" onchange="this.form.submit()"
-                class="glass rounded-xl border border-dark-700 px-4 py-2.5 text-sm focus:border-neon-500/40 transition-colors">
-                <option value="">All Categories</option>
-                <option value="Frontend" {{ request('category') == 'Frontend' ? 'selected' : '' }}>Frontend</option>
-                <option value="Backend" {{ request('category') == 'Backend' ? 'selected' : '' }}>Backend</option>
-                <option value="Full Stack" {{ request('category') == 'Full Stack' ? 'selected' : '' }}>Full Stack</option>
-                <option value="Design" {{ request('category') == 'Design' ? 'selected' : '' }}>Design</option>
-                <option value="DevOps" {{ request('category') == 'DevOps' ? 'selected' : '' }}>DevOps</option>
-                <option value="Other" {{ request('category') == 'Other' ? 'selected' : '' }}>Other</option>
-            </select>
-            <button type="submit" class="p-2.5 rounded-xl glass border border-dark-700 text-neon-500 hover:bg-neon-500/10 transition-all">
-                <i class="ri-filter-3-line"></i>
-            </button>
-        </form>
-
-        <div class="flex items-center gap-3">
-            <a href="{{ route('admin.skills.index', ['archived' => request('archived') ? '0' : '1']) }}"
-                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl glass border border-dark-700 text-sm font-medium hover:border-neon-500/40 transition-all">
-                <i class="ri-archive-line"></i>
-                {{ request('archived') ? 'View Active' : 'View Archived' }}
-            </a>
-            <a href="{{ route('admin.skills.create') }}"
-                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-neon text-dark-950 text-sm font-bold hover:neon-glow transition-all">
-                <i class="ri-add-line"></i> Add Skill
-            </a>
-        </div>
+<div class="sm:flex sm:items-center justify-between mb-8">
+    <div class="sm:flex-auto">
+        <h1 class="text-2xl font-black text-slate-900">Technical Skills</h1>
+        <p class="mt-2 text-sm text-slate-500">Manage your technical expertise, proficiency levels, and skill categories.</p>
     </div>
+    <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none flex gap-3">
+        <a href="?archived={{ request('archived') ? '0' : '1' }}" class="inline-flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all">
+            <i class="{{ request('archived') ? 'ri-eye-line' : 'ri-archive-line' }}"></i>
+            {{ request('archived') ? 'View Active' : 'View Archived' }}
+        </a>
+        <a href="{{ route('admin.skills.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-center text-sm font-bold text-white shadow-sm hover:bg-indigo-500 transition-all">
+            <i class="ri-add-line"></i>
+            Add Skill
+        </a>
+    </div>
+</div>
 
-    {{-- Skills Grid --}}
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        @forelse ($skills as $skill)
-            <div class="group glass rounded-2xl border border-dark-700 p-5 hover:border-neon-500/30 transition-all duration-300 hover:-translate-y-1">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        @if ($skill->icon)
-                            <div class="w-12 h-12 rounded-xl flex items-center justify-center"
-                                style="background: {{ $skill->color ?? 'oklch(0.66 0.17 195 / 0.1)' }};">
-                                <img src="{{ $skill->icon }}" alt="{{ $skill->name }}" class="w-6 h-6 object-contain">
-                            </div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @forelse($skills as $skill)
+        <div class="group bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-300">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                        @if($skill->icon)
+                            <img src="{{ $skill->icon }}" class="w-6 h-6 object-contain" alt="">
                         @else
-                            <div class="w-12 h-12 rounded-xl flex items-center justify-center gradient-neon">
-                                <i class="ri-code-s-slash-line text-dark-950 text-lg"></i>
-                            </div>
+                            <i class="ri-code-s-slash-line text-2xl"></i>
                         @endif
-                        <div>
-                            <h3 class="font-display font-semibold text-dark-100">{{ $skill->name }}</h3>
-                            <span class="text-xs px-2 py-0.5 rounded-full bg-dark-700 text-dark-400">{{ $skill->type }}</span>
-                        </div>
                     </div>
-                    @if ($skill->trashed())
-                        <span class="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-400 font-medium">Archived</span>
-                    @endif
-                </div>
-
-                {{-- Proficiency Bar --}}
-                <div class="mb-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs text-dark-400">Proficiency</span>
-                        <span class="text-xs font-semibold" 
-                            style="color: {{ $skill->proficiency >= 80 ? 'oklch(0.72 0.18 160)' : ($skill->proficiency >= 60 ? 'oklch(0.66 0.17 195)' : 'oklch(0.58 0.22 290)') }};">
-                            {{ $skill->proficiency }}% - {{ $skill->level }}
+                    <div>
+                        <h3 class="font-bold text-slate-900">{{ $skill->name }}</h3>
+                        <span class="inline-flex items-center rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-500 border border-slate-200 uppercase tracking-widest mt-1">
+                            {{ $skill->category }}
                         </span>
                     </div>
-                    <div class="h-2 rounded-full bg-dark-700 overflow-hidden">
-                        <div class="h-full rounded-full transition-all duration-500"
-                            style="width: {{ $skill->proficiency }}%; background: linear-gradient(90deg, {{ $skill->color ?? 'oklch(0.66 0.17 195)' }}, {{ $skill->color ?? 'oklch(0.60 0.15 220)' }});">
-                        </div>
-                    </div>
                 </div>
-
-                {{-- Actions --}}
-                <div class="flex items-center gap-2 pt-4 border-t border-dark-700">
-                    @if ($skill->trashed())
-                        <form action="{{ route('admin.skills.restore', $skill) }}" method="POST" class="flex-1">
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    @if($skill->trashed())
+                        <form action="{{ route('admin.skills.restore', $skill->id) }}" method="POST" class="inline">
                             @csrf
                             @method('PATCH')
-                            <button type="submit"
-                                class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-all">
-                                <i class="ri-refresh-line"></i> Restore
-                            </button>
-                        </form>
-                        <form action="{{ route('admin.skills.destroy', $skill) }}" method="POST"
-                            onsubmit="return confirm('Permanently delete this skill?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                class="p-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-all">
-                                <i class="ri-delete-bin-line"></i>
+                            <button type="submit" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Restore">
+                                <i class="ri-refresh-line"></i>
                             </button>
                         </form>
                     @else
-                        <a href="{{ route('admin.skills.edit', $skill) }}"
-                            class="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-neon-500/10 text-neon-400 hover:bg-neon-500/20 transition-all">
-                            <i class="ri-pencil-line"></i> Edit
+                        <a href="{{ route('admin.skills.edit', $skill) }}" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Edit">
+                            <i class="ri-pencil-line"></i>
                         </a>
-                        <a href="{{ route('admin.skills.show', $skill) }}"
-                            class="p-2 rounded-lg text-dark-400 hover:text-neon-400 hover:bg-neon-500/10 transition-all">
-                            <i class="ri-eye-line"></i>
-                        </a>
-                        <form action="{{ route('admin.skills.destroy', $skill) }}" method="POST"
-                            onsubmit="return confirm('Archive this skill?');">
+                        <form action="{{ route('admin.skills.destroy', $skill) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure?')">
                             @csrf
                             @method('DELETE')
-                            <button type="submit"
-                                class="p-2 rounded-lg text-dark-400 hover:text-red-400 hover:bg-red-500/10 transition-all">
-                                <i class="ri-archive-line"></i>
+                            <button type="submit" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
+                                <i class="ri-delete-bin-line"></i>
                             </button>
                         </form>
                     @endif
                 </div>
             </div>
-        @empty
-            <div class="col-span-full">
-                <div class="glass rounded-2xl border border-dark-700 p-12 text-center">
-                    <i class="ri-bar-chart-2-line text-5xl text-dark-600 mb-4"></i>
-                    <p class="text-dark-400 font-medium">No skills found</p>
-                    <p class="text-dark-600 text-sm mt-1">Start by adding your first skill</p>
-                    <a href="{{ route('admin.skills.create') }}"
-                        class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl gradient-neon text-dark-950 text-sm font-bold hover:neon-glow transition-all">
-                        <i class="ri-add-line"></i> Add Your First Skill
-                    </a>
+
+            <div class="space-y-2">
+                <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <span>Proficiency</span>
+                    <span class="text-slate-900">{{ $skill->proficiency }}%</span>
+                </div>
+                <div class="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-full bg-indigo-500 rounded-full transition-all duration-1000" style="width: {{ $skill->proficiency }}%"></div>
                 </div>
             </div>
-        @endforelse
-    </div>
-
-    {{-- Pagination --}}
-    @if ($skills->hasPages())
-        <div class="mt-8 flex justify-center">
-            {{ $skills->links() }}
         </div>
-    @endif
+    @empty
+        <div class="col-span-full py-20 text-center bg-white rounded-2xl border border-slate-200">
+            <div class="flex flex-col items-center gap-3">
+                <div class="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300">
+                    <i class="ri-medal-line text-3xl"></i>
+                </div>
+                <p class="text-sm text-slate-400 font-medium">No skills found.</p>
+                <a href="{{ route('admin.skills.create') }}" class="text-sm font-bold text-indigo-600 hover:text-indigo-700">Add your first skill</a>
+            </div>
+        </div>
+    @endforelse
+</div>
+
+@if($skills->hasPages())
+    <div class="mt-8">
+        {{ $skills->links() }}
+    </div>
+@endif
 @endsection
