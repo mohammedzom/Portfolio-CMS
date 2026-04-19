@@ -4,22 +4,34 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class Login extends Controller
 {
     public function __invoke(LoginRequest $request)
     {
         $credentials = $request->validated();
+        $user = User::where('email', $credentials['email'])->first();
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-
-            return redirect()->intended('/admin')->with('success', 'Welcome back!');
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials',
+                'data' => [
+                    'error' => 'Invalid credentials',
+                ],
+            ], 401);
         }
 
-        return back()
-            ->withErrors(['email' => 'The provided credentials do not match our records.'])
-            ->onlyInput('email');
+        $token = $user->createToken('api_token');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logged in successfully',
+            'data' => [
+                'token' => $token->plainTextToken,
+            ],
+        ]);
     }
 }

@@ -10,11 +10,12 @@ class Logout extends Controller
 {
     public function __invoke(Request $request)
     {
-        Auth::logout();
+        Auth::user()->currentAccessToken()->delete();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect('/')->with('success', 'You have been logged out.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Logged out successfully',
+            'data' => [],
+        ]);
     }
 }
