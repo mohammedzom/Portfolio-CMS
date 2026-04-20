@@ -1,27 +1,31 @@
 <?php
 
-use App\Http\Controllers\Admin\Login;
-use App\Http\Controllers\Admin\Logout;
-use App\Http\Controllers\MessageController;
+use App\Http\Controllers\Auth\Login;
+use App\Http\Controllers\Auth\Logout;
+use App\Http\Controllers\V1\MessageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/login', Login::class)->name('login');
+Route::prefix('v1')->group(function () {
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', Logout::class)->name('logout');
+    Route::post('/login', Login::class)->name('login');
 
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', Logout::class)->name('logout');
 
-    Route::prefix('messages')->controller(MessageController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::get('/{message}', 'show');
-        Route::delete('/{message}', 'destroy');
-        Route::patch('/{message}/read', 'markAsRead');
-        Route::patch('/{message}/unread', 'markAsUnread');
-        Route::patch('/{id}/restore', 'restore');
+        Route::get('/user', function (Request $request) {
+            return $request->user();
+        });
+
+        Route::prefix('messages')->controller(MessageController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/{message}', 'show');
+            Route::delete('/{message}', 'destroy');
+            Route::patch('/{message}/read', 'markAsRead');
+            Route::patch('/{message}/unread', 'markAsUnread');
+            Route::patch('/{id}/restore', 'restore');
+        });
+
     });
 
 });
