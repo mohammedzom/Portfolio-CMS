@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\V1\Auth\Login;
-use App\Http\Controllers\V1\Auth\Logout;
-use App\Http\Controllers\V1\MessageController;
+use App\Http\Controllers\Api\V1\Auth\Login;
+use App\Http\Controllers\Api\V1\Auth\Logout;
+use App\Http\Controllers\Api\V1\MessageController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

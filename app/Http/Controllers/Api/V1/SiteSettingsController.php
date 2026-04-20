@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\V1;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Requests\UpdateSiteSettingsRequest;
 use App\Models\SiteSettings;
