@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Resources\MessageResource;
+use App\Http\Resources\ProjectResource;
+use App\Http\Resources\SiteSettingstResource;
+use App\Http\Resources\SkillResource;
 use App\Models\Message;
 use App\Models\Project;
 use App\Models\SiteSettings;
@@ -15,34 +19,28 @@ class DashboardController extends Controller
         $projects = Project::orderBy('sort_order')->take(5)->get();
         $skills = Skill::orderBy('proficiency', 'desc')->take(6)->get();
         $settings = SiteSettings::firstOrFail();
-        $messages = Message::latest()->take(3)->get();
+        $messages = Message::orderBy('read_at')->take(3)->get();
 
-        $projectsCount = Project::whereNotNull('deleted_at')->count();
+        $projectsCount = Project::withoutTrashed()->count();
         $messagesCount = Message::count();
-        $messagesCountnew = Message::where('is_read', false)->count();
+        $messagesCountnew = Message::whereNull('read_at')->count();
 
-        $skillsCount = Skill::whereNotNull('deleted_at')->count();
-
-        $languages = ! empty($settings->languages)
-            ? implode(', ', $settings->languages)
-            : 'N/A';
-
-        $social_links = $settings->social_links ?? [];
+        $skillsCount = Skill::withoutTrashed()->count();
 
         return response()->json([
             'success' => true,
             'message' => 'Dashboard data fetched successfully',
             'data' => [
-                'projects' => $projects,
-                'skills' => $skills,
-                'settings' => $settings,
-                'social_links' => $social_links,
-                'languages' => $languages,
-                'projectsCount' => $projectsCount,
-                'messagesCount' => $messagesCount,
-                'messages' => $messages,
-                'messagesCountnew' => $messagesCountnew,
-                'skillsCount' => $skillsCount,
+                'projects' => ProjectResource::collection($projects),
+                'skills' => SkillResource::collection($skills),
+                'messages' => MessageResource::collection($messages),
+                'settings' => SiteSettingstResource::make($settings),
+                'projects_count' => $projectsCount,
+                'messages_count' => [
+                    'total' => $messagesCount,
+                    'unread' => $messagesCountnew,
+                ],
+                'skills_count' => $skillsCount,
             ],
         ]);
     }
