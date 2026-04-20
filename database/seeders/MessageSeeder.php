@@ -9,7 +9,23 @@ class MessageSeeder extends Seeder
 {
     public function run(): void
     {
-        Message::factory()->count(8)->read()->create();
-        Message::factory()->count(5)->unread()->create();
+        foreach (range(1, 8) as $i) {
+            Message::create([
+                'name' => fake()->name(),
+                'email' => fake()->email(),
+                'subject' => fake()->sentence(),
+                'body' => fake()->paragraph(3),
+                'read_at' => now(),
+            ]);
+        }
+
+        foreach (range(1, 5) as $i) {
+            Message::create([
+                'name' => fake()->name(),
+                'email' => fake()->email(),
+                'subject' => fake()->sentence(),
+                'body' => fake()->paragraph(3),
+            ]);
+        }
     }
 }

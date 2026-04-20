@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Experiences\StoreExperienceRequest;
 use App\Http\Requests\Experiences\UpdateExperienceRequest;
+use App\Http\Resources\ExperienceResource;
 use App\Models\Experience;
 use Illuminate\Http\Request;
 
@@ -25,44 +26,77 @@ class ExperienceController extends Controller
 
         $experiences = $query->orderBy('start_date', 'desc')->paginate(10);
 
-        return view('admin.experiences.index', compact('experiences'));
-    }
-
-    public function create()
-    {
-        return view('admin.experiences.create');
+        return response()->json([
+            'success' => true,
+            'message' => 'Experiences retrieved successfully',
+            'data' => ExperienceResource::collection($experiences),
+            'meta' => [
+                'current_page' => $experiences->currentPage(),
+                'last_page' => $experiences->lastPage(),
+                'total' => $experiences->total(),
+                'per_page' => $experiences->perPage(),
+            ],
+        ]);
     }
 
     public function store(StoreExperienceRequest $request)
     {
-        Experience::create($request->validated());
+        $experience = Experience::create($request->validated());
 
-        return redirect()->route('admin.experience.index')->with('success', 'Experience created successfully.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Experience created successfully.',
+            'data' => new ExperienceResource($experience),
+        ]);
     }
 
     public function show(Experience $experience)
     {
-        return view('admin.experiences.show', compact('experience'));
+        return response()->json([
+            'success' => true,
+            'message' => 'Experience retrieved successfully.',
+            'data' => new ExperienceResource($experience),
+        ]);
     }
 
     public function update(UpdateExperienceRequest $request, Experience $experience)
     {
         $experience->update($request->validated());
 
-        return redirect()->route('admin.experience.index')->with('success', 'Experience updated successfully.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Experience updated successfully.',
+            'data' => new ExperienceResource($experience),
+        ]);
     }
 
     public function destroy(Experience $experience)
     {
         $experience->delete();
 
-        return redirect()->route('admin.experience.index')->with('success', 'Experience deleted successfully.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Experience deleted successfully.',
+            'data' => [],
+        ]);
     }
 
-    public function restore(Experience $experience)
+    public function restore(string $id)
     {
+        $experience = Experience::withTrashed()->findOrFail($id);
+        if (! $experience) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Experience not found.',
+                'data' => [],
+            ]);
+        }
         $experience->restore();
 
-        return redirect()->route('admin.experience.index')->with('success', 'Experience restored successfully.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Experience restored successfully.',
+            'data' => new ExperienceResource($experience),
+        ]);
     }
 }

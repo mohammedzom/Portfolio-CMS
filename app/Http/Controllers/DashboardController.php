@@ -28,6 +28,21 @@ class DashboardController extends Controller
 
         $social_links = $settings->social_links ?? [];
 
-        return view('admin.dashboard', compact('projects', 'skills', 'settings', 'social_links', 'languages', 'projectsCount', 'messagesCount', 'messages', 'messagesCountnew', 'skillsCount'));
+        return response()->json([
+            'success' => true,
+            'message' => 'Dashboard data fetched successfully',
+            'data' => [
+                'projects' => $projects,
+                'skills' => $skills,
+                'settings' => $settings,
+                'social_links' => $social_links,
+                'languages' => $languages,
+                'projectsCount' => $projectsCount,
+                'messagesCount' => $messagesCount,
+                'messages' => $messages,
+                'messagesCountnew' => $messagesCountnew,
+                'skillsCount' => $skillsCount,
+            ],
+        ]);
     }
 }

@@ -14,12 +14,11 @@ return new class extends Migration
             $table->string('email');
             $table->string('subject')->nullable();
             $table->text('body');
-            $table->boolean('is_read')->default(false);
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index('is_read');
+            $table->index('read_at');
             $table->index('created_at');
         });
     }
