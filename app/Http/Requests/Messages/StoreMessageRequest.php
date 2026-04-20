@@ -12,7 +12,7 @@ class StoreMessageRequest extends FormRequest
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'subject' => 'required|string|max:255',
-            'message' => 'required|string',
+            'body' => 'required|string',
         ];
     }
 
@@ -32,8 +32,8 @@ class StoreMessageRequest extends FormRequest
             'subject.required' => 'Subject is required.',
             'subject.max' => 'Subject cannot be longer than 255 characters.',
 
-            // message
-            'message.required' => 'Message is required.',
+            // body
+            'body.required' => 'Body is required.',
         ];
     }
 }

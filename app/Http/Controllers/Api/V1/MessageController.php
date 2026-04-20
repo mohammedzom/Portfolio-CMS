@@ -39,11 +39,19 @@ class MessageController extends Controller
                 'total' => $messages->total(),
                 'per_page' => $messages->perPage(),
             ],
+            'paginationLinks' => [
+                'self' => $messages->url($messages->currentPage()),
+                'first' => $messages->url(1),
+                'last' => $messages->url($messages->lastPage()),
+                'prev' => $messages->previousPageUrl(),
+                'next' => $messages->nextPageUrl(),
+            ],
         ]);
     }
 
-    public function show(Message $message)
+    public function show(string $id)
     {
+        $message = Message::withoutTrashed()->findOrFail($id);
         $message->update(['read_at' => now()]);
 
         return response()->json([
@@ -53,31 +61,27 @@ class MessageController extends Controller
         ]);
     }
 
-    public function destroy(Message $message)
+    public function destroy(string $id)
     {
+        $message = Message::withoutTrashed()->findOrFail($id);
         $message->delete();
 
         return response()->json([
             'success' => true,
             'message' => 'Message deleted successfully',
+            'data' => [],
         ]);
     }
 
     public function restore(string $id)
     {
         $message = Message::onlyTrashed()->findOrFail($id);
-        if (! $message) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Message not found.',
-                'data' => [],
-            ]);
-        }
         $message->restore();
 
         return response()->json([
             'success' => true,
             'message' => 'Message restored successfully',
+            'data' => new MessageResource($message),
         ]);
     }
 
@@ -117,6 +121,18 @@ class MessageController extends Controller
         ]);
     }
 
+    public function forceDelete(string $id)
+    {
+        $message = Message::onlyTrashed()->findOrFail($id);
+        $message->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Message permanently deleted successfully',
+            'data' => [],
+        ]);
+    }
+
     public function store(StoreMessageRequest $request)
     {
         $message = Message::create($request->validated());
@@ -124,7 +140,7 @@ class MessageController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Thank you for your message. I will get back to you as soon as possible.',
-            'data' => new MessageResource($message),
+            'data' => [],
         ], 201);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Services\StoreServiceRequest;
 use App\Http\Requests\Services\UpdateServiceRequest;
+use App\Http\Resources\ServiceResource;
 use App\Models\Service;
 
 class ServiceController extends Controller
@@ -21,51 +22,65 @@ class ServiceController extends Controller
             $services->where('title', 'like', '%'.request('search').'%');
             $services->orWhere('description', 'like', '%'.request('search').'%');
         }
-        $services = $services->orderBy('sort_order')->paginate(10);
+        $services = $services->orderBy('sort_order')->get();
 
-        return view('admin.services.index', compact('services'));
-    }
-
-    public function create()
-    {
-        return view('admin.services.create');
+        return response()->json([
+            'success' => true,
+            'message' => 'Services fetched successfully',
+            'data' => ServiceResource::collection($services),
+        ]);
     }
 
     public function store(StoreServiceRequest $request)
     {
-        Service::create($request->validated());
+        $service = Service::create($request->validated());
 
-        return redirect()->route('admin.services.index')->with('success', 'Service created successfully');
+        return response()->json([
+            'success' => true,
+            'message' => 'Service created successfully',
+            'data' => new ServiceResource($service),
+        ]);
     }
 
     public function show(Service $service)
     {
-        return view('admin.services.show', compact('service'));
-    }
-
-    public function edit(Service $service)
-    {
-        return view('admin.services.edit', compact('service'));
+        return response()->json([
+            'success' => true,
+            'message' => 'Service fetched successfully',
+            'data' => new ServiceResource($service),
+        ]);
     }
 
     public function update(UpdateServiceRequest $request, Service $service)
     {
         $service->update($request->validated());
 
-        return redirect()->route('admin.services.index')->with('success', 'Service updated successfully');
+        return response()->json([
+            'success' => true,
+            'message' => 'Service updated successfully',
+            'data' => new ServiceResource($service),
+        ]);
     }
 
     public function destroy(Service $service)
     {
         $service->delete();
 
-        return redirect()->route('admin.services.index')->with('success', 'Service deleted successfully');
+        return response()->json([
+            'success' => true,
+            'message' => 'Service Archived successfully',
+            'data' => [],
+        ]);
     }
 
     public function restore(Service $service)
     {
         $service->restore();
 
-        return redirect()->route('admin.services.index')->with('success', 'Service restored successfully');
+        return response()->json([
+            'success' => true,
+            'message' => 'Service restored successfully',
+            'data' => new ServiceResource($service),
+        ]);
     }
 }

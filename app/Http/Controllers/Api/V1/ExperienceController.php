@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Experiences\StoreExperienceRequest;
 use App\Http\Requests\Experiences\UpdateExperienceRequest;
 use App\Http\Resources\ExperienceResource;
@@ -24,18 +25,12 @@ class ExperienceController extends Controller
                 ->orWhere('description', 'like', '%'.$request->search.'%');
         }
 
-        $experiences = $query->orderBy('start_date', 'desc')->paginate(10);
+        $experiences = $query->orderBy('start_date', 'desc')->get();
 
         return response()->json([
             'success' => true,
             'message' => 'Experiences retrieved successfully',
             'data' => ExperienceResource::collection($experiences),
-            'meta' => [
-                'current_page' => $experiences->currentPage(),
-                'last_page' => $experiences->lastPage(),
-                'total' => $experiences->total(),
-                'per_page' => $experiences->perPage(),
-            ],
         ]);
     }
 
@@ -50,8 +45,10 @@ class ExperienceController extends Controller
         ]);
     }
 
-    public function show(Experience $experience)
+    public function show(string $id)
     {
+        $experience = Experience::findOrFail($id);
+
         return response()->json([
             'success' => true,
             'message' => 'Experience retrieved successfully.',
@@ -59,8 +56,9 @@ class ExperienceController extends Controller
         ]);
     }
 
-    public function update(UpdateExperienceRequest $request, Experience $experience)
+    public function update(UpdateExperienceRequest $request, string $id)
     {
+        $experience = Experience::withoutTrashed()->findOrFail($id);
         $experience->update($request->validated());
 
         return response()->json([
@@ -70,33 +68,39 @@ class ExperienceController extends Controller
         ]);
     }
 
-    public function destroy(Experience $experience)
+    public function destroy(string $id)
     {
+        $experience = Experience::withoutTrashed()->findOrFail($id);
         $experience->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Experience deleted successfully.',
+            'message' => 'Experience Archived successfully.',
             'data' => [],
         ]);
     }
 
     public function restore(string $id)
     {
-        $experience = Experience::withTrashed()->findOrFail($id);
-        if (! $experience) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Experience not found.',
-                'data' => [],
-            ]);
-        }
+        $experience = Experience::onlyTrashed()->findOrFail($id);
         $experience->restore();
 
         return response()->json([
             'success' => true,
             'message' => 'Experience restored successfully.',
             'data' => new ExperienceResource($experience),
+        ]);
+    }
+
+    public function forceDelete(string $id)
+    {
+        $experience = Experience::onlyTrashed()->findOrFail($id);
+        $experience->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Experience deleted successfully.',
+            'data' => [],
         ]);
     }
 }
