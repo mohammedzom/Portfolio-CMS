@@ -2,6 +2,12 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Controllers\Api\Controller;
+use App\Http\Resources\ExperienceResource;
+use App\Http\Resources\ProjectResource;
+use App\Http\Resources\ServiceResource;
+use App\Http\Resources\SiteSettingstResource;
+use App\Http\Resources\SkillResource;
 use App\Models\Experience;
 use App\Models\Project;
 use App\Models\Service;
@@ -18,12 +24,12 @@ class PortfolioController extends Controller
         $experiences = Experience::orderBy('start_date', 'desc')->get();
         $settings = SiteSettings::firstOrFail();
 
-        $languages = ! empty($settings->languages)
-            ? implode(', ', $settings->languages)
-            : 'N/A';
-
-        $social_links = $settings->social_links ?? [];
-
-        return view('app', compact('projects', 'skills', 'services', 'settings', 'social_links', 'languages', 'experiences'));
+        return response()->json([
+            'projects' => ProjectResource::collection($projects),
+            'skills' => SkillResource::collection($skills),
+            'services' => ServiceResource::collection($services),
+            'settings' => new SiteSettingstResource($settings),
+            'experiences' => ExperienceResource::collection($experiences),
+        ]);
     }
 }

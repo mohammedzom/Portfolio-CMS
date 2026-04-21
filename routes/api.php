@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Auth\Logout;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\ExperienceController;
 use App\Http\Controllers\Api\V1\MessageController;
+use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\ServiceController;
 use App\Http\Controllers\Api\V1\SkillController;
@@ -14,6 +15,9 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
 
     Route::post('/login', Login::class)->name('login');
+
+    Route::post('/message', [MessageController::class, 'store']);
+    Route::get('/portfolio', [PortfolioController::class, 'index']);
 
     // Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', Logout::class)->name('logout');
@@ -25,7 +29,6 @@ Route::prefix('v1')->group(function () {
     Route::prefix('messages')->controller(MessageController::class)->group(function () {
         Route::get('/', 'index');
         Route::get('/{id}', 'show');
-        Route::post('/', 'store');
         Route::patch('/{id}/read', 'markAsRead');
         Route::patch('/{id}/unread', 'markAsUnread');
         Route::delete('/{id}', 'destroy');
