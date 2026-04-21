@@ -7,80 +7,94 @@ use App\Http\Requests\Services\StoreServiceRequest;
 use App\Http\Requests\Services\UpdateServiceRequest;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
+use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $services = Service::query();
-        if (request()->has('archived') && request('archived')) {
+        if ($request->has('archived') && $request->archived) {
             $services->onlyTrashed();
         } else {
             $services->withoutTrashed();
         }
-        if (request('search')) {
-            $services->where('title', 'like', '%'.request('search').'%');
-            $services->orWhere('description', 'like', '%'.request('search').'%');
+        if ($request->filled('search')) {
+            $services->where('title', 'like', '%'.$request->search.'%');
+            $services->orWhere('description', 'like', '%'.$request->search.'%');
         }
         $services = $services->orderBy('sort_order')->get();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Services fetched successfully',
-            'data' => ServiceResource::collection($services),
-        ]);
+        return $this->successResponse(
+            ServiceResource::collection($services),
+            'Services fetched successfully.'
+        );
     }
 
     public function store(StoreServiceRequest $request)
     {
         $service = Service::create($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Service created successfully',
-            'data' => new ServiceResource($service),
-        ]);
+        return $this->successResponse(
+            new ServiceResource($service),
+            'Service created successfully.',
+            201
+        );
     }
 
-    public function show(Service $service)
+    public function show(string $id)
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Service fetched successfully',
-            'data' => new ServiceResource($service),
-        ]);
+        $service = Service::withoutTrashed()->findOrFail($id);
+
+        return $this->successResponse(
+            new ServiceResource($service),
+            'Service fetched successfully.'
+        );
     }
 
-    public function update(UpdateServiceRequest $request, Service $service)
+    public function update(UpdateServiceRequest $request, string $id)
     {
+        $service = Service::withoutTrashed()->findOrFail($id);
         $service->update($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Service updated successfully',
-            'data' => new ServiceResource($service),
-        ]);
+        return $this->successResponse(
+            new ServiceResource($service),
+            'Service updated successfully.'
+        );
     }
 
-    public function destroy(Service $service)
+    public function destroy(string $id)
     {
+        $service = Service::withoutTrashed()->findOrFail($id);
         $service->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Service Archived successfully',
-            'data' => [],
-        ]);
+        return $this->successResponse(
+            [],
+            'Service Archived successfully.',
+            204
+        );
     }
 
-    public function restore(Service $service)
+    public function restore(string $id)
     {
+        $service = Service::onlyTrashed()->findOrFail($id);
         $service->restore();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Service restored successfully',
-            'data' => new ServiceResource($service),
-        ]);
+        return $this->successResponse(
+            new ServiceResource($service),
+            'Service restored successfully.'
+        );
+    }
+
+    public function forceDelete(string $id)
+    {
+        $service = Service::withTrashed()->findOrFail($id);
+        $service->forceDelete();
+
+        return $this->successResponse(
+            [],
+            'Service force deleted successfully.',
+            204
+        );
     }
 }

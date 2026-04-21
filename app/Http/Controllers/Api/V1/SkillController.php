@@ -5,72 +5,101 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Skills\StoreSkillRequest;
 use App\Http\Requests\Skills\UpdateSkillRequest;
+use App\Http\Resources\SkillResource;
 use App\Models\Skill;
+use Illuminate\Http\Request;
 
 class SkillController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $query = Skill::query();
 
-        if (request()->has('archived') && request()->archived) {
+        if ($request->has('archived') && $request->archived) {
             $query->onlyTrashed();
         } else {
             $query->withoutTrashed();
         }
 
-        if (request()->filled('category')) {
-            $query->where('category', request()->category);
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
         }
-        if (request()->filled('search')) {
-            $query->where('name', 'like', '%'.request()->search.'%');
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%'.$request->search.'%');
         }
 
         $skills = $query->orderBy('proficiency', 'desc')->paginate(10);
 
-        return view('admin.skills.index', compact('skills'));
-    }
-
-    public function create()
-    {
-        return view('admin.skills.create');
+        return $this->successResponse(
+            SkillResource::collection($skills),
+            'Skills retreived successfully.'
+        );
     }
 
     public function store(StoreSkillRequest $request)
     {
-        Skill::create($request->validated());
+        $skill = Skill::create($request->validated());
 
-        return redirect()->route('admin.skills.index')->with('success', 'Skill created successfully');
+        return $this->successResponse(
+            new SkillResource($skill),
+            'Skill created successfully.',
+            201
+        );
     }
 
-    public function show(Skill $skill)
+    public function show(string $id)
     {
-        return view('admin.skills.show', compact('skill'));
+        $skill = Skill::withoutTrashed()->findOrFail($id);
+
+        return $this->successResponse(
+            new SkillResource($skill),
+            'Skill fetched successfully.'
+        );
     }
 
-    public function edit(Skill $skill)
+    public function update(UpdateSkillRequest $request, string $id)
     {
-        return view('admin.skills.edit', compact('skill'));
-    }
-
-    public function update(UpdateSkillRequest $request, Skill $skill)
-    {
+        $skill = Skill::withoutTrashed()->findOrFail($id);
         $skill->update($request->validated());
 
-        return redirect()->route('admin.skills.index')->with('success', 'Skill updated successfully');
+        return $this->successResponse(
+            new SkillResource($skill),
+            'Skill updated successfully.'
+        );
     }
 
-    public function destroy(Skill $skill)
+    public function destroy(string $id)
     {
+        $skill = Skill::withoutTrashed()->findOrFail($id);
         $skill->delete();
 
-        return redirect()->route('admin.skills.index')->with('success', 'Skill deleted successfully');
+        return $this->successResponse(
+            [],
+            'Skill deleted successfully.',
+            204
+        );
     }
 
-    public function restore(Skill $skill)
+    public function restore(string $id)
     {
+        $skill = Skill::onlyTrashed()->findOrFail($id);
         $skill->restore();
 
-        return redirect()->route('admin.skills.index')->with('success', 'Skill restored successfully');
+        return $this->successResponse(
+            new SkillResource($skill),
+            'Skill restored successfully.'
+        );
+    }
+
+    public function forceDelete(string $id)
+    {
+        $skill = Skill::withTrashed()->findOrFail($id);
+        $skill->forceDelete();
+
+        return $this->successResponse(
+            [],
+            'Skill force deleted successfully.',
+            204
+        );
     }
 }

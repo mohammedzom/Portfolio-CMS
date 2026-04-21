@@ -19,17 +19,21 @@ class PortfolioController extends Controller
     public function index()
     {
         $projects = Project::orderBy('sort_order')->get();
-        $skills = Skill::orderBy('proficiency', 'desc')->get();
+        $technical_skills = Skill::where('type', 'technical')->orderBy('proficiency', 'desc')->get();
+        $tool_skills = Skill::where('type', 'tool')->get();
         $services = Service::orderBy('sort_order')->get();
         $experiences = Experience::orderBy('start_date', 'desc')->get();
         $settings = SiteSettings::firstOrFail();
 
-        return response()->json([
+        return $this->successResponse([
+            'skills' => [
+                'technical' => SkillResource::collection($technical_skills),
+                'tools' => SkillResource::collection($tool_skills),
+            ],
             'projects' => ProjectResource::collection($projects),
-            'skills' => SkillResource::collection($skills),
             'services' => ServiceResource::collection($services),
-            'settings' => new SiteSettingstResource($settings),
+            'information' => new SiteSettingstResource($settings),
             'experiences' => ExperienceResource::collection($experiences),
-        ]);
+        ], 'Portfolio Data Retreived Successfully.');
     }
 }

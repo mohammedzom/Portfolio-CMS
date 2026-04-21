@@ -15,23 +15,22 @@ class Login extends Controller
         $user = User::where('email', $credentials['email'])->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid credentials',
-                'data' => [
+            return $this->errorResponse(
+                'Invalid credentials',
+                401,
+                [
                     'error' => 'Invalid credentials',
-                ],
-            ], 401);
+                ]
+            );
         }
 
         $token = $user->createToken('api_token');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Logged in successfully',
-            'data' => [
+        return $this->successResponse(
+            [
                 'token' => $token->plainTextToken,
             ],
-        ]);
+            'Logged in successfully.'
+        );
     }
 }

@@ -19,9 +19,9 @@ class ExperienceResource extends JsonResource
             'job_title' => $this->job_title,
             'company' => $this->company,
             'description' => $this->description,
-            'start_date' => $this->start_date,
-            'end_date' => $this->end_date,
-            'is_current' => $this->is_current,
+            'period' => $this->end_date
+                ? $this->start_date.' — '.$this->end_date
+                : $this->start_date.' — Present',
             'deleted_at_human' => $this->deleted_at?->diffForHumans(),
             'deleted_at' => $this->deleted_at,
             'created_at' => $this->created_at,

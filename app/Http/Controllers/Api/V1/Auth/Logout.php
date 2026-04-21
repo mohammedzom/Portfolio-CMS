@@ -12,10 +12,9 @@ class Logout extends Controller
     {
         Auth::user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Logged out successfully',
-            'data' => [],
-        ]);
+        return $this->successResponse(
+            [],
+            'Logged out successfully.'
+        );
     }
 }

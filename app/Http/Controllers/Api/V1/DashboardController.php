@@ -17,7 +17,8 @@ class DashboardController extends Controller
     public function index()
     {
         $projects = Project::orderBy('sort_order')->take(5)->get();
-        $skills = Skill::orderBy('proficiency', 'desc')->take(6)->get();
+        $technical_skills = Skill::where('type', 'technical')->orderBy('proficiency', 'desc')->take(6)->get();
+        $tool_skills = Skill::where('type', 'tool')->take(6)->get();
         $settings = SiteSettings::firstOrFail();
         $messages = Message::orderBy('read_at')->take(3)->get();
 
@@ -27,21 +28,20 @@ class DashboardController extends Controller
 
         $skillsCount = Skill::withoutTrashed()->count();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dashboard data fetched successfully',
-            'data' => [
-                'projects' => ProjectResource::collection($projects),
-                'skills' => SkillResource::collection($skills),
-                'messages' => MessageResource::collection($messages),
-                'settings' => SiteSettingstResource::make($settings),
-                'projects_count' => $projectsCount,
-                'messages_count' => [
-                    'total' => $messagesCount,
-                    'unread' => $messagesCountnew,
-                ],
-                'skills_count' => $skillsCount,
+        return $this->successResponse([
+            'projects' => ProjectResource::collection($projects),
+            'skills' => [
+                'technical' => SkillResource::collection($technical_skills),
+                'tool' => SkillResource::collection($tool_skills),
             ],
-        ]);
+            'messages' => MessageResource::collection($messages),
+            'information' => SiteSettingstResource::make($settings),
+            'projects_count' => $projectsCount,
+            'messages_count' => [
+                'total' => $messagesCount,
+                'unread' => $messagesCountnew,
+            ],
+            'skills_count' => $skillsCount,
+        ], 'Dashboard Data Retrieved Successfully');
     }
 }
