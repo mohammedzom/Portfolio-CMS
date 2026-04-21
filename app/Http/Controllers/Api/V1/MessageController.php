@@ -65,8 +65,7 @@ class MessageController extends Controller
 
         return $this->successResponse(
             [],
-            'Message deleted successfully.',
-            204
+            'Message Archived successfully.'
         );
     }
 
@@ -89,7 +88,8 @@ class MessageController extends Controller
                 'Message is already read.',
             );
         }
-        $message->update(['read_at' => now()]);
+        $message->read_at = now();
+        $message->save();
 
         return $this->successResponse(
             [
@@ -102,8 +102,14 @@ class MessageController extends Controller
     public function markAsUnread(string $id)
     {
         $message = Message::findOrFail($id);
+        if (! $message->read_at) {
+            return $this->errorResponse(
+                'Message is already unread.'
+            );
+        }
 
-        $message->update(['read_at' => null]);
+        $message->read_at = null;
+        $message->save();
 
         return $this->successResponse(
             [],
@@ -113,12 +119,12 @@ class MessageController extends Controller
 
     public function forceDelete(string $id)
     {
-        $message = Message::onlyTrashed()->findOrFail($id);
+        $message = Message::findOrFail($id);
         $message->forceDelete();
 
         return $this->successResponse(
             [],
-            'Message permanently deleted successfully.'
+            'Message deleted successfully.'
         );
     }
 

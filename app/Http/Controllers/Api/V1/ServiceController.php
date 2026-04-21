@@ -70,8 +70,7 @@ class ServiceController extends Controller
 
         return $this->successResponse(
             [],
-            'Service Archived successfully.',
-            204
+            'Service Archived successfully.'
         );
     }
 
@@ -88,13 +87,12 @@ class ServiceController extends Controller
 
     public function forceDelete(string $id)
     {
-        $service = Service::withTrashed()->findOrFail($id);
+        $service = Service::findOrFail($id);
         $service->forceDelete();
 
         return $this->successResponse(
             [],
-            'Service force deleted successfully.',
-            204
+            'Service deleted successfully.'
         );
     }
 }

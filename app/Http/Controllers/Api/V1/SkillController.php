@@ -75,8 +75,7 @@ class SkillController extends Controller
 
         return $this->successResponse(
             [],
-            'Skill deleted successfully.',
-            204
+            'Skill Archived successfully.'
         );
     }
 
@@ -93,13 +92,12 @@ class SkillController extends Controller
 
     public function forceDelete(string $id)
     {
-        $skill = Skill::withTrashed()->findOrFail($id);
+        $skill = Skill::findOrFail($id);
         $skill->forceDelete();
 
         return $this->successResponse(
             [],
-            'Skill force deleted successfully.',
-            204
+            'Skill deleted successfully.'
         );
     }
 }

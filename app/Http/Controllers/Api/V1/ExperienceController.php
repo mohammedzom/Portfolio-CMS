@@ -72,8 +72,7 @@ class ExperienceController extends Controller
 
         return $this->successResponse(
             [],
-            'Experience Archived successfully.',
-            204
+            'Experience Archived successfully.'
         );
     }
 
@@ -95,8 +94,7 @@ class ExperienceController extends Controller
 
         return $this->successResponse(
             [],
-            'Experience deleted successfully.',
-            204
+            'Experience deleted successfully.'
         );
     }
 }

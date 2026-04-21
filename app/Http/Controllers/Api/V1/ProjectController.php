@@ -124,8 +124,7 @@ class ProjectController extends Controller
 
         return $this->successResponse(
             [],
-            'Project deleted successfully.',
-            204
+            'Project Archived successfully.'
         );
     }
 
@@ -142,13 +141,12 @@ class ProjectController extends Controller
 
     public function forceDelete(string $id)
     {
-        $project = Project::withTrashed()->findOrFail($id);
+        $project = Project::findOrFail($id);
         $project->forceDelete();
 
         return $this->successResponse(
             [],
-            'Project force deleted successfully.',
-            204
+            'Project deleted successfully.'
         );
     }
 }
