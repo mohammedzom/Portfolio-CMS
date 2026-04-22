@@ -14,7 +14,6 @@ class SkillResource extends JsonResource
             'name' => $this->name,
             'proficiency' => $this->proficiency,
             'icon' => $this->icon,
-            'color' => $this->color,
             'type' => $this->type,
             'sort_order' => $this->sort_order,
             'deleted_at_human' => $this->deleted_at?->diffForHumans(),

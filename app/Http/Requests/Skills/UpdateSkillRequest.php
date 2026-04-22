@@ -17,7 +17,6 @@ class UpdateSkillRequest extends FormRequest
                 Rule::unique('skills', 'name')->ignore($this->skill->id),
             ],
             'icon' => 'nullable|url',
-            'color' => 'nullable|string|max:20',
             'proficiency' => 'required|integer|min:0|max:100',
             'type' => 'required|string',
         ];
@@ -34,10 +33,6 @@ class UpdateSkillRequest extends FormRequest
 
             // Icon
             'icon.url' => 'Icon must be a valid URL.',
-
-            // Color
-            'color.string' => 'Color must be a string.',
-            'color.max' => 'Color cannot be longer than 20 characters.',
 
             // Proficiency
             'proficiency.required' => 'Proficiency is required.',

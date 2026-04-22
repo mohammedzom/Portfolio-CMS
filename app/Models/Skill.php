@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable('name', 'icon', 'color', 'proficiency', 'type', 'sort_order')]
+#[Fillable('name', 'icon', 'proficiency', 'type', 'sort_order')]
 class Skill extends Model
 {
     use HasFactory, SoftDeletes;

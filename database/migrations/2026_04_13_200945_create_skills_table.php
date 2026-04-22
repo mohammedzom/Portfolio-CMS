@@ -12,7 +12,6 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->string('icon')->nullable();
-            $table->string('color', 20)->nullable();
             $table->unsignedTinyInteger('proficiency')->default(80);
             $table->string('type')->nullable();
             $table->timestamps();
