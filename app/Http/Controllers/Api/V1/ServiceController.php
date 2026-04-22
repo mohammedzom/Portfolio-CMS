@@ -55,7 +55,14 @@ class ServiceController extends Controller
     public function update(UpdateServiceRequest $request, string $id)
     {
         $service = Service::withoutTrashed()->findOrFail($id);
-        $service->update($request->validated());
+
+        $service->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'icon' => $request->icon,
+            'sort_order' => $request->sort_order,
+            'tags' => $request->tags,
+        ]);
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -87,7 +94,7 @@ class ServiceController extends Controller
 
     public function forceDelete(string $id)
     {
-        $service = Service::findOrFail($id);
+        $service = Service::withTrashed()->findOrFail($id);
         $service->forceDelete();
 
         return $this->successResponse(

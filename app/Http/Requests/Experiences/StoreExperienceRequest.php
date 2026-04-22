@@ -12,8 +12,8 @@ class StoreExperienceRequest extends FormRequest
             'job_title' => 'required|string|max:255',
             'company' => 'required|string|max:255',
             'description' => 'required|string|max:255',
-            'start_date' => 'required|date|before_or_equal:end_date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'start_date' => 'required|integer|max:'.(int) date('Y'),
+            'end_date' => 'required_if:is_current,false,0|nullable|integer|after:start_date',
             'is_current' => 'required|boolean',
         ];
     }
@@ -35,14 +35,14 @@ class StoreExperienceRequest extends FormRequest
 
             // start date
             'start_date.required' => 'Start date is required.',
-            'start_date.date' => 'Start date must be a valid date.',
+            'start_date.integer' => 'Start date must be a valid year.',
 
             // end date
-            'end_date.date' => 'End date must be a valid date.',
-            'end_date.after_or_equal' => 'End date must be after or equal to start date.',
+            'end_date.required_if' => 'End date is required if is current is false.',
+            'end_date.integer' => 'End date must be a valid year.',
+            'end_date.after' => 'End date must be after start date.',
 
             // is current
-            'is_current.required' => 'Is current is required.',
             'is_current.boolean' => 'Is current must be a boolean.',
         ];
     }

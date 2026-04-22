@@ -13,12 +13,13 @@ abstract class Controller
         ], $code);
     }
 
-    protected function errorResponse($message = 'Error', $code = 400, $error = null)
+    protected function errorResponse($message = 'Error', $code = 400, $error = null, $errorCode = null)
     {
         $response = [
             'success' => false,
             'message' => $message,
             'data' => [],
+            'error_code' => $errorCode,
         ];
 
         if ($error && ! app()->environment('production')) {

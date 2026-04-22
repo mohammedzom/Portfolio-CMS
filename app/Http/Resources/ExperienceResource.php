@@ -7,11 +7,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ExperienceResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
@@ -19,9 +14,7 @@ class ExperienceResource extends JsonResource
             'job_title' => $this->job_title,
             'company' => $this->company,
             'description' => $this->description,
-            'period' => $this->end_date
-                ? $this->start_date.' — '.$this->end_date
-                : $this->start_date.' — Present',
+            'period' => $this->start_date.' - '.($this->is_current ? 'Present' : $this->end_date),
             'deleted_at_human' => $this->deleted_at?->diffForHumans(),
             'deleted_at' => $this->deleted_at,
             'created_at' => $this->created_at,

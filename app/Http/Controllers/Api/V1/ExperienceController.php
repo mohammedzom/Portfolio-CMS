@@ -8,6 +8,7 @@ use App\Http\Requests\Experiences\UpdateExperienceRequest;
 use App\Http\Resources\ExperienceResource;
 use App\Models\Experience;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ExperienceController extends Controller
 {
@@ -35,7 +36,9 @@ class ExperienceController extends Controller
 
     public function store(StoreExperienceRequest $request)
     {
-        $experience = Experience::create($request->validated());
+        $data = $request->validated();
+        $this->checkForbiddenFields($data);
+        $experience = Experience::create($data);
 
         return $this->successResponse(
             new ExperienceResource($experience),
@@ -57,7 +60,9 @@ class ExperienceController extends Controller
     public function update(UpdateExperienceRequest $request, string $id)
     {
         $experience = Experience::withoutTrashed()->findOrFail($id);
-        $experience->update($request->validated());
+        $data = $request->validated();
+        $this->checkForbiddenFields($data);
+        $experience->update($data);
 
         return $this->successResponse(
             new ExperienceResource($experience),
@@ -89,12 +94,24 @@ class ExperienceController extends Controller
 
     public function forceDelete(string $id)
     {
-        $experience = Experience::findOrFail($id);
+        $experience = Experience::withTrashed()->findOrFail($id);
         $experience->forceDelete();
 
         return $this->successResponse(
             [],
             'Experience deleted successfully.'
         );
+    }
+
+    protected function checkForbiddenFields(array $data)
+    {
+        if ($data['is_current'] && isset($data['end_date'])) {
+            throw ValidationException::withMessages(
+                [
+                    'end_date' => 'End date must be false when is_current is true.',
+                ],
+                'VALIDATION_ERROR'
+            );
+        }
     }
 }
