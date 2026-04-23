@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\ServiceController;
+use App\Http\Controllers\Api\V1\SiteSettingsController;
 use App\Http\Controllers\Api\V1\SkillController;
 use Illuminate\Support\Facades\Route;
 
@@ -72,6 +73,9 @@ Route::prefix('v1')->group(function () {
         Route::patch('/{id}/restore', 'restore');
         Route::delete('/{id}/force-delete', 'forceDelete');
     });
+
+    Route::patch('/site-info', [SiteSettingsController::class, 'update']);
+    Route::get('/site-info', [SiteSettingsController::class, 'index']);
     // });
 
 });

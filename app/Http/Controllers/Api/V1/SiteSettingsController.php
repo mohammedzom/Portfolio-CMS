@@ -38,6 +38,7 @@ class SiteSettingsController extends Controller
                 Storage::disk('public')->delete($settings->cv_file);
             }
             $validated['cv_file'] = $request->file('cv_file')->store('cv', 'public');
+            $validated['cv_file_name'] = $request->file('cv_file')->getClientOriginalName();
         }
 
         $settings->update($validated);
