@@ -19,9 +19,9 @@ class UpdateSiteSettingsRequest extends FormRequest
 
             // Contact Info
             'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif,webp|max:15360',
-            // 'cv_file' => 'sometimes|file|mimes:pdf,doc,docx|max:15360',
+            'cv_file' => 'sometimes|file|mimes:pdf,doc,docx|max:15360',
             'email' => 'sometimes|email|max:255',
-            'phone' => 'sometimes|phone:AUTO,AR,US,GB', // International phone format
+            'phone' => ['sometimes', 'phone:AUTO,AR,US,GB,PS'],
             'location' => 'sometimes|string',
 
             // Social Links
@@ -67,9 +67,7 @@ class UpdateSiteSettingsRequest extends FormRequest
 
             // Social Links
             'social_links.array' => 'Social links must be an array.',
-            'social_links.*.name.sometimes' => 'Social link name is sometimes.',
             'social_links.*.name.max' => 'Social link name cannot be longer than 255 characters.',
-            'social_links.*.url.sometimes' => 'Social link URL is sometimes.',
             'social_links.*.url.url' => 'Social link URL must be a valid URL.',
             'social_links.*.url.max' => 'Social link URL cannot be longer than 255 characters.',
 
@@ -83,7 +81,6 @@ class UpdateSiteSettingsRequest extends FormRequest
             'projects_count.integer' => 'Projects count must be an integer.',
             'clients_count.integer' => 'Clients count must be an integer.',
 
-            'available_for_freelance.sometimes' => 'Available for freelance is sometimes.',
             'available_for_freelance.boolean' => 'Available for freelance must be a boolean.',
 
             // URLs
