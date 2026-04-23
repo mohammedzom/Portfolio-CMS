@@ -74,8 +74,10 @@ Route::prefix('v1')->group(function () {
         Route::delete('/{id}/force-delete', 'forceDelete');
     });
 
-    Route::patch('/site-info', [SiteSettingsController::class, 'update']);
-    Route::get('/site-info', [SiteSettingsController::class, 'index']);
+    Route::prefix('site-info')->controller(SiteSettingsController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::patch('/', 'update');
+    });
     // });
 
 });

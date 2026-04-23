@@ -18,8 +18,8 @@ class UpdateSiteSettingsRequest extends FormRequest
             'bio' => 'sometimes|string|max:255',
 
             // Contact Info
-            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max=15360',
-            'cv_file' => 'sometimes|file|mimes:pdf,doc,docx|max=15360',
+            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif,webp|max:15360',
+            // 'cv_file' => 'sometimes|file|mimes:pdf,doc,docx|max:15360',
             'email' => 'sometimes|email|max:255',
             'phone' => 'sometimes|phone:AUTO,AR,US,GB', // International phone format
             'location' => 'sometimes|string',
