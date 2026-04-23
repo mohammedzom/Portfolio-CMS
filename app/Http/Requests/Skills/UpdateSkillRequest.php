@@ -11,14 +11,14 @@ class UpdateSkillRequest extends FormRequest
     {
         return [
             'name' => [
-                'required',
+                'sometimes',
                 'string',
                 'max:255',
-                Rule::unique('skills', 'name')->ignore($this->skill->id),
+                Rule::unique('skills', 'name')->ignore($this->id),
             ],
-            'icon' => 'nullable|url',
-            'proficiency' => 'required|integer|min:0|max:100',
-            'type' => 'required|string',
+            'icon' => 'sometimes|url',
+            'proficiency' => 'sometimes|integer|min:0|max:100',
+            'type' => 'sometimes|string',
         ];
     }
 
@@ -26,7 +26,6 @@ class UpdateSkillRequest extends FormRequest
     {
         return [
             // Name
-            'name.required' => 'Name is required.',
             'name.string' => 'Name must be a string.',
             'name.max' => 'Name cannot be longer than 255 characters.',
             'name.unique' => 'Skill name already exists.',
@@ -35,13 +34,11 @@ class UpdateSkillRequest extends FormRequest
             'icon.url' => 'Icon must be a valid URL.',
 
             // Proficiency
-            'proficiency.required' => 'Proficiency is required.',
             'proficiency.integer' => 'Proficiency must be an integer.',
             'proficiency.min' => 'Proficiency cannot be less than 0.',
             'proficiency.max' => 'Proficiency cannot be more than 100.',
 
             // Type
-            'type.required' => 'Type is required.',
             'type.string' => 'Type must be a string.',
         ];
     }

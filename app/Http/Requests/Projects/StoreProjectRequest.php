@@ -44,6 +44,8 @@ class StoreProjectRequest extends FormRequest
 
             // * Category validation
             'category.required' => 'Category is required.',
+            'category.in' => 'Category must be one of the following: (Web, App, Mobile, Script, Other).',
+            'category.string' => 'Category must be a string.',
 
             // * Live URL validation
             'live_url.url' => 'Live URL must be a valid URL.',

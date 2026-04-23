@@ -11,24 +11,24 @@ class UpdateProjectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:255',
+            'title' => 'sometimes|string|max:255',
             'slug' => [
                 'nullable',
                 'string',
                 'max:255',
                 Rule::unique(Project::class)->ignore($this->project?->id),
             ],
-            'description' => 'required|string',
-            'category' => 'required|in:Web,App,Mobile,Script,Other',
-            'tech_stack' => 'nullable|array',
-            'images' => 'nullable|array',
+            'description' => 'sometimes|string',
+            'category' => 'sometimes|in:Web,App,Mobile,Script,Other',
+            'tech_stack' => 'sometimes|array',
+            'images' => 'sometimes|array',
+            'images.*' => 'sometimes|image|mimes:jpeg,png,jpg,gif,webp|max:15360',
             'deleted_images' => 'nullable|array',
-            'cover_image' => 'nullable|string',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:15360',
-            'live_url' => 'nullable|url',
-            'repo_url' => 'nullable|url',
-            'is_featured' => 'nullable|boolean',
-            'sort_order' => 'nullable|integer',
+            'deleted_images.*' => 'string',
+            'live_url' => 'sometimes|url',
+            'repo_url' => 'sometimes|url',
+            'is_featured' => 'sometimes|boolean',
+            'sort_order' => 'sometimes|integer',
         ];
     }
 

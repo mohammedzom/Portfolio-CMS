@@ -8,6 +8,7 @@ use App\Http\Requests\Projects\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -24,7 +25,7 @@ class ProjectController extends Controller
             $query->where('title', 'like', '%'.$request->search.'%');
             $query->orWhere('description', 'like', '%'.$request->search.'%');
         }
-        $projects = $query->orderBy('sort_order', 'desc');
+        $projects = $query->orderBy('sort_order')->get();
 
         return $this->successResponse(
             ProjectResource::collection($projects),
@@ -58,6 +59,7 @@ class ProjectController extends Controller
         if (Project::where('slug', $slug)->exists()) {
             $slug .= '-'.uniqid();
         }
+        $maxSortOrder = Project::withoutTrashed()->max('sort_order') + 1;
         $project = Project::create([
             'title' => $request->title,
             'slug' => $slug,
@@ -67,7 +69,7 @@ class ProjectController extends Controller
             'live_url' => $request->live_url,
             'repo_url' => $request->repo_url,
             'is_featured' => $request->is_featured ?? false,
-            'sort_order' => $request->sort_order,
+            'sort_order' => $request->sort_order ?? $maxSortOrder,
             'images' => $paths,
         ]);
 
@@ -81,21 +83,35 @@ class ProjectController extends Controller
     public function update(UpdateProjectRequest $request, string $id)
     {
         $project = Project::withoutTrashed()->findOrFail($id);
-        $validated = $request->validated();
 
-        $paths = is_array($project->images) ? $project->images : [];
-        if ($validated->hasFile('images')) {
-            foreach ($validated->file('images') as $file) {
-                $fileOriginalName = explode('.', $file->getClientOriginalName())[0];
+        $currentImages = is_array($project->images) ? $project->images : [];
+
+        if ($request->has('deleted_images')) {
+            foreach ($request->deleted_images as $pathToDelete) {
+                $relativePath = 'projects/'.basename($pathToDelete);
+                if (($key = array_search($relativePath, $currentImages)) !== false) {
+                    Storage::disk('public')->delete($relativePath);
+                    unset($currentImages[$key]);
+                }
+            }
+            $currentImages = array_values($currentImages);
+        }
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $fileOriginalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
                 $extension = $file->getClientOriginalExtension();
                 $fileName = 'project_'.$fileOriginalName.'_'.uniqid().'.'.$extension;
-                $paths[] = $file->storeAs('projects', $fileName, 'public');
+                $currentImages[] = $file->storeAs('projects', $fileName, 'public');
             }
         }
 
-        $slug = $request->slug ?? str()->slug($request->title);
-        if (Project::where('slug', $slug)->where('id', '!=', $project->id)->exists()) {
-            $slug .= '-'.uniqid();
+        $slug = $project->slug;
+        if ($request->has('slug') && $request->slug != $project->slug) {
+            $slug = str()->slug($request->slug);
+            if (Project::where('slug', $slug)->where('id', '!=', $project->id)->exists()) {
+                $slug .= '-'.uniqid();
+            }
         }
 
         $project->update([
@@ -107,8 +123,8 @@ class ProjectController extends Controller
             'live_url' => $request->live_url,
             'repo_url' => $request->repo_url,
             'is_featured' => $request->is_featured ?? false,
-            'sort_order' => $request->sort_order,
-            'images' => $paths,
+            'sort_order' => $request->sort_order ?? $project->sort_order,
+            'images' => $currentImages,
         ]);
 
         return $this->successResponse(
@@ -142,6 +158,11 @@ class ProjectController extends Controller
     public function forceDelete(string $id)
     {
         $project = Project::findOrFail($id);
+
+        foreach ($project->images as $pathToDelete) {
+            $relativePath = 'projects/'.basename($pathToDelete);
+            Storage::disk('public')->delete($relativePath);
+        }
         $project->forceDelete();
 
         return $this->successResponse(

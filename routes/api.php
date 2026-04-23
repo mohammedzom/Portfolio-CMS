@@ -55,11 +55,11 @@ Route::prefix('v1')->group(function () {
 
     Route::prefix('skills')->controller(SkillController::class)->group(function () {
         Route::get('/', 'index');
-        Route::get('/{id}', 'show');
         Route::post('/', 'store');
+        Route::get('/{id}', 'show');
         Route::patch('/{id}', 'update');
-        Route::delete('/{id}', 'destroy');
         Route::patch('/{id}/restore', 'restore');
+        Route::delete('/{id}', 'destroy');
         Route::delete('/{id}/force-delete', 'forceDelete');
     });
 

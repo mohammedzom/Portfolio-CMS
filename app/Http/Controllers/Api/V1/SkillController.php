@@ -92,7 +92,7 @@ class SkillController extends Controller
 
     public function forceDelete(string $id)
     {
-        $skill = Skill::findOrFail($id);
+        $skill = Skill::withTrashed()->findOrFail($id);
         $skill->forceDelete();
 
         return $this->successResponse(

@@ -15,8 +15,8 @@ class Project extends Model
     protected function casts(): array
     {
         return [
-            'tech_stack' => 'array',
-            'images' => 'array',
+            'tech_stack' => 'json',
+            'images' => 'json',
             'is_featured' => 'boolean',
             'sort_order' => 'integer',
             'deleted_at' => 'datetime',

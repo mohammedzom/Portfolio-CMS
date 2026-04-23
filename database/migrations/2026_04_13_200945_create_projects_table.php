@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('live_url')->nullable();
             $table->string('repo_url')->nullable();
             $table->boolean('is_featured')->default(false);
-            $table->smallInteger('sort_order')->default(0);
+            $table->smallInteger('sort_order');
             $table->softDeletes();
             $table->timestamps();
 
