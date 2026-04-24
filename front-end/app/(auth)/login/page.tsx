@@ -1,17 +1,13 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { AxiosError } from "axios";
+import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2, Lock, Mail, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
-import { apiClient, type ApiResponse } from "@/lib/axios";
-
-type LoginPayload = {
-  token?: string;
-  access_token?: string;
-};
+import { type ApiResponse } from "@/lib/axios";
+import { useAuth } from "@/src/context/AuthContext";
 
 type LoginFormData = {
   email: string;
@@ -25,33 +21,27 @@ const initialFormState: LoginFormData = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading, login } = useAuth();
 
   const [formData, setFormData] = useState<LoginFormData>(initialFormState);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
 
-    setIsLoading(true);
+    setIsSubmitting(true);
     setErrorMessage("");
 
     try {
-      const response = await apiClient.post<ApiResponse<LoginPayload>>("/login", formData);
-
-      const token =
-        response.data.data?.token ??
-        response.data.data?.access_token ??
-        (response.data as unknown as LoginPayload)?.token ??
-        (response.data as unknown as LoginPayload)?.access_token;
-
-      if (!token) {
-        throw new Error("No token was returned by the authentication endpoint.");
-      }
-
-      window.localStorage.setItem("auth_token", token);
-      router.replace("/dashboard");
+      await login(formData, { redirectTo: "/dashboard" });
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse<null>>;
 
@@ -60,9 +50,21 @@ export default function LoginPage() {
           (error instanceof Error ? error.message : "Unable to login. Please try again."),
       );
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-12 text-slate-100">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.25),transparent_45%),radial-gradient(circle_at_80%_10%,rgba(168,85,247,0.2),transparent_40%),radial-gradient(circle_at_50%_90%,rgba(16,185,129,0.18),transparent_35%)]" />
+        <div className="relative z-10 inline-flex items-center gap-2 rounded-xl border border-violet-400/25 bg-black/30 px-4 py-3 backdrop-blur-md">
+          <Loader2 className="size-4 animate-spin text-violet-200" />
+          <span className="text-sm text-slate-200">Preparing login...</span>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-12 text-slate-100">
@@ -137,11 +139,11 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isSubmitting}
             className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-75"
           >
-            {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-            {isLoading ? "Signing in..." : "Sign in"}
+            {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+            {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
         </form>
       </motion.section>

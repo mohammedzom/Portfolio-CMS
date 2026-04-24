@@ -6,6 +6,8 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+type UnauthorizedHandler = () => void | Promise<void>;
+
 const apiBaseURL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
@@ -17,6 +19,13 @@ export const apiClient = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+let isHandlingUnauthorized = false;
+
+export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): void {
+  unauthorizedHandler = handler;
+}
 
 apiClient.interceptors.request.use((config) => {
   if (typeof window === "undefined") {
@@ -34,5 +43,20 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error: AxiosError) => Promise.reject(error),
+  (error: AxiosError) => {
+    if (
+      typeof window !== "undefined" &&
+      error.response?.status === 401 &&
+      unauthorizedHandler &&
+      !isHandlingUnauthorized
+    ) {
+      isHandlingUnauthorized = true;
+
+      Promise.resolve(unauthorizedHandler()).finally(() => {
+        isHandlingUnauthorized = false;
+      });
+    }
+
+    return Promise.reject(error);
+  },
 );
