@@ -6,11 +6,12 @@ use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Messages\StoreMessageRequest;
 use App\Http\Resources\MessageResource;
 use App\Models\Message;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MessageController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $query = Message::query();
 
@@ -47,7 +48,7 @@ class MessageController extends Controller
         ], 'Messages retrieved successfully.');
     }
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $message = Message::withoutTrashed()->findOrFail($id);
         $message->update(['read_at' => now()]);
@@ -58,7 +59,7 @@ class MessageController extends Controller
         );
     }
 
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $message = Message::withoutTrashed()->findOrFail($id);
         $message->delete();
@@ -69,7 +70,7 @@ class MessageController extends Controller
         );
     }
 
-    public function restore(string $id)
+    public function restore(string $id): JsonResponse
     {
         $message = Message::onlyTrashed()->findOrFail($id);
         $message->restore();
@@ -80,7 +81,7 @@ class MessageController extends Controller
         );
     }
 
-    public function markAsRead(string $id)
+    public function markAsRead(string $id): JsonResponse
     {
         $message = Message::findOrFail($id);
         if ($message->read_at) {
@@ -99,7 +100,7 @@ class MessageController extends Controller
         );
     }
 
-    public function markAsUnread(string $id)
+    public function markAsUnread(string $id): JsonResponse
     {
         $message = Message::findOrFail($id);
         if (! $message->read_at) {
@@ -117,7 +118,7 @@ class MessageController extends Controller
         );
     }
 
-    public function forceDelete(string $id)
+    public function forceDelete(string $id): JsonResponse
     {
         $message = Message::findOrFail($id);
         $message->forceDelete();
@@ -128,7 +129,7 @@ class MessageController extends Controller
         );
     }
 
-    public function store(StoreMessageRequest $request)
+    public function store(StoreMessageRequest $request): JsonResponse
     {
         Message::create($request->validated());
 

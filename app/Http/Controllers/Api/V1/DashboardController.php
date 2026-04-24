@@ -11,10 +11,11 @@ use App\Models\Message;
 use App\Models\Project;
 use App\Models\SiteSettings;
 use App\Models\Skill;
+use Illuminate\Http\JsonResponse;
 
 class DashboardController extends Controller
 {
-    public function __invoke()
+    public function __invoke(): JsonResponse
     {
         $projects = Project::orderBy('sort_order')->take(5)->get();
         $technical_skills = Skill::where('type', 'technical')->orderBy('proficiency', 'desc')->take(6)->get();

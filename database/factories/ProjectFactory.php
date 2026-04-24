@@ -15,9 +15,9 @@ class ProjectFactory extends Factory
             'title' => ucwords($title),
             'slug' => Str::slug($title).'-'.fake()->unique()->numberBetween(1, 999),
             'description' => fake()->sentence(12),
-            'category' => json_encode(fake()->randomElements(['Web', 'App', 'Design', 'UI/UX'], 2)),
+            'category' => fake()->randomElement(['Web', 'App', 'Mobile', 'Script', 'Other']),
             'tech_stack' => json_encode(fake()->randomElements(['React + Tailwind', 'Next.js + Framer', 'Vue + Laravel', 'React Native', 'Figma', 'Figma + CSS'], 4)),
-            'image' => null,
+            'images' => [],
             'live_url' => fake()->url(),
             'repo_url' => 'https://github.com/'.fake()->userName().'/'.Str::slug($title),
             'is_featured' => fake()->boolean(30),
@@ -32,6 +32,6 @@ class ProjectFactory extends Factory
 
     public function web(): static
     {
-        return $this->state(['category' => json_encode(['Web'])]);
+        return $this->state(['category' => 'Web']);
     }
 }

@@ -7,12 +7,13 @@ use App\Http\Requests\Services\StoreServiceRequest;
 use App\Http\Requests\Services\UpdateServiceRequest;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class ServiceController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $query = Service::query();
         $cache_key = 'portfolio_services';
@@ -42,7 +43,7 @@ class ServiceController extends Controller
         );
     }
 
-    public function store(StoreServiceRequest $request)
+    public function store(StoreServiceRequest $request): JsonResponse
     {
         $service = Service::create($request->validated());
         Cache::forget('portfolio_services');
@@ -55,7 +56,7 @@ class ServiceController extends Controller
         );
     }
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $service = Service::withoutTrashed()->findOrFail($id);
 
@@ -65,7 +66,7 @@ class ServiceController extends Controller
         );
     }
 
-    public function update(UpdateServiceRequest $request, string $id)
+    public function update(UpdateServiceRequest $request, string $id): JsonResponse
     {
         $service = Service::withoutTrashed()->findOrFail($id);
 
@@ -85,7 +86,7 @@ class ServiceController extends Controller
         );
     }
 
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $service = Service::withoutTrashed()->findOrFail($id);
         $service->delete();
@@ -98,7 +99,7 @@ class ServiceController extends Controller
         );
     }
 
-    public function restore(string $id)
+    public function restore(string $id): JsonResponse
     {
         $service = Service::onlyTrashed()->findOrFail($id);
         $service->restore();
@@ -111,7 +112,7 @@ class ServiceController extends Controller
         );
     }
 
-    public function forceDelete(string $id)
+    public function forceDelete(string $id): JsonResponse
     {
         $service = Service::withTrashed()->findOrFail($id);
         $isTrashed = $service->trashed();

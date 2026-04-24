@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Projects\StoreProjectAction;
+use App\Actions\Projects\UpdateProjectAction;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Projects\StoreProjectRequest;
 use App\Http\Requests\Projects\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $query = Project::query();
         $cache_key = 'portfolio_projects';
@@ -43,7 +46,7 @@ class ProjectController extends Controller
         );
     }
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $project = Project::withoutTrashed()->findOrFail($id);
 
@@ -53,37 +56,12 @@ class ProjectController extends Controller
         );
     }
 
-    public function store(StoreProjectRequest $request)
+    public function store(StoreProjectRequest $request): JsonResponse
     {
-        $paths = [];
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $fileOriginalName = explode('.', $file->getClientOriginalName())[0];
-                $extension = $file->getClientOriginalExtension();
-                $fileName = 'project_'.$fileOriginalName.'_'.uniqid().'.'.$extension;
-                $paths[] = $file->storeAs('projects', $fileName, 'public');
-            }
-        }
-
-        $slug = $request->slug ?? str()->slug($request->title);
-        if (Project::where('slug', $slug)->exists()) {
-            $slug .= '-'.uniqid();
-        }
-        $maxSortOrder = Project::withoutTrashed()->max('sort_order') + 1;
-        $project = Project::create([
-            'title' => $request->title,
-            'slug' => $slug,
-            'description' => $request->description,
-            'category' => $request->category,
-            'tech_stack' => $request->tech_stack,
-            'live_url' => $request->live_url,
-            'repo_url' => $request->repo_url,
-            'is_featured' => $request->is_featured ?? false,
-            'sort_order' => $request->sort_order ?? $maxSortOrder,
-            'images' => $paths,
-        ]);
-        Cache::forget('portfolio_projects');
-        Cache::forget('portfolio_all');
+        $project = StoreProjectAction::run(
+            $request->validated(),
+            $request->hasFile('images') ? $request->file('images') : []
+        );
 
         return $this->successResponse(
             new ProjectResource($project),
@@ -92,54 +70,16 @@ class ProjectController extends Controller
         );
     }
 
-    public function update(UpdateProjectRequest $request, string $id)
+    public function update(UpdateProjectRequest $request, string $id): JsonResponse
     {
         $project = Project::withoutTrashed()->findOrFail($id);
 
-        $currentImages = is_array($project->images) ? $project->images : [];
-
-        if ($request->has('deleted_images')) {
-            foreach ($request->deleted_images as $pathToDelete) {
-                $relativePath = 'projects/'.basename($pathToDelete);
-                if (($key = array_search($relativePath, $currentImages)) !== false) {
-                    Storage::disk('public')->delete($relativePath);
-                    unset($currentImages[$key]);
-                }
-            }
-            $currentImages = array_values($currentImages);
-        }
-
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $fileOriginalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $extension = $file->getClientOriginalExtension();
-                $fileName = 'project_'.$fileOriginalName.'_'.uniqid().'.'.$extension;
-                $currentImages[] = $file->storeAs('projects', $fileName, 'public');
-            }
-        }
-
-        $slug = $project->slug;
-        if ($request->has('slug') && $request->slug != $project->slug) {
-            $slug = str()->slug($request->slug);
-            if (Project::where('slug', $slug)->where('id', '!=', $project->id)->exists()) {
-                $slug .= '-'.uniqid();
-            }
-        }
-
-        $project->update([
-            'title' => $request->title,
-            'slug' => $slug,
-            'description' => $request->description,
-            'category' => $request->category,
-            'tech_stack' => $request->tech_stack,
-            'live_url' => $request->live_url,
-            'repo_url' => $request->repo_url,
-            'is_featured' => $request->is_featured ?? false,
-            'sort_order' => $request->sort_order ?? $project->sort_order,
-            'images' => $currentImages,
-        ]);
-        Cache::forget('portfolio_projects');
-        Cache::forget('portfolio_all');
+        $project = UpdateProjectAction::run(
+            $project,
+            $request->validated(),
+            $request->deleted_images ?? [],
+            $request->hasFile('images') ? $request->file('images') : []
+        );
 
         return $this->successResponse(
             new ProjectResource($project),
@@ -147,7 +87,7 @@ class ProjectController extends Controller
         );
     }
 
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $project = Project::withoutTrashed()->findOrFail($id);
         $project->delete();
@@ -161,7 +101,7 @@ class ProjectController extends Controller
         );
     }
 
-    public function restore(string $id)
+    public function restore(string $id): JsonResponse
     {
         $project = Project::onlyTrashed()->findOrFail($id);
         $project->restore();
@@ -175,11 +115,11 @@ class ProjectController extends Controller
         );
     }
 
-    public function forceDelete(string $id)
+    public function forceDelete(string $id): JsonResponse
     {
         $project = Project::withTrashed()->findOrFail($id);
         $isTrashed = $project->trashed();
-        foreach ($project->images as $pathToDelete) {
+        foreach (is_array($project->images) ? $project->images : [] as $pathToDelete) {
             $relativePath = 'projects/'.basename($pathToDelete);
             Storage::disk('public')->delete($relativePath);
         }

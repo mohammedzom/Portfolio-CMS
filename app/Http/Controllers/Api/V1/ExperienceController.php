@@ -7,13 +7,14 @@ use App\Http\Requests\Experiences\StoreExperienceRequest;
 use App\Http\Requests\Experiences\UpdateExperienceRequest;
 use App\Http\Resources\ExperienceResource;
 use App\Models\Experience;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 
 class ExperienceController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $query = Experience::query();
         if ($request->has('archived') && $request->archived) {
@@ -39,7 +40,7 @@ class ExperienceController extends Controller
         );
     }
 
-    public function store(StoreExperienceRequest $request)
+    public function store(StoreExperienceRequest $request): JsonResponse
     {
         $data = $request->validated();
         $this->checkForbiddenFields($data);
@@ -54,7 +55,7 @@ class ExperienceController extends Controller
         );
     }
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $experience = Experience::findOrFail($id);
 
@@ -64,7 +65,7 @@ class ExperienceController extends Controller
         );
     }
 
-    public function update(UpdateExperienceRequest $request, string $id)
+    public function update(UpdateExperienceRequest $request, string $id): JsonResponse
     {
         $experience = Experience::withoutTrashed()->findOrFail($id);
         $data = $request->validated();
@@ -79,7 +80,7 @@ class ExperienceController extends Controller
         );
     }
 
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $experience = Experience::withoutTrashed()->findOrFail($id);
         $experience->delete();
@@ -92,7 +93,7 @@ class ExperienceController extends Controller
         );
     }
 
-    public function restore(string $id)
+    public function restore(string $id): JsonResponse
     {
         $experience = Experience::onlyTrashed()->findOrFail($id);
         $experience->restore();
@@ -105,7 +106,7 @@ class ExperienceController extends Controller
         );
     }
 
-    public function forceDelete(string $id)
+    public function forceDelete(string $id): JsonResponse
     {
         $experience = Experience::withTrashed()->findOrFail($id);
         $experience->forceDelete();

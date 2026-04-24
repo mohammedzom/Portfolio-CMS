@@ -7,12 +7,13 @@ use App\Http\Requests\Skills\StoreSkillRequest;
 use App\Http\Requests\Skills\UpdateSkillRequest;
 use App\Http\Resources\SkillResource;
 use App\Models\Skill;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class SkillController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $query = Skill::query();
         if ($request->has('archived') && $request->archived) {
@@ -36,7 +37,7 @@ class SkillController extends Controller
         );
     }
 
-    public function store(StoreSkillRequest $request)
+    public function store(StoreSkillRequest $request): JsonResponse
     {
         $skill = Skill::create($request->validated());
         Cache::forget('portfolio_all');
@@ -48,7 +49,7 @@ class SkillController extends Controller
         );
     }
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $skill = Skill::withoutTrashed()->findOrFail($id);
 
@@ -58,7 +59,7 @@ class SkillController extends Controller
         );
     }
 
-    public function update(UpdateSkillRequest $request, string $id)
+    public function update(UpdateSkillRequest $request, string $id): JsonResponse
     {
         $skill = Skill::withoutTrashed()->findOrFail($id);
         $skill->update($request->validated());
@@ -71,7 +72,7 @@ class SkillController extends Controller
         );
     }
 
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         $skill = Skill::withoutTrashed()->findOrFail($id);
         $skill->delete();
@@ -83,7 +84,7 @@ class SkillController extends Controller
         );
     }
 
-    public function restore(string $id)
+    public function restore(string $id): JsonResponse
     {
         $skill = Skill::onlyTrashed()->findOrFail($id);
         $skill->restore();
@@ -95,7 +96,7 @@ class SkillController extends Controller
         );
     }
 
-    public function forceDelete(string $id)
+    public function forceDelete(string $id): JsonResponse
     {
         $skill = Skill::withTrashed()->findOrFail($id);
         $skill->forceDelete();
