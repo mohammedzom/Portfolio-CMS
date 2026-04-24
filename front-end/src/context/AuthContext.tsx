@@ -119,24 +119,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    const storedToken = window.localStorage.getItem(TOKEN_STORAGE_KEY);
-    const storedUser = window.localStorage.getItem(USER_STORAGE_KEY);
+    try {
+      const storedToken = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+      const storedUser = window.localStorage.getItem(USER_STORAGE_KEY);
 
-    if (storedToken) {
-      setToken(storedToken);
-    }
-
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser) as User;
-        setUser(parsedUser);
-      } catch {
-        window.localStorage.removeItem(USER_STORAGE_KEY);
+      if (storedToken) {
+        setToken(storedToken);
       }
-    }
 
-    setIsLoading(false);
-  }, []);
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser) as User;
+          setUser(parsedUser);
+        } catch {
+          window.localStorage.removeItem(USER_STORAGE_KEY);
+        }
+      }
+    } catch {
+      clearAuthState();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [clearAuthState]);
 
   useEffect(() => {
     setUnauthorizedHandler(() => logout({ callApi: false, redirectTo: "/login" }));

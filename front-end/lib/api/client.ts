@@ -13,12 +13,14 @@ const apiBaseURL =
 
 export const apiClient = axios.create({
   baseURL: apiBaseURL,
-  withCredentials: true,
+  withCredentials: false,
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
   },
 });
+
+export const axiosClient = apiClient;
 
 let unauthorizedHandler: UnauthorizedHandler | null = null;
 let isHandlingUnauthorized = false;
