@@ -30,7 +30,8 @@ class SiteSettingsController extends Controller
             if ($settings->avatar) {
                 Storage::disk('public')->delete($settings->avatar);
             }
-            $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            $file_name = 'avatar.'.$request->file('avatar')->getClientOriginalExtension();
+            $validated['avatar'] = $request->file('avatar')->storeAs('avatars', $file_name, 'public');
         }
 
         if ($request->hasFile('cv_file')) {
