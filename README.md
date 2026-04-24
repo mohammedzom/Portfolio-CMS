@@ -1,58 +1,70 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Portfolio CMS API 🚀
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A modern, high-performance headless Content Management System (CMS) built with **Laravel 13** and **PHP 8.5**. This API serves as the robust backend for a personal portfolio, featuring a "Cosmic Dark" aesthetic on the upcoming frontend.
 
-## About Laravel
+## 🌟 Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Project Management:** Complete CRUD with multi-image uploads, slug generation, and order sorting.
+- **Skill Tracking:** Categorize and rank technical and tooling skills.
+- **Services & Experiences:** Showcase professional history and offered services.
+- **Site Settings:** Manage global portfolio information (bio, social links, resume).
+- **Messaging System:** Secure contact form endpoints with read/unread tracking.
+- **Admin Dashboard:** Aggregated analytics and recent data overview.
+- **Robust Authentication:** Secured via Laravel Sanctum.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🏗️ Architecture & Best Practices
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+This project strictly adheres to modern Laravel architecture and "Skinny Controller" principles:
 
-## Learning Laravel
+- **Action Classes:** Complex business logic (like handling multiple file uploads and database transactions) is extracted into single-purpose Action classes using `lorisleiva/laravel-actions` (e.g., `StoreProjectAction`, `UpdateProjectAction`).
+- **Data Integrity:** Database operations involving multiple steps or file uploads are wrapped in `DB::transaction()` to prevent data corruption.
+- **Performance:** Extensive use of Laravel Cache (`Cache::remember`, `Cache::forget`) to serve read-heavy endpoints (like the public portfolio) blazingly fast. 
+- **Type Safety:** Strict return type hinting (`JsonResponse`) across all API controllers.
+- **Validation:** Dedicated `FormRequest` classes handle incoming data validation and custom error messages.
+- **API Resources:** Consistent JSON output formatted via Laravel Eloquent API Resources.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🧪 Testing
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+The API is covered by feature tests written in **Pest** (`pestphp/pest`).
+To run the test suite:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+vendor/bin/pest
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## 🛠️ Tech Stack
 
-## Contributing
+- **Framework:** Laravel 13
+- **Language:** PHP 8.5
+- **Authentication:** Laravel Sanctum
+- **Testing:** Pest v4
+- **Formatting:** Laravel Pint
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🚀 Getting Started
 
-## Code of Conduct
+1. Clone the repository.
+2. Install dependencies:
+   ```bash
+   composer install
+   ```
+3. Copy `.env.example` to `.env` and configure your database and cache settings.
+4. Generate application key:
+   ```bash
+   php artisan key:generate
+   ```
+5. Run migrations and seed the database:
+   ```bash
+   php artisan migrate --seed
+   ```
+6. Link storage (for project images and CV uploads):
+   ```bash
+   php artisan storage:link
+   ```
+7. Start the local development server:
+   ```bash
+   php artisan serve
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 📚 API Documentation
 
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+A comprehensive Postman collection is available in the `resources/` directory (`Portfolio-cms.postman_collection.json`) containing all available endpoints, required headers, and payload examples for both the public API and the protected Admin API.
