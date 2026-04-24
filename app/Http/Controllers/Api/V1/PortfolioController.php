@@ -13,31 +13,36 @@ use App\Models\Project;
 use App\Models\Service;
 use App\Models\SiteSettings;
 use App\Models\Skill;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
 class PortfolioController extends Controller
 {
-    public function index()
+    public function index(): JsonResponse
     {
-        $hours = config('app.cache_ttl_hours', 24);
+        $hours = intval(config('app.cache_ttl_hours', 24));
         $ttl = now()->addHours($hours);
 
-        $projects = Cache::remember('portfolio_projects', $ttl, fn () => Project::orderBy('sort_order')->get());
-        $technical_skills = Cache::remember('portfolio_tech_skills', $ttl, fn () => Skill::where('type', 'technical')->orderBy('proficiency', 'desc')->get());
-        $tool_skills = Cache::remember('portfolio_tool_skills', $ttl, fn () => Skill::where('type', 'tool')->get());
-        $services = Cache::remember('portfolio_services', $ttl, fn () => Service::orderBy('sort_order')->get());
-        $experiences = Cache::remember('portfolio_experiences', $ttl, fn () => Experience::orderBy('start_date', 'desc')->get());
-        $settings = Cache::remember('portfolio_settings', $ttl, fn () => SiteSettings::firstOrFail());
+        $data = Cache::remember('portfolio_all', $ttl, function () {
+            $projects = Project::orderBy('sort_order')->get();
+            $technical_skills = Skill::where('type', 'technical')->orderBy('proficiency', 'desc')->get();
+            $tool_skills = Skill::where('type', 'tool')->get();
+            $services = Service::orderBy('sort_order')->get();
+            $experiences = Experience::orderBy('start_date', 'desc')->get();
+            $settings = SiteSettings::firstOrFail();
 
-        return $this->successResponse([
-            'skills' => [
-                'technical' => SkillResource::collection($technical_skills),
-                'tools' => SkillResource::collection($tool_skills),
-            ],
-            'projects' => ProjectResource::collection($projects),
-            'services' => ServiceResource::collection($services),
-            'information' => new SiteSettingstResource($settings),
-            'experiences' => ExperienceResource::collection($experiences),
-        ], 'Portfolio Data Retreived Successfully.');
+            return $this->resolveForCache([
+                'skills' => [
+                    'technical' => SkillResource::collection($technical_skills)->resolve(),
+                    'tools' => SkillResource::collection($tool_skills)->resolve(),
+                ],
+                'projects' => ProjectResource::collection($projects)->resolve(),
+                'services' => ServiceResource::collection($services)->resolve(),
+                'information' => (new SiteSettingstResource($settings))->resolve(),
+                'experiences' => ExperienceResource::collection($experiences)->resolve(),
+            ]);
+        });
+
+        return $this->successResponse($data, 'Portfolio Data Retreived Successfully.');
     }
 }

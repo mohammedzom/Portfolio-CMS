@@ -13,15 +13,15 @@ class SiteSettingsController extends Controller
 {
     public function index()
     {
-        $hours = config('app.cache_ttl_hours', 24);
+        $hours = intval(config('app.cache_ttl_hours', 24));
         $ttl = now()->addHours($hours);
 
         $settings = Cache::remember('portfolio_settings', $ttl, function () {
-            return SiteSettings::firstOrFail();
+            return $this->resolveForCache(new SiteSettingstResource(SiteSettings::firstOrFail()));
         });
 
         return $this->successResponse(
-            new SiteSettingstResource($settings),
+            $settings,
             'Site settings fetched successfully.'
         );
     }
@@ -54,6 +54,7 @@ class SiteSettingsController extends Controller
 
         $settings->update($validated);
         Cache::forget('portfolio_settings');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new SiteSettingstResource($settings),

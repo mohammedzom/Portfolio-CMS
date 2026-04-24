@@ -2,8 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
+use Illuminate\Http\Resources\Json\JsonResource;
+
 abstract class Controller
 {
+
+    protected function resolveForCache($resource): array
+    {
+        $data = is_array($resource) ? $resource : $resource->resolve();
+
+        return json_decode(json_encode($data), true);
+    }
+
     protected function successResponse($data = [], $message = 'Success', $code = 200)
     {
         return response()->json([

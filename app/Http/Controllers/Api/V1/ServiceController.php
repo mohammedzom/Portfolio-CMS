@@ -28,16 +28,16 @@ class ServiceController extends Controller
             $query->orWhere('description', 'like', '%'.$request->search.'%');
         }
 
-        $hours = config('app.cache_ttl_hours', 24);
+        $hours = intval(config('app.cache_ttl_hours', 24));
         $ttl = now()->addHours($hours);
         if ($cache_key) {
-            $services = Cache::remember($cache_key, $ttl, fn () => $query->orderBy('sort_order')->get());
+            $services = Cache::remember($cache_key, $ttl, fn () => $this->resolveForCache(ServiceResource::collection($query->orderBy('sort_order')->get())));
         } else {
-            $services = $query->orderBy('sort_order')->get();
+            $services = $this->resolveForCache(ServiceResource::collection($query->orderBy('sort_order')->get()));
         }
 
         return $this->successResponse(
-            ServiceResource::collection($services),
+            $services,
             'Services fetched successfully.'
         );
     }
@@ -46,6 +46,7 @@ class ServiceController extends Controller
     {
         $service = Service::create($request->validated());
         Cache::forget('portfolio_services');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -76,6 +77,7 @@ class ServiceController extends Controller
             'tags' => $request->tags,
         ]);
         Cache::forget('portfolio_services');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -88,6 +90,7 @@ class ServiceController extends Controller
         $service = Service::withoutTrashed()->findOrFail($id);
         $service->delete();
         Cache::forget('portfolio_services');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             [],
@@ -100,6 +103,7 @@ class ServiceController extends Controller
         $service = Service::onlyTrashed()->findOrFail($id);
         $service->restore();
         Cache::forget('portfolio_services');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -110,8 +114,16 @@ class ServiceController extends Controller
     public function forceDelete(string $id)
     {
         $service = Service::withTrashed()->findOrFail($id);
+        $isTrashed = $service->trashed();
         $service->forceDelete();
-        Cache::forget('portfolio_services');
+
+        if ($isTrashed) {
+            Cache::forget('portfolio_services_archived');
+        } else {
+            Cache::forget('portfolio_services');
+            Cache::forget('portfolio_all');
+
+        }
 
         return $this->successResponse(
             [],

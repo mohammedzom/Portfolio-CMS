@@ -39,11 +39,7 @@ class SkillController extends Controller
     public function store(StoreSkillRequest $request)
     {
         $skill = Skill::create($request->validated());
-        if ($skill->type == 'technical') {
-            Cache::forget('portfolio_tech_skills');
-        } elseif ($skill->type == 'tool') {
-            Cache::forget('portfolio_tool_skills');
-        }
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new SkillResource($skill),
@@ -67,11 +63,7 @@ class SkillController extends Controller
         $skill = Skill::withoutTrashed()->findOrFail($id);
         $skill->update($request->validated());
 
-        if ($skill->type == 'technical' && $skill->wasChanged('type')) {
-            Cache::forget('portfolio_tech_skills');
-        } elseif ($skill->type == 'tool' && $skill->wasChanged('type')) {
-            Cache::forget('portfolio_tool_skills');
-        }
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new SkillResource($skill),
@@ -83,8 +75,7 @@ class SkillController extends Controller
     {
         $skill = Skill::withoutTrashed()->findOrFail($id);
         $skill->delete();
-        Cache::forget('portfolio_tech_skills');
-        Cache::forget('portfolio_tool_skills');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             [],
@@ -96,8 +87,7 @@ class SkillController extends Controller
     {
         $skill = Skill::onlyTrashed()->findOrFail($id);
         $skill->restore();
-        Cache::forget('portfolio_tech_skills');
-        Cache::forget('portfolio_tool_skills');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new SkillResource($skill),
@@ -109,8 +99,7 @@ class SkillController extends Controller
     {
         $skill = Skill::withTrashed()->findOrFail($id);
         $skill->forceDelete();
-        Cache::forget('portfolio_tech_skills');
-        Cache::forget('portfolio_tool_skills');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             [],

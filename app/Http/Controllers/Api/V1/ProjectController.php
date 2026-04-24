@@ -29,16 +29,16 @@ class ProjectController extends Controller
             $query->orWhere('description', 'like', '%'.$request->search.'%');
         }
 
-        $hours = config('app.cache_ttl_hours', 24);
+        $hours = intval(config('app.cache_ttl_hours', 24));
         $ttl = now()->addHours($hours);
         if ($cache_key) {
-            $projects = Cache::remember($cache_key, $ttl, fn () => $query->orderBy('sort_order')->get());
+            $projects = Cache::remember($cache_key, $ttl, fn () => $this->resolveForCache(ProjectResource::collection($query->orderBy('sort_order')->get())));
         } else {
-            $projects = $query->orderBy('sort_order')->get();
+            $projects = $this->resolveForCache(ProjectResource::collection($query->orderBy('sort_order')->get()));
         }
 
         return $this->successResponse(
-            ProjectResource::collection($projects),
+            $projects,
             'Projects retreived successfully.'
         );
     }
@@ -83,6 +83,7 @@ class ProjectController extends Controller
             'images' => $paths,
         ]);
         Cache::forget('portfolio_projects');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new ProjectResource($project),
@@ -138,6 +139,7 @@ class ProjectController extends Controller
             'images' => $currentImages,
         ]);
         Cache::forget('portfolio_projects');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new ProjectResource($project),
@@ -151,6 +153,7 @@ class ProjectController extends Controller
         $project->delete();
         Cache::forget('portfolio_projects');
         Cache::forget('portfolio_projects_archived');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             [],
@@ -164,6 +167,7 @@ class ProjectController extends Controller
         $project->restore();
         Cache::forget('portfolio_projects');
         Cache::forget('portfolio_projects_archived');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new ProjectResource($project),
@@ -173,15 +177,20 @@ class ProjectController extends Controller
 
     public function forceDelete(string $id)
     {
-        $project = Project::findOrFail($id);
-
+        $project = Project::withTrashed()->findOrFail($id);
+        $isTrashed = $project->trashed();
         foreach ($project->images as $pathToDelete) {
             $relativePath = 'projects/'.basename($pathToDelete);
             Storage::disk('public')->delete($relativePath);
         }
         $project->forceDelete();
-        Cache::forget('portfolio_projects');
-        Cache::forget('portfolio_projects_archived');
+
+        if ($isTrashed) {
+            Cache::forget('portfolio_projects_archived');
+        } else {
+            Cache::forget('portfolio_projects');
+            Cache::forget('portfolio_all');
+        }
 
         return $this->successResponse(
             [],
