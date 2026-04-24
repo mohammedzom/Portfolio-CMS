@@ -8,6 +8,7 @@ use App\Http\Requests\Experiences\UpdateExperienceRequest;
 use App\Http\Resources\ExperienceResource;
 use App\Models\Experience;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 
 class ExperienceController extends Controller
@@ -25,8 +26,12 @@ class ExperienceController extends Controller
                 ->orWhere('company', 'like', '%'.$request->search.'%')
                 ->orWhere('description', 'like', '%'.$request->search.'%');
         }
+        $hours = config('app.cache_ttl_hours', 24);
+        $ttl = now()->addHours($hours);
 
-        $experiences = $query->orderBy('start_date', 'desc')->get();
+        $experiences = Cache::remember('portfolio_experiences', $ttl, function () use ($query) {
+            return $query->orderBy('start_date', 'desc')->get();
+        });
 
         return $this->successResponse(
             ExperienceResource::collection($experiences),
@@ -39,6 +44,7 @@ class ExperienceController extends Controller
         $data = $request->validated();
         $this->checkForbiddenFields($data);
         $experience = Experience::create($data);
+        Cache::forget('portfolio_experiences');
 
         return $this->successResponse(
             new ExperienceResource($experience),
@@ -63,6 +69,7 @@ class ExperienceController extends Controller
         $data = $request->validated();
         $this->checkForbiddenFields($data);
         $experience->update($data);
+        Cache::forget('portfolio_experiences');
 
         return $this->successResponse(
             new ExperienceResource($experience),
@@ -74,6 +81,7 @@ class ExperienceController extends Controller
     {
         $experience = Experience::withoutTrashed()->findOrFail($id);
         $experience->delete();
+        Cache::forget('portfolio_experiences');
 
         return $this->successResponse(
             [],
@@ -85,6 +93,7 @@ class ExperienceController extends Controller
     {
         $experience = Experience::onlyTrashed()->findOrFail($id);
         $experience->restore();
+        Cache::forget('portfolio_experiences');
 
         return $this->successResponse(
             new ExperienceResource($experience),
@@ -96,6 +105,7 @@ class ExperienceController extends Controller
     {
         $experience = Experience::withTrashed()->findOrFail($id);
         $experience->forceDelete();
+        Cache::forget('portfolio_experiences');
 
         return $this->successResponse(
             [],

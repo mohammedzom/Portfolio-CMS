@@ -20,7 +20,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/portfolio', [PortfolioController::class, 'index'])->middleware('throttle:100,1');
 
     // Protected Routes
-    // Route::middleware('auth:sanctum')->group(function () { // comment this for testing
+    // Route::prefix('addmin')->middleware('auth:sanctum')->group(function () { // comment this for testing
     Route::post('/logout', Logout::class);
     Route::get('/dashboard', DashboardController::class);
 

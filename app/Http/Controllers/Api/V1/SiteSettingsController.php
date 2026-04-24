@@ -6,13 +6,19 @@ use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\UpdateSiteSettingsRequest;
 use App\Http\Resources\SiteSettingstResource;
 use App\Models\SiteSettings;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class SiteSettingsController extends Controller
 {
     public function index()
     {
-        $settings = SiteSettings::firstOrFail();
+        $hours = config('app.cache_ttl_hours', 24);
+        $ttl = now()->addHours($hours);
+
+        $settings = Cache::remember('portfolio_settings', $ttl, function () {
+            return SiteSettings::firstOrFail();
+        });
 
         return $this->successResponse(
             new SiteSettingstResource($settings),
@@ -47,6 +53,7 @@ class SiteSettingsController extends Controller
         }
 
         $settings->update($validated);
+        Cache::forget('portfolio_settings');
 
         return $this->successResponse(
             new SiteSettingstResource($settings),

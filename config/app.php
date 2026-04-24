@@ -28,6 +28,8 @@ return [
 
     'env' => env('APP_ENV', 'production'),
 
+    'cache_ttl_hours' => env('CACHE_TTL', 24),
+
     /*
     |--------------------------------------------------------------------------
     | Application Debug Mode

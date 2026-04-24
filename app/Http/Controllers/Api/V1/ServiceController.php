@@ -8,22 +8,33 @@ use App\Http\Requests\Services\UpdateServiceRequest;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class ServiceController extends Controller
 {
     public function index(Request $request)
     {
-        $services = Service::query();
+        $query = Service::query();
+        $cache_key = 'portfolio_services';
         if ($request->has('archived') && $request->archived) {
-            $services->onlyTrashed();
+            $query->onlyTrashed();
+            $cache_key .= '_archived';
         } else {
-            $services->withoutTrashed();
+            $query->withoutTrashed();
         }
         if ($request->filled('search')) {
-            $services->where('title', 'like', '%'.$request->search.'%');
-            $services->orWhere('description', 'like', '%'.$request->search.'%');
+            $cache_key = null;
+            $query->where('title', 'like', '%'.$request->search.'%');
+            $query->orWhere('description', 'like', '%'.$request->search.'%');
         }
-        $services = $services->orderBy('sort_order')->get();
+
+        $hours = config('app.cache_ttl_hours', 24);
+        $ttl = now()->addHours($hours);
+        if ($cache_key) {
+            $services = Cache::remember($cache_key, $ttl, fn () => $query->orderBy('sort_order')->get());
+        } else {
+            $services = $query->orderBy('sort_order')->get();
+        }
 
         return $this->successResponse(
             ServiceResource::collection($services),
@@ -34,6 +45,7 @@ class ServiceController extends Controller
     public function store(StoreServiceRequest $request)
     {
         $service = Service::create($request->validated());
+        Cache::forget('portfolio_services');
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -63,6 +75,7 @@ class ServiceController extends Controller
             'sort_order' => $request->sort_order,
             'tags' => $request->tags,
         ]);
+        Cache::forget('portfolio_services');
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -74,6 +87,7 @@ class ServiceController extends Controller
     {
         $service = Service::withoutTrashed()->findOrFail($id);
         $service->delete();
+        Cache::forget('portfolio_services');
 
         return $this->successResponse(
             [],
@@ -85,6 +99,7 @@ class ServiceController extends Controller
     {
         $service = Service::onlyTrashed()->findOrFail($id);
         $service->restore();
+        Cache::forget('portfolio_services');
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -96,6 +111,7 @@ class ServiceController extends Controller
     {
         $service = Service::withTrashed()->findOrFail($id);
         $service->forceDelete();
+        Cache::forget('portfolio_services');
 
         return $this->successResponse(
             [],
