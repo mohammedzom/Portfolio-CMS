@@ -1,0 +1,1287 @@
+{
+  "info": {
+    "_postman_id": "b1b1e398-541c-428b-8d8a-233b47913d77",
+    "name": "Portfolio-cms",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "28290355"
+  },
+  "item": [
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "GET All Messages",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "1|c3tHrxsbEQxmFMrniJuQJtth150JCN0u82nCwYr77c0e043d",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "2",
+                  "disabled": true
+                },
+                {
+                  "key": "archived",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Message",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/messages/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "messages",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark as read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/messages/12/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "messages",
+                "12",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark as unread",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/messages/12/unread",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "messages",
+                "12",
+                "unread"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Restore message",
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {}
+          },
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/messages/12/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "messages",
+                "12",
+                "restore"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Store Message",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"test\",\n    \"email\": \"test@g.com\",\n    \"subject\": \"test\",\n    \"body\": \"test\"\n}"
+            },
+            "url": {
+              "raw": "{{public_url}}/message",
+              "host": [
+                "{{public_url}}"
+              ],
+              "path": [
+                "message"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Archive Messages",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{base_url}}/messages/10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "messages",
+                "10"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Messages",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "x-api-key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{base_url}}/messages/12/force-delete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "messages",
+                "12",
+                "force-delete"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/login?email=admin@mohammedzomlot.dev&password=12345678",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "login"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "admin@mohammedzomlot.dev"
+                },
+                {
+                  "key": "password",
+                  "value": "12345678"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "1|c3tHrxsbEQxmFMrniJuQJtth150JCN0u82nCwYr77c0e043d",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Services",
+      "item": [
+        {
+          "name": "ALL Services",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services"
+              ],
+              "query": [
+                {
+                  "key": "archived",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Service",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\" : \"Service\",\n    \"description\" : \"Create a new service\",\n    \"icon\" : \"https://www.svgrepo.com/show/489281/api.svg\",\n    \"sort_order\" : \"1\",\n    \"tags\" : [\"service\", \"create\", \"test\" ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/services",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Service",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\" : \"Service\",\n    \"description\" : \"Create a new service\",\n    \"icon\" : \"https://www.svgrepo.com/show/489281/api.svg\",\n    \"sort_order\" : \"1\",\n    \"tags\" : [\"service\", \"create\", \"test\" ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/services/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Archive Service",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services/7",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services",
+                "7"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Service",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services/1/force-delete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services",
+                "1",
+                "force-delete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Restore Service",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/services/7/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "services",
+                "7",
+                "restore"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Experiences",
+      "item": [
+        {
+          "name": "ALL Experiences",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/experiences",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "experiences"
+              ],
+              "query": [
+                {
+                  "key": "archived",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Experience",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/experiences/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "experiences",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Experience",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"job_title\" : \"test\",\n    \"company\" : \"Create a new experiences test\",\n    \"description\" : \"test\",\n    \"start_date\" : \"2021\",\n    \"end_date\" : \"2023\",\n    \"is_current\" : false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/experiences",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "experiences"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Experience",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"job_title\" : \"test\",\n    \"company\" : \"Create a new experiences test\",\n    \"description\" : \"test\",\n    \"start_date\" : \"2021\",\n    \"end_date\" : \"2022\",\n    \"is_current\" : false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/experiences/5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "experiences",
+                "5"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Archive Experience",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/experiences/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "experiences",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Experience",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/experiences/7/force-delete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "experiences",
+                "7",
+                "force-delete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Experience Service",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/experiences/2/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "experiences",
+                "2",
+                "restore"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Skills",
+      "item": [
+        {
+          "name": "ALL Skills",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/skills?archived=true",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "skills"
+              ],
+              "query": [
+                {
+                  "key": "archived",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Skill",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/skills/7",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "skills",
+                "7"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Skill",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"job_title\" : \"test\",\n    \"company\" : \"Create a new experiences test\",\n    \"description\" : \"test\",\n    \"start_date\" : \"2021\",\n    \"end_date\" : \"2023\",\n    \"is_current\" : false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/skills",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "skills"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Skills",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"HTML & CSS\",\n    \"proficiency\": 80,\n    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n    \"type\": \"technical\",\n    \"sort_order\": 2   \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/skills/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "skills",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Archive Skill",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/skills/2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "skills",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Skill",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/skills/7/force-delete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "skills",
+                "7",
+                "force-delete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Restore Skill",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/skills/2/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "skills",
+                "2",
+                "restore"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "ALL Projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects"
+              ],
+              "query": [
+                {
+                  "key": "archived",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Project",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/22",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "22"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "test",
+                  "type": "text",
+                  "uuid": "3d6fe9ba-f1d5-4d69-b9fe-45e14017ec20"
+                },
+                {
+                  "key": "description",
+                  "value": "test description",
+                  "type": "text",
+                  "uuid": "4bb5c3f8-58d8-46c2-833a-29ae027cb953"
+                },
+                {
+                  "key": "category",
+                  "value": "Web",
+                  "type": "text",
+                  "uuid": "74f14144-39da-4ea5-89ee-e9872aff6b2c"
+                },
+                {
+                  "key": "images[]",
+                  "type": "file",
+                  "uuid": "7ffce366-902c-4746-a0b4-1b6be45cbe15",
+                  "src": [
+                    "/home/mohammedzom/Downloads/wallpaperflare.com_wallpaper.jpg",
+                    "/home/mohammedzom/Pictures/photo_2026-02-28_15-12-21.jpg"
+                  ]
+                },
+                {
+                  "key": "tech_stack[]",
+                  "value": "test",
+                  "type": "text",
+                  "uuid": "f6d474e9-c312-4cec-b388-502af5848899"
+                },
+                {
+                  "key": "tech_stack[]",
+                  "value": "test2",
+                  "type": "text",
+                  "uuid": "7b5920ef-822c-49ce-8413-5ddae8e5912b"
+                },
+                {
+                  "key": "live_url",
+                  "value": "https://google.com",
+                  "type": "text",
+                  "uuid": "78f04bd0-c6da-4932-b5ca-b98da1a3f59d"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/projects",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "test",
+                  "type": "text",
+                  "uuid": "3d6fe9ba-f1d5-4d69-b9fe-45e14017ec20"
+                },
+                {
+                  "key": "description",
+                  "value": "test description",
+                  "type": "text",
+                  "uuid": "4bb5c3f8-58d8-46c2-833a-29ae027cb953"
+                },
+                {
+                  "key": "category",
+                  "value": "Web",
+                  "type": "text",
+                  "uuid": "74f14144-39da-4ea5-89ee-e9872aff6b2c"
+                },
+                {
+                  "key": "tech_stack[]",
+                  "value": "test",
+                  "type": "text",
+                  "uuid": "f6d474e9-c312-4cec-b388-502af5848899",
+                  "disabled": true
+                },
+                {
+                  "key": "tech_stack[]",
+                  "value": "test23",
+                  "type": "text",
+                  "uuid": "7b5920ef-822c-49ce-8413-5ddae8e5912b",
+                  "disabled": true
+                },
+                {
+                  "key": "live_url",
+                  "value": "https://google.com",
+                  "type": "text",
+                  "uuid": "78f04bd0-c6da-4932-b5ca-b98da1a3f59d"
+                },
+                {
+                  "key": "images[]",
+                  "type": "file",
+                  "uuid": "1531ee2b-1caf-4b6e-bdc7-51ef50be281e",
+                  "src": "/home/mohammedzom/Pictures/remmina_Quick Connect_localhost:3390_20260226-033853.png",
+                  "disabled": true
+                },
+                {
+                  "key": "deleted_images[]",
+                  "value": "http://127.0.0.1:8000/storage/projects/project_m_69e8a8cf9fa7f.jpg",
+                  "type": "text",
+                  "uuid": "cd9f684b-7257-4c77-8da4-b2c8b65cfd87",
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/projects/22",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "22"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Archive Project",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "Request not found/projects/22",
+              "host": [
+                "Request not found"
+              ],
+              "path": [
+                "projects",
+                "22"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Poject",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/22/force-delete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "22",
+                "force-delete"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Restore Project",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/projects/22/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "projects",
+                "22",
+                "restore"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Site Info",
+      "item": [
+        {
+          "name": "Site Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/site-info",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "site-info"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Site Info",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "phone",
+                  "value": "+970593628153",
+                  "type": "text",
+                  "uuid": "c335bcb2-9083-4aa0-97bc-b60afdb18e89"
+                },
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "uuid": "baabf4db-f3be-4393-a63c-f283fde1684b",
+                  "src": "/home/mohammedzom/Downloads/project-management-planning-development-message-box-notification-graphic.jpg",
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/site-info",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "site-info"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/dashboard",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "dashboard"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Dashboard",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/dashboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "dashboard"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Host",
+              "value": "127.0.0.1:8000"
+            },
+            {
+              "key": "Connection",
+              "value": "close"
+            },
+            {
+              "key": "X-Powered-By",
+              "value": "PHP/8.5.0"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, private"
+            },
+            {
+              "key": "Date",
+              "value": "Fri, 24 Apr 2026 07:17:12 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"success\": true,\n    \"message\": \"Dashboard Data Retrieved Successfully\",\n    \"data\": {\n        \"projects\": [\n            {\n                \"id\": 1,\n                \"title\": \"Modern Website\",\n                \"slug\": \"modern-website\",\n                \"description\": \"A sleek corporate website with smooth animations and lightning-fast performance.\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"React\",\n                    \"Tailwind\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": true,\n                \"sort_order\": 1,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 2,\n                \"title\": \"Landing Page\",\n                \"slug\": \"landing-page\",\n                \"description\": \"High-converting landing page with A/B testing and integrated analytics.\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"Next.js\",\n                    \"Framer\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 2,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 3,\n                \"title\": \"E-commerce Store\",\n                \"slug\": \"e-commerce-store\",\n                \"description\": \"Full-stack shop with cart, payment integration via Stripe, and admin panel.\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"Vue\",\n                    \"Laravel\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": true,\n                \"sort_order\": 3,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 4,\n                \"title\": \"Mobile App UI\",\n                \"slug\": \"mobile-app-ui\",\n                \"description\": \"Cross-platform mobile app with clean interface and offline-first architecture.\",\n                \"category\": \"App\",\n                \"tech_stack\": [\n                    \"React Native\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 4,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 5,\n                \"title\": \"Analytics Dashboard\",\n                \"slug\": \"analytics-dashboard\",\n                \"description\": \"Data visualization dashboard design system with 40+ components ready for handoff.\",\n                \"category\": \"App\",\n                \"tech_stack\": [\n                    \"Figma\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": true,\n                \"sort_order\": 5,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            }\n        ],\n        \"skills\": {\n            \"technical\": [\n                {\n                    \"id\": 4,\n                    \"name\": \"Tailwind CSS\",\n                    \"proficiency\": 92,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 2,\n                    \"name\": \"JavaScript / TypeScript\",\n                    \"proficiency\": 90,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T09:04:09.000000Z\"\n                },\n                {\n                    \"id\": 3,\n                    \"name\": \"React / Vue.js\",\n                    \"proficiency\": 85,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 1,\n                    \"name\": \"HTML & CSS\",\n                    \"proficiency\": 80,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:51:06.000000Z\"\n                },\n                {\n                    \"id\": 6,\n                    \"name\": \"Figma / UI Design\",\n                    \"proficiency\": 80,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 5,\n                    \"name\": \"Node.js / PHP\",\n                    \"proficiency\": 75,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                }\n            ],\n            \"tool\": [\n                {\n                    \"id\": 8,\n                    \"name\": \"CSS3\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 9,\n                    \"name\": \"JavaScript\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 10,\n                    \"name\": \"React\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 11,\n                    \"name\": \"Vue\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 12,\n                    \"name\": \"Git\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 13,\n                    \"name\": \"GitHub\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                }\n            ]\n        },\n        \"messages\": [\n            {\n                \"id\": 9,\n                \"name\": \"Mr. Wyman Moore\",\n                \"email\": \"shansen@hotmail.com\",\n                \"subject\": \"Est qui et repellat sed nihil fugit.\",\n                \"body\": \"Voluptate aut omnis omnis cupiditate magni fugit quia. Aut explicabo sapiente ullam amet sed illo eveniet rerum. Facilis quam autem vel consequuntur neque ut similique.\",\n                \"is_read\": false,\n                \"read_at_human\": null,\n                \"read_at\": null,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 10,\n                \"name\": \"Mr. Bennie Konopelski Sr.\",\n                \"email\": \"lschuster@boehm.net\",\n                \"subject\": \"Eaque eos cumque est commodi.\",\n                \"body\": \"Enim corrupti atque itaque ut consequatur. Aspernatur nesciunt ea voluptatem ut temporibus molestias minus. Maxime molestiae ratione quae accusantium ullam omnis.\",\n                \"is_read\": false,\n                \"read_at_human\": null,\n                \"read_at\": null,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 11,\n                \"name\": \"Ernestine Willms\",\n                \"email\": \"wilber54@mante.info\",\n                \"subject\": \"Et suscipit voluptas nisi atque nesciunt ipsum consectetur.\",\n                \"body\": \"Commodi quia neque quisquam rerum commodi. Unde deserunt ea aut quasi at sed. Enim eius eligendi expedita neque velit repellendus aut. Et ea hic ut eligendi.\",\n                \"is_read\": false,\n                \"read_at_human\": null,\n                \"read_at\": null,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            }\n        ],\n        \"information\": {\n            \"id\": 1,\n            \"first_name\": \"Mohammed\",\n            \"last_name\": \"Zomlot\",\n            \"full_name\": \"Mohammed Zomlot\",\n            \"tagline\": \"Front-end Developer & UI Designer\",\n            \"bio\": \"I'm a passionate front-end developer with 5+ years of experience creating stunning web interfaces. I specialize in turning complex ideas into clean, intuitive, and high-performance digital experiences.\",\n            \"about_me\": \"I'm a passionate front-end developer with 5+ years of experience creating stunning web interfaces. I specialize in turning complex ideas into clean, intuitive, and high-performance digital experiences.\",\n            \"avatar\": \"http://127.0.0.1:8000/storage/avatars/avatar.jpg\",\n            \"cv_file\": \"http://127.0.0.1:8000/storage/cv/backend-developer2_-_Template_18.pdf\",\n            \"cv_file_name\": \"backend-developer2_-_Template_18.pdf\",\n            \"url_prefix\": \"Mohammedzomlot\",\n            \"url_suffix\": \"dev\",\n            \"languages\": [\n                \"Arabic (Native)\",\n                \"English\"\n            ],\n            \"email\": \"patrick@dev.io\",\n            \"phone\": \"+970593628153\",\n            \"location\": \"Casablanca, Morocco\",\n            \"social_links\": [\n                {\n                    \"url\": \"https://github.com/\",\n                    \"icon\": \"ri-github-line\",\n                    \"name\": \"GitHub\"\n                },\n                {\n                    \"url\": \"https://linkedin.com/\",\n                    \"icon\": \"ri-linkedin-line\",\n                    \"name\": \"LinkedIn\"\n                },\n                {\n                    \"url\": \"https://twitter.com/\",\n                    \"icon\": \"ri-twitter-line\",\n                    \"name\": \"Twitter\"\n                },\n                {\n                    \"url\": \"https://dribbble.com/\",\n                    \"icon\": \"ri-dribbble-line\",\n                    \"name\": \"Dribbble\"\n                }\n            ],\n            \"years_experience\": 5,\n            \"projects_count\": 20,\n            \"clients_count\": 15,\n            \"available_for_freelance\": true,\n            \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n            \"updated_at\": \"2026-04-24T07:03:46.000000Z\"\n        },\n        \"projects_count\": 21,\n        \"messages_count\": {\n            \"total\": 13,\n            \"unread\": 5\n        },\n        \"skills_count\": 17\n    }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Portfolio",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/portfolio",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "portfolio"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Portfolio",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/portfolio",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "portfolio"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "Host",
+              "value": "127.0.0.1:8000"
+            },
+            {
+              "key": "Connection",
+              "value": "close"
+            },
+            {
+              "key": "X-Powered-By",
+              "value": "PHP/8.5.0"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, private"
+            },
+            {
+              "key": "Date",
+              "value": "Fri, 24 Apr 2026 07:16:53 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "X-RateLimit-Limit",
+              "value": "100"
+            },
+            {
+              "key": "X-RateLimit-Remaining",
+              "value": "99"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"success\": true,\n    \"message\": \"Portfolio Data Retreived Successfully.\",\n    \"data\": {\n        \"skills\": {\n            \"technical\": [\n                {\n                    \"id\": 4,\n                    \"name\": \"Tailwind CSS\",\n                    \"proficiency\": 92,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 2,\n                    \"name\": \"JavaScript / TypeScript\",\n                    \"proficiency\": 90,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T09:04:09.000000Z\"\n                },\n                {\n                    \"id\": 3,\n                    \"name\": \"React / Vue.js\",\n                    \"proficiency\": 85,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 1,\n                    \"name\": \"HTML & CSS\",\n                    \"proficiency\": 80,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:51:06.000000Z\"\n                },\n                {\n                    \"id\": 6,\n                    \"name\": \"Figma / UI Design\",\n                    \"proficiency\": 80,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 5,\n                    \"name\": \"Node.js / PHP\",\n                    \"proficiency\": 75,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"technical\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                }\n            ],\n            \"tools\": [\n                {\n                    \"id\": 8,\n                    \"name\": \"CSS3\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 9,\n                    \"name\": \"JavaScript\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 10,\n                    \"name\": \"React\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 11,\n                    \"name\": \"Vue\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 12,\n                    \"name\": \"Git\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 13,\n                    \"name\": \"GitHub\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 14,\n                    \"name\": \"Figma\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 15,\n                    \"name\": \"MySQL\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 16,\n                    \"name\": \"Laravel\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 17,\n                    \"name\": \"Tailwind\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                },\n                {\n                    \"id\": 18,\n                    \"name\": \"CLI\",\n                    \"proficiency\": 0,\n                    \"icon\": \"https://www.svgrepo.com/show/489281/api.svg\",\n                    \"type\": \"tool\",\n                    \"sort_order\": null,\n                    \"deleted_at_human\": null,\n                    \"deleted_at\": null,\n                    \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                    \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n                }\n            ]\n        },\n        \"projects\": [\n            {\n                \"id\": 1,\n                \"title\": \"Modern Website\",\n                \"slug\": \"modern-website\",\n                \"description\": \"A sleek corporate website with smooth animations and lightning-fast performance.\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"React\",\n                    \"Tailwind\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": true,\n                \"sort_order\": 1,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 2,\n                \"title\": \"Landing Page\",\n                \"slug\": \"landing-page\",\n                \"description\": \"High-converting landing page with A/B testing and integrated analytics.\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"Next.js\",\n                    \"Framer\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 2,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 3,\n                \"title\": \"E-commerce Store\",\n                \"slug\": \"e-commerce-store\",\n                \"description\": \"Full-stack shop with cart, payment integration via Stripe, and admin panel.\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"Vue\",\n                    \"Laravel\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": true,\n                \"sort_order\": 3,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 4,\n                \"title\": \"Mobile App UI\",\n                \"slug\": \"mobile-app-ui\",\n                \"description\": \"Cross-platform mobile app with clean interface and offline-first architecture.\",\n                \"category\": \"App\",\n                \"tech_stack\": [\n                    \"React Native\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 4,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 5,\n                \"title\": \"Analytics Dashboard\",\n                \"slug\": \"analytics-dashboard\",\n                \"description\": \"Data visualization dashboard design system with 40+ components ready for handoff.\",\n                \"category\": \"App\",\n                \"tech_stack\": [\n                    \"Figma\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": true,\n                \"sort_order\": 5,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 6,\n                \"title\": \"Portfolio Design\",\n                \"slug\": \"portfolio-design\",\n                \"description\": \"Custom portfolio template for creatives — fully responsive with dark mode support.\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"Figma\",\n                    \"CSS\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 6,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 7,\n                \"title\": \"Project Title\",\n                \"slug\": \"project-title\",\n                \"description\": \"Project Description\",\n                \"category\": \"Web\",\n                \"tech_stack\": null,\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 7,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:17:39.000000Z\",\n                \"updated_at\": \"2026-04-22T10:17:39.000000Z\"\n            },\n            {\n                \"id\": 8,\n                \"title\": \"Project Title\",\n                \"slug\": \"project-title-69e8a068049a6\",\n                \"description\": \"Project Description\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"HTML\",\n                    \"CSS\",\n                    \"JavaScript\"\n                ],\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 8,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:18:16.000000Z\",\n                \"updated_at\": \"2026-04-22T10:18:16.000000Z\"\n            },\n            {\n                \"id\": 9,\n                \"title\": \"test\",\n                \"slug\": \"test\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": null,\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 9,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:24:18.000000Z\",\n                \"updated_at\": \"2026-04-22T10:24:18.000000Z\"\n            },\n            {\n                \"id\": 10,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a23b007b2\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": null,\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 10,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:26:03.000000Z\",\n                \"updated_at\": \"2026-04-22T10:26:03.000000Z\"\n            },\n            {\n                \"id\": 11,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a23ed55e7\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": null,\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 11,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:26:06.000000Z\",\n                \"updated_at\": \"2026-04-22T10:26:06.000000Z\"\n            },\n            {\n                \"id\": 12,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a2409bacf\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": null,\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 12,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:26:08.000000Z\",\n                \"updated_at\": \"2026-04-22T10:26:08.000000Z\"\n            },\n            {\n                \"id\": 13,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a24571b3a\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": null,\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 13,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:26:13.000000Z\",\n                \"updated_at\": \"2026-04-22T10:26:13.000000Z\"\n            },\n            {\n                \"id\": 14,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a26cb47d8\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": null,\n                \"images\": [],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 14,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:26:52.000000Z\",\n                \"updated_at\": \"2026-04-22T10:26:52.000000Z\"\n            },\n            {\n                \"id\": 15,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a3762fb27\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": null,\n                \"images\": [\n                    \"http://127.0.0.1:8000/storage/projects/project_wallpaperflare_69e8a375b59ba.jpg\",\n                    \"http://127.0.0.1:8000/storage/projects/project_photo_2026-02-28_15-12-21_69e8a3761c87d.jpg\"\n                ],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 15,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:31:18.000000Z\",\n                \"updated_at\": \"2026-04-22T10:31:18.000000Z\"\n            },\n            {\n                \"id\": 16,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a3ae6201c\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"test\"\n                ],\n                \"images\": [\n                    \"http://127.0.0.1:8000/storage/projects/project_wallpaperflare_69e8a3ae6122a.jpg\",\n                    \"http://127.0.0.1:8000/storage/projects/project_photo_2026-02-28_15-12-21_69e8a3ae61420.jpg\"\n                ],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 16,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:32:14.000000Z\",\n                \"updated_at\": \"2026-04-22T10:32:14.000000Z\"\n            },\n            {\n                \"id\": 17,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a3b603529\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"test,test2\"\n                ],\n                \"images\": [\n                    \"http://127.0.0.1:8000/storage/projects/project_wallpaperflare_69e8a3b60277b.jpg\",\n                    \"http://127.0.0.1:8000/storage/projects/project_photo_2026-02-28_15-12-21_69e8a3b60299a.jpg\"\n                ],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 17,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:32:22.000000Z\",\n                \"updated_at\": \"2026-04-22T10:32:22.000000Z\"\n            },\n            {\n                \"id\": 18,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a3ca7f810\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"test\",\n                    \"test2\"\n                ],\n                \"images\": [\n                    \"http://127.0.0.1:8000/storage/projects/project_wallpaperflare_69e8a3ca76387.jpg\",\n                    \"http://127.0.0.1:8000/storage/projects/project_photo_2026-02-28_15-12-21_69e8a3ca766a8.jpg\"\n                ],\n                \"live_url\": null,\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 18,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:32:42.000000Z\",\n                \"updated_at\": \"2026-04-22T10:32:42.000000Z\"\n            },\n            {\n                \"id\": 19,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a3f6e46e0\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"test\",\n                    \"test2\"\n                ],\n                \"images\": [\n                    \"http://127.0.0.1:8000/storage/projects/project_wallpaperflare_69e8a3f6dd83d.jpg\",\n                    \"http://127.0.0.1:8000/storage/projects/project_photo_2026-02-28_15-12-21_69e8a3f6ddace.jpg\"\n                ],\n                \"live_url\": \"https://moh.m\",\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 19,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:33:26.000000Z\",\n                \"updated_at\": \"2026-04-22T10:33:26.000000Z\"\n            },\n            {\n                \"id\": 20,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a407687ae\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"test\",\n                    \"test2\"\n                ],\n                \"images\": [\n                    \"http://127.0.0.1:8000/storage/projects/project_wallpaperflare_69e8a407679ea.jpg\",\n                    \"http://127.0.0.1:8000/storage/projects/project_photo_2026-02-28_15-12-21_69e8a40767bee.jpg\"\n                ],\n                \"live_url\": \"https://google.com\",\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 20,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:33:43.000000Z\",\n                \"updated_at\": \"2026-04-22T10:33:43.000000Z\"\n            },\n            {\n                \"id\": 21,\n                \"title\": \"test\",\n                \"slug\": \"test-69e8a451b7754\",\n                \"description\": \"test description\",\n                \"category\": \"Web\",\n                \"tech_stack\": [\n                    \"test\",\n                    \"test23\"\n                ],\n                \"images\": [],\n                \"live_url\": \"https://google.com\",\n                \"repo_url\": null,\n                \"is_featured\": false,\n                \"sort_order\": 21,\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T10:34:57.000000Z\",\n                \"updated_at\": \"2026-04-22T10:34:57.000000Z\"\n            }\n        ],\n        \"services\": [\n            {\n                \"id\": 1,\n                \"title\": \"Web Development\",\n                \"description\": \"Building fast, responsive, and accessible websites using the latest technologies and best practices.\",\n                \"icon\": \"ri-code-box-line\",\n                \"tags\": [\n                    \"React\",\n                    \"Next.js\",\n                    \"Vue\",\n                    \"Laravel\"\n                ],\n                \"sort_order\": 1,\n                \"deleted_at\": null,\n                \"deleted_at_human\": null,\n                \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n            },\n            {\n                \"id\": 2,\n                \"title\": \"UI/UX Design\",\n                \"description\": \"Creating intuitive and visually stunning user interfaces with a focus on user experience and conversion.\",\n                \"icon\": \"ri-layout-4-line\",\n                \"tags\": [\n                    \"Figma\",\n                    \"Prototyping\",\n                    \"Design Systems\",\n                    \"Wireframing\"\n                ],\n                \"sort_order\": 2,\n                \"deleted_at\": null,\n                \"deleted_at_human\": null,\n                \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n            },\n            {\n                \"id\": 3,\n                \"title\": \"Mobile-First Design\",\n                \"description\": \"Every project is built mobile-first ensuring perfect experience across all devices and screen sizes.\",\n                \"icon\": \"ri-smartphone-line\",\n                \"tags\": [\n                    \"Responsive\",\n                    \"PWA\",\n                    \"Performance\",\n                    \"Accessibility\"\n                ],\n                \"sort_order\": 3,\n                \"deleted_at\": null,\n                \"deleted_at_human\": null,\n                \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n            },\n            {\n                \"id\": 4,\n                \"title\": \"Performance Optimization\",\n                \"description\": \"Analyzing and optimizing web performance for lightning-fast load times and smooth interactions.\",\n                \"icon\": \"ri-speed-line\",\n                \"tags\": [\n                    \"Core Web Vitals\",\n                    \"SEO\",\n                    \"Caching\",\n                    \"Compression\"\n                ],\n                \"sort_order\": 4,\n                \"deleted_at\": null,\n                \"deleted_at_human\": null,\n                \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n            },\n            {\n                \"id\": 5,\n                \"title\": \"Open Source\",\n                \"description\": \"Contributing to the community through open source projects and sharing knowledge with other developers.\",\n                \"icon\": \"ri-github-line\",\n                \"tags\": [\n                    \"npm packages\",\n                    \"GitHub\",\n                    \"Documentation\",\n                    \"Tutorials\"\n                ],\n                \"sort_order\": 5,\n                \"deleted_at\": null,\n                \"deleted_at_human\": null,\n                \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n            },\n            {\n                \"id\": 6,\n                \"title\": \"Ongoing Support\",\n                \"description\": \"Providing continuous maintenance, updates, and support to keep your digital products running smoothly.\",\n                \"icon\": \"ri-customer-service-2-line\",\n                \"tags\": [\n                    \"Monitoring\",\n                    \"Updates\",\n                    \"Hotfixes\",\n                    \"Consulting\"\n                ],\n                \"sort_order\": 6,\n                \"deleted_at\": null,\n                \"deleted_at_human\": null,\n                \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:22.000000Z\"\n            }\n        ],\n        \"information\": {\n            \"id\": 1,\n            \"first_name\": \"Mohammed\",\n            \"last_name\": \"Zomlot\",\n            \"full_name\": \"Mohammed Zomlot\",\n            \"tagline\": \"Front-end Developer & UI Designer\",\n            \"bio\": \"I'm a passionate front-end developer with 5+ years of experience creating stunning web interfaces. I specialize in turning complex ideas into clean, intuitive, and high-performance digital experiences.\",\n            \"about_me\": \"I'm a passionate front-end developer with 5+ years of experience creating stunning web interfaces. I specialize in turning complex ideas into clean, intuitive, and high-performance digital experiences.\",\n            \"avatar\": \"http://127.0.0.1:8000/storage/avatars/avatar.jpg\",\n            \"cv_file\": \"http://127.0.0.1:8000/storage/cv/backend-developer2_-_Template_18.pdf\",\n            \"cv_file_name\": \"backend-developer2_-_Template_18.pdf\",\n            \"url_prefix\": \"Mohammedzomlot\",\n            \"url_suffix\": \"dev\",\n            \"languages\": [\n                \"Arabic (Native)\",\n                \"English\"\n            ],\n            \"email\": \"patrick@dev.io\",\n            \"phone\": \"+970593628153\",\n            \"location\": \"Casablanca, Morocco\",\n            \"social_links\": [\n                {\n                    \"url\": \"https://github.com/\",\n                    \"icon\": \"ri-github-line\",\n                    \"name\": \"GitHub\"\n                },\n                {\n                    \"url\": \"https://linkedin.com/\",\n                    \"icon\": \"ri-linkedin-line\",\n                    \"name\": \"LinkedIn\"\n                },\n                {\n                    \"url\": \"https://twitter.com/\",\n                    \"icon\": \"ri-twitter-line\",\n                    \"name\": \"Twitter\"\n                },\n                {\n                    \"url\": \"https://dribbble.com/\",\n                    \"icon\": \"ri-dribbble-line\",\n                    \"name\": \"Dribbble\"\n                }\n            ],\n            \"years_experience\": 5,\n            \"projects_count\": 20,\n            \"clients_count\": 15,\n            \"available_for_freelance\": true,\n            \"created_at\": \"2026-04-22T08:35:22.000000Z\",\n            \"updated_at\": \"2026-04-24T07:03:46.000000Z\"\n        },\n        \"experiences\": [\n            {\n                \"id\": 1,\n                \"job_title\": \"Senior Front-end Developer\",\n                \"company\": \"Acme Studio\",\n                \"description\": \"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\",\n                \"period\": \"2023 - \",\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 2,\n                \"job_title\": \"Front-end Developer\",\n                \"company\": \"WebCraft Co.\",\n                \"description\": \"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\",\n                \"period\": \"2021 - 2023\",\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            },\n            {\n                \"id\": 3,\n                \"job_title\": \"Junior Developer\",\n                \"company\": \"Freelance\",\n                \"description\": \"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\",\n                \"period\": \"2019 - 2021\",\n                \"deleted_at_human\": null,\n                \"deleted_at\": null,\n                \"created_at\": \"2026-04-22T08:35:23.000000Z\",\n                \"updated_at\": \"2026-04-22T08:35:23.000000Z\"\n            }\n        ]\n    }\n}"
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "1|dpl14zUWIwCDbpYZum4lManspQaO9qPSUotMS8SY86286c89",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": ""
+    },
+    {
+      "key": "public_url",
+      "value": ""
+    }
+  ]
+}

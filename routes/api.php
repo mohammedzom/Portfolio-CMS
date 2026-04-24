@@ -20,64 +20,64 @@ Route::prefix('v1')->group(function () {
     Route::get('/portfolio', [PortfolioController::class, 'index'])->middleware('throttle:25,1');
 
     // Protected Routes
-    // Route::prefix('admin')->middleware('auth:sanctum')->group(function () { // comment this for testing
-    Route::post('/logout', Logout::class);
-    Route::get('/dashboard', DashboardController::class);
+    Route::prefix('admin')->middleware('auth:sanctum')->group(function () { // comment this for testing
+        Route::post('/logout', Logout::class);
+        Route::get('/dashboard', DashboardController::class);
 
-    Route::prefix('messages')->controller(MessageController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::get('/{id}', 'show');
-        Route::patch('/{id}/read', 'markAsRead');
-        Route::patch('/{id}/unread', 'markAsUnread');
-        Route::delete('/{id}', 'destroy');
-        Route::patch('/{id}/restore', 'restore');
-        Route::delete('/{id}/force-delete', 'forceDelete');
-    });
+        Route::prefix('messages')->controller(MessageController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/{id}', 'show');
+            Route::patch('/{id}/read', 'markAsRead');
+            Route::patch('/{id}/unread', 'markAsUnread');
+            Route::delete('/{id}', 'destroy');
+            Route::patch('/{id}/restore', 'restore');
+            Route::delete('/{id}/force-delete', 'forceDelete');
+        });
 
-    Route::prefix('services')->controller(ServiceController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::get('/{id}', 'show');
-        Route::post('/', 'store');
-        Route::patch('/{id}', 'update');
-        Route::delete('/{id}', 'destroy');
-        Route::patch('/{id}/restore', 'restore');
-        Route::delete('/{id}/force-delete', 'forceDelete');
-    });
+        Route::prefix('services')->controller(ServiceController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/{id}', 'show');
+            Route::post('/', 'store');
+            Route::patch('/{id}', 'update');
+            Route::delete('/{id}', 'destroy');
+            Route::patch('/{id}/restore', 'restore');
+            Route::delete('/{id}/force-delete', 'forceDelete');
+        });
 
-    Route::prefix('experiences')->controller(ExperienceController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::get('/{id}', 'show');
-        Route::post('/', 'store');
-        Route::patch('/{id}', 'update');
-        Route::delete('/{id}', 'destroy');
-        Route::patch('/{id}/restore', 'restore');
-        Route::delete('/{id}/force-delete', 'forceDelete');
-    });
+        Route::prefix('experiences')->controller(ExperienceController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/{id}', 'show');
+            Route::post('/', 'store');
+            Route::patch('/{id}', 'update');
+            Route::delete('/{id}', 'destroy');
+            Route::patch('/{id}/restore', 'restore');
+            Route::delete('/{id}/force-delete', 'forceDelete');
+        });
 
-    Route::prefix('skills')->controller(SkillController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::post('/', 'store');
-        Route::get('/{id}', 'show');
-        Route::patch('/{id}', 'update');
-        Route::patch('/{id}/restore', 'restore');
-        Route::delete('/{id}', 'destroy');
-        Route::delete('/{id}/force-delete', 'forceDelete');
-    });
+        Route::prefix('skills')->controller(SkillController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::get('/{id}', 'show');
+            Route::patch('/{id}', 'update');
+            Route::patch('/{id}/restore', 'restore');
+            Route::delete('/{id}', 'destroy');
+            Route::delete('/{id}/force-delete', 'forceDelete');
+        });
 
-    Route::prefix('projects')->controller(ProjectController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::get('/{id}', 'show');
-        Route::post('/', 'store');
-        Route::patch('/{id}', 'update');
-        Route::delete('/{id}', 'destroy');
-        Route::patch('/{id}/restore', 'restore');
-        Route::delete('/{id}/force-delete', 'forceDelete');
-    });
+        Route::prefix('projects')->controller(ProjectController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/{id}', 'show');
+            Route::post('/', 'store');
+            Route::patch('/{id}', 'update');
+            Route::delete('/{id}', 'destroy');
+            Route::patch('/{id}/restore', 'restore');
+            Route::delete('/{id}/force-delete', 'forceDelete');
+        });
 
-    Route::prefix('site-info')->controller(SiteSettingsController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::patch('/', 'update');
+        Route::prefix('site-info')->controller(SiteSettingsController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::patch('/', 'update');
+        });
     });
-    // });
 
 });
