@@ -27,10 +27,10 @@ type NavigationItem = {
 const navigationItems: NavigationItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
-  { href: "/skills", label: "Skills", icon: Sparkles },
-  { href: "/services", label: "Services", icon: Wrench },
-  { href: "/messages", label: "Messages", icon: MessageSquare },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/skills", label: "Skills", icon: Sparkles },
+  { href: "/dashboard/services", label: "Services", icon: Wrench },
+  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminLayout({
