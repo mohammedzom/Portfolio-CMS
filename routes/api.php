@@ -15,12 +15,12 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
 
     // Public Routes
-    Route::post('/login', Login::class)->name('login')->middleware('throttle:10,1');
-    Route::post('/message', [MessageController::class, 'store'])->middleware('throttle:5,1');
-    Route::get('/portfolio', [PortfolioController::class, 'index'])->middleware('throttle:100,1');
+    Route::post('/admin/login', Login::class)->name('login')->middleware('throttle:10,1');
+    Route::post('/message', [MessageController::class, 'store'])->middleware('throttle:contact_form');
+    Route::get('/portfolio', [PortfolioController::class, 'index'])->middleware('throttle:25,1');
 
     // Protected Routes
-    // Route::prefix('addmin')->middleware('auth:sanctum')->group(function () { // comment this for testing
+    // Route::prefix('admin')->middleware('auth:sanctum')->group(function () { // comment this for testing
     Route::post('/logout', Logout::class);
     Route::get('/dashboard', DashboardController::class);
 

@@ -12,8 +12,8 @@ class StoreExperienceRequest extends FormRequest
             'job_title' => 'required|string|max:255',
             'company' => 'required|string|max:255',
             'description' => 'required|string|max:255',
-            'start_date' => 'required|integer|max:'.(int) date('Y'),
-            'end_date' => 'required_if:is_current,false,0|nullable|integer|after:start_date',
+            'start_date' => 'required|digits:4|integer|max:'.(int) date('Y'),
+            'end_date' => 'exclude_if:is_current,true|required_if:is_current,false|digits:4|integer|after_or_equal:start_date',
             'is_current' => 'required|boolean',
         ];
     }
