@@ -17,18 +17,20 @@ class UpdateAchievementAction
             $achievement = Achievement::findOrFail($id);
 
             if ($file) {
-                Storage::disk('public')->delete($achievement->certificate_url);
+                if (! empty($achievement->certificate_url)) {
+                    Storage::disk('public')->delete($achievement->certificate_url);
+                }
                 $fileName = $file->getClientOriginalName();
-                $file = $file->storeAs('achievements', $fileName, 'public');
+                $path = $file->storeAs('achievements', $fileName, 'public');
             }
 
             $achievement->update([
-                'title' => $data['title'],
-                'issuer' => $data['issuer'],
-                'date' => $data['date'],
-                'url' => $data['url'],
-                'description' => $data['description'],
-                'certificate_url' => $file ?? $achievement->certificate_url,
+                'title' => $data['title'] ?? $achievement->title,
+                'issuer' => $data['issuer'] ?? $achievement->issuer,
+                'date' => $data['date'] ?? $achievement->date,
+                'url' => $data['url'] ?? $achievement->url,
+                'description' => $data['description'] ?? $achievement->description,
+                'certificate_url' => $path ?? $achievement->certificate_url,
             ]);
 
             return $achievement;
