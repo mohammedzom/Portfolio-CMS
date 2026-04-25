@@ -16,7 +16,7 @@ class AchievementSeeder extends Seeder
                 'date' => '2024-03-15',
                 'url' => 'https://aws.amazon.com/certification/',
                 'description' => 'Validates technical expertise in developing and maintaining applications built on AWS.',
-                'image' => null,
+                'certificate_url' => null,
             ],
             [
                 'title' => 'Meta Front-End Developer Certificate',
@@ -24,7 +24,7 @@ class AchievementSeeder extends Seeder
                 'date' => '2023-09-01',
                 'url' => 'https://www.coursera.org/professional-certificates/meta-front-end-developer',
                 'description' => 'Professional certification covering React, responsive design, and modern front-end development workflows.',
-                'image' => null,
+                'certificate_url' => null,
             ],
             [
                 'title' => 'JavaScript Algorithms and Data Structures',
@@ -32,7 +32,7 @@ class AchievementSeeder extends Seeder
                 'date' => '2022-06-20',
                 'url' => 'https://www.freecodecamp.org/certification/',
                 'description' => 'Comprehensive certification in JavaScript fundamentals, ES6+, algorithms, and data structures.',
-                'image' => null,
+                'certificate_url' => null,
             ],
             [
                 'title' => 'Google UX Design Certificate',
@@ -40,7 +40,7 @@ class AchievementSeeder extends Seeder
                 'date' => '2023-01-10',
                 'url' => 'https://grow.google/certificates/ux-design/',
                 'description' => 'Covers the full UX design process: empathize, define, ideate, prototype, and test.',
-                'image' => null,
+                'certificate_url' => null,
             ],
             [
                 'title' => 'Best Web Application – Regional Hackathon',
@@ -48,7 +48,7 @@ class AchievementSeeder extends Seeder
                 'date' => '2023-11-05',
                 'url' => null,
                 'description' => 'First place award for developing an innovative real-time collaboration tool during a 48-hour hackathon.',
-                'image' => null,
+                'certificate_url' => null,
             ],
         ];
 

@@ -21,7 +21,7 @@ class AchievementResource extends JsonResource
             'date' => $this->date,
             'url' => $this->url,
             'description' => $this->description,
-            'image' => $this->image,
+            'certificate_url' => $this->certificate_url ? asset('storage/'.$this->certificate_url) : null,
             'deleted_at_human' => $this->deleted_at?->diffForHumans(),
             'deleted_at' => $this->deleted_at,
             'created_at' => $this->created_at,

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Education\StoreEducationRequest;
+use App\Http\Requests\Education\UpdateEducationRequest;
 use App\Http\Resources\EducationResource;
 use App\Models\Education;
 use Illuminate\Http\JsonResponse;
@@ -25,11 +26,11 @@ class EducationController extends Controller
         $ttl = now()->addHours($hours);
 
         $educations = Cache::remember($cacheKey, $ttl, function () use ($query) {
-            return $this->resolveForCache($query->get());
+            return $this->resolveForCache(EducationResource::collection($query->get()));
         });
 
         return $this->successResponse(
-            EducationResource::collection($educations),
+            $educations,
             'Education index fetched successfully.'
         );
     }
@@ -58,7 +59,7 @@ class EducationController extends Controller
         );
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateEducationRequest $request, string $id): JsonResponse
     {
         $validated = $request->validated();
         $education = Education::findOrFail($id);
@@ -78,7 +79,7 @@ class EducationController extends Controller
         $education = Education::withoutTrashed()->findOrFail($id);
         $education->delete();
 
-        Cache::forget('educations_archive');
+        Cache::forget('educations_archived');
         Cache::forget('educations');
         Cache::forget('portfolio_all');
 
@@ -93,7 +94,7 @@ class EducationController extends Controller
         $education = Education::onlyTrashed()->findOrFail($id);
         $education->restore();
 
-        Cache::forget('educations_archive');
+        Cache::forget('educations_archived');
         Cache::forget('educations');
         Cache::forget('portfolio_all');
 
@@ -110,7 +111,7 @@ class EducationController extends Controller
         $education->forceDelete();
 
         if ($isTrashed) {
-            Cache::forget('educations_archive');
+            Cache::forget('educations_archived');
         } else {
             Cache::forget('educations');
             Cache::forget('portfolio_all');

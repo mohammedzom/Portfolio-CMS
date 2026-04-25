@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable('title', 'issuer', 'date', 'url', 'description', 'image')]
+#[Fillable('title', 'issuer', 'date', 'url', 'description', 'certificate_url')]
 class Achievement extends Model
 {
     use HasFactory, SoftDeletes;

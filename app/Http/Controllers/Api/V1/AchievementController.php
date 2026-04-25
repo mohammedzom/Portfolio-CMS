@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Achievement\StoreAchievementAction;
+use App\Actions\Achievement\UpdateAchievementAction;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Achievement\StoreAchievementRequest;
 use App\Http\Requests\Achievement\UpdateAchievementRequest;
@@ -26,26 +28,26 @@ class AchievementController extends Controller
         $ttl = now()->addHours($hours);
 
         $achievements = Cache::remember($cacheKey, $ttl, function () use ($query) {
-            return $this->resolveForCache($query->get());
+            return $this->resolveForCache(AchievementResource::collection($query->get()));
         });
 
         return $this->successResponse(
-            AchievementResource::collection($achievements),
+            $achievements,
             'Achievement index fetched successfully.'
         );
     }
 
     public function store(StoreAchievementRequest $request): JsonResponse
     {
-        $validated = $request->validated();
-        $achievement = Achievement::create($validated);
-
-        Cache::forget('achievements');
-        Cache::forget('portfolio_all');
+        $achievement = StoreAchievementAction::run(
+            $request->validated(),
+            $request->hasFile('file') ? $request->file('file') : null
+        );
 
         return $this->successResponse(
             new AchievementResource($achievement),
-            'Achievement created successfully.'
+            'Achievement created successfully.',
+            201
         );
     }
 
@@ -61,9 +63,11 @@ class AchievementController extends Controller
 
     public function update(UpdateAchievementRequest $request, string $id): JsonResponse
     {
-        $validated = $request->validated();
-        $achievement = Achievement::findOrFail($id);
-        $achievement->update($validated);
+        $achievement = UpdateAchievementAction::run(
+            $request->validated(),
+            $request->hasFile('file') ? $request->file('file') : null,
+            $id
+        );
 
         Cache::forget('achievements');
         Cache::forget('portfolio_all');
@@ -79,7 +83,7 @@ class AchievementController extends Controller
         $achievement = Achievement::withoutTrashed()->findOrFail($id);
         $achievement->delete();
 
-        Cache::forget('achievements_archive');
+        Cache::forget('achievements_archived');
         Cache::forget('achievements');
         Cache::forget('portfolio_all');
 
@@ -94,7 +98,7 @@ class AchievementController extends Controller
         $achievement = Achievement::onlyTrashed()->findOrFail($id);
         $achievement->restore();
 
-        Cache::forget('achievements_archive');
+        Cache::forget('achievements_archived');
         Cache::forget('achievements');
         Cache::forget('portfolio_all');
 
@@ -111,7 +115,7 @@ class AchievementController extends Controller
         $achievement->forceDelete();
 
         if ($isTrashed) {
-            Cache::forget('achievements_archive');
+            Cache::forget('achievements_archived');
         } else {
             Cache::forget('achievements');
             Cache::forget('portfolio_all');

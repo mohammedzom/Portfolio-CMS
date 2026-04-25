@@ -16,7 +16,7 @@ class UpdateProjectRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
-                Rule::unique(Project::class)->ignore($this->project->id),
+                Rule::unique(Project::class)->ignore($this->route('id')),
             ],
             'description' => 'sometimes|string',
             'category' => 'sometimes|in:Web,App,Mobile,Script,Other',

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->date('date');
             $table->string('url')->nullable();
             $table->text('description')->nullable();
-            $table->string('image')->nullable();
+            $table->string('certificate_url')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
