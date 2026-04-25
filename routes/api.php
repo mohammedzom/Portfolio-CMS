@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AchievementController;
 use App\Http\Controllers\Api\V1\Auth\Login;
 use App\Http\Controllers\Api\V1\Auth\Logout;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\EducationController;
 use App\Http\Controllers\Api\V1\ExperienceController;
 use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\PortfolioController;
@@ -65,6 +67,26 @@ Route::prefix('v1')->middleware('check-api-key')->group(function () {
         });
 
         Route::prefix('projects')->controller(ProjectController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/{id}', 'show');
+            Route::post('/', 'store');
+            Route::patch('/{id}', 'update');
+            Route::delete('/{id}', 'destroy');
+            Route::patch('/{id}/restore', 'restore');
+            Route::delete('/{id}/force-delete', 'forceDelete');
+        });
+
+        Route::prefix('achievements')->controller(AchievementController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/{id}', 'show');
+            Route::post('/', 'store');
+            Route::patch('/{id}', 'update');
+            Route::delete('/{id}', 'destroy');
+            Route::patch('/{id}/restore', 'restore');
+            Route::delete('/{id}/force-delete', 'forceDelete');
+        });
+
+        Route::prefix('education')->controller(EducationController::class)->group(function () {
             Route::get('/', 'index');
             Route::get('/{id}', 'show');
             Route::post('/', 'store');
