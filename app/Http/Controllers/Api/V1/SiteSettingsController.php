@@ -29,7 +29,7 @@ class SiteSettingsController extends Controller
 
     public function update(UpdateSiteSettingsRequest $request, UpdateSiteSettingsAction $action): JsonResponse
     {
-        $settings = SiteSettings::firstOrFail();
+        $settings = SiteSettings::firstOrCreate();
 
         $settings = $action->execute($settings, $request->validated(), $request->allFiles());
 
