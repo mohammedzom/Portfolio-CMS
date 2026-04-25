@@ -12,7 +12,7 @@ use App\Http\Controllers\Api\V1\SiteSettingsController;
 use App\Http\Controllers\Api\V1\SkillController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware('check-api-key')->group(function () {
 
     // Public Routes
     Route::post('/admin/login', Login::class)->name('login')->middleware('throttle:10,1');

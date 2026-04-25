@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+
+class CheckApiKey
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        $apiKey = $request->header('x-api-key');
+
+        if (! $apiKey || $apiKey !== env('API_KEY')) {
+            throw new AccessDeniedHttpException('Unauthorized');
+        }
+
+        return $next($request);
+    }
+}
