@@ -21,34 +21,34 @@ class DatabaseSeeder extends Seeder
         );
 
         // Portfolio settings (single row)
-        SiteSettings::firstOrCreate(
+        SiteSettings::updateOrCreate(
             ['id' => 1],
             [
                 'first_name' => 'Mohammed',
                 'last_name' => 'Zomlot',
-                'tagline' => 'Front-end Developer & UI Designer',
-                'bio' => "I'm a passionate front-end developer with 5+ years of experience creating stunning web interfaces. I specialize in turning complex ideas into clean, intuitive, and high-performance digital experiences.",
-                'about_me' => "I'm a passionate front-end developer with 5+ years of experience creating stunning web interfaces. I specialize in turning complex ideas into clean, intuitive, and high-performance digital experiences.",
-                'email' => 'patrick@dev.io',
-                'phone' => '+1 (555) 000-0000',
-                'location' => 'Casablanca, Morocco',
+                'tagline' => 'Software Engineer',
+                'bio' => 'Specialized in building robust, scalable server-side architectures using PHP & Laravel. Passionate about clean code, RESTful APIs, and database optimization.',
+                'about_me' => 'Resilient Software Engineering student with a strong foundation in algorithmic problem-solving. I began my journey as a passionate Mobile Developer (Flutter), building several feature-rich applications. However, due to the war in Gaza and the resulting hardware limitations of my available device, I demonstrated adaptability by pivoting to Backend Development. I now specialize in PHP, Laravel, and RESTful APIs, leveraging my engineering mindset to build robust server-side solutions while continuing to excel in regional programming contests.',
+                'avatar' => 'https://api.mohammedzomlot.online/storage/avatars/avatar.jpg',
+                'cv_file' => 'https://api.mohammedzomlot.online/storage/cv/Mohammed_Zomlot-CV.pdf',
+                'email' => 'mohammedzomlot2@gmail.com',
+                'phone' => '+970593628153',
+                'location' => 'Gaza Strip, Palestine',
                 'social_links' => [
-                    ['url' => 'https://github.com/', 'icon' => 'ri-github-line', 'name' => 'GitHub'],
-                    ['url' => 'https://linkedin.com/', 'icon' => 'ri-linkedin-line', 'name' => 'LinkedIn'],
-                    ['url' => 'https://twitter.com/', 'icon' => 'ri-twitter-line', 'name' => 'Twitter'],
-                    ['url' => 'https://dribbble.com/', 'icon' => 'ri-dribbble-line', 'name' => 'Dribbble'],
+                    ['name' => 'github', 'url' => 'https://github.com/mohammedzom'],
+                    ['name' => 'linkedin', 'url' => 'https://www.linkedin.com/in/mohammedzom/'],
+                    ['name' => 'Telegram', 'url' => 'https://t.me/mohammedzom'],
                 ],
-                'years_experience' => 5,
-                'projects_count' => 20,
-                'clients_count' => 15,
+                'years_experience' => 1,
+                'projects_count' => 4,
+                'clients_count' => 3,
                 'available_for_freelance' => true,
                 'url_prefix' => 'Mohammedzomlot',
                 'url_suffix' => 'dev',
                 'languages' => [
-                    'Arabic (Native)',
-                    'English',
+                    ['name' => 'Arabic', 'level' => 'Native'],
+                    ['name' => 'English', 'level' => 'Intermediate'],
                 ],
-
             ]
         );
 
@@ -58,6 +58,8 @@ class DatabaseSeeder extends Seeder
             ProjectSeeder::class,
             MessageSeeder::class,
             ExperienceSeeder::class,
+            AchievementSeeder::class,
+            EducationSeeder::class,
         ]);
     }
 }

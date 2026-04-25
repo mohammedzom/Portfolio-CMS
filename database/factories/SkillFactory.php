@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Skill;
+use App\Models\SkillCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -13,22 +14,14 @@ class SkillFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->randomElement(['HTML & CSS', 'JavaScript', 'TypeScript', 'React', 'Vue.js', 'Tailwind CSS', 'Node.js', 'PHP', 'Laravel', 'Figma', 'Git']),
-            'icon' => fake()->randomElement(['ri-html5-fill', 'ri-javascript-fill', 'ri-reactjs-fill', 'ri-vuejs-fill', 'ri-css3-fill']),
-            'color' => fake()->hexColor(),
+            'skill_category_id' => SkillCategory::factory(),
+            'name' => fake()->unique()->randomElement([
+                'PHP', 'Laravel', 'MySQL', 'RESTful APIs', 'Python',
+                'JavaScript', 'React', 'Vue.js', 'Tailwind CSS', 'Git',
+                'Docker', 'Linux', 'C++', 'Java', 'Flutter', 'Dart',
+            ]),
+            'icon' => 'https://www.svgrepo.com/show/489281/api.svg',
             'proficiency' => fake()->numberBetween(60, 99),
-            'type' => fake()->randomElement(['technical', 'tool']),
-            'sort_order' => fake()->numberBetween(0, 20),
         ];
-    }
-
-    public function technical(): static
-    {
-        return $this->state(['type' => 'technical']);
-    }
-
-    public function tool(): static
-    {
-        return $this->state(['type' => 'tool']);
     }
 }
