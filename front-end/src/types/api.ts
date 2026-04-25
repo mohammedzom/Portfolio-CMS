@@ -49,6 +49,28 @@ export type Skill = TimestampFields & {
   category: string;
 };
 
+export type SkillCategory = TimestampFields & {
+  id: number;
+  name: string;
+  slug: string | null;
+};
+
+export type DashboardData = {
+  projects: Project[];
+  skills: {
+    technical: Skill[];
+    tool: Skill[];
+  };
+  messages: Message[];
+  information: SiteSettings;
+  projects_count: number;
+  messages_count: {
+    total: number;
+    unread: number;
+  };
+  skills_count: number;
+};
+
 export type Experience = TimestampFields & {
   id: number;
   job_title: string;

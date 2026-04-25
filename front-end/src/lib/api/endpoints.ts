@@ -8,6 +8,7 @@ export const apiEndpoints = {
     projects: "/admin/projects",
     services: "/admin/services",
     skills: "/admin/skills",
+    skillCategories: "/admin/skill-categories",
     experiences: "/admin/experiences",
     education: "/admin/education",
     achievements: "/admin/achievements",

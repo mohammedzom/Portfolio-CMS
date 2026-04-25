@@ -1,18 +1,61 @@
-export default function PortfolioHomePage() {
-  return (
-    <div className="flex min-h-dvh items-center justify-center bg-background px-6 py-16">
-      <section className="w-full max-w-5xl">
-        <p className="text-sm font-medium uppercase tracking-wide text-primary">
-          Public Portfolio
-        </p>
-        <h1 className="mt-4 max-w-3xl text-4xl font-semibold text-foreground sm:text-6xl">
-          Portfolio CMS frontend scaffold
-        </h1>
-        <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-          This public route group is ready for the portfolio rebuild. Step 4 will
-          connect it to the mapped portfolio, message, and media endpoints.
-        </p>
-      </section>
-    </div>
-  );
+import { PortfolioPage } from "@/features/portfolio/portfolio-page";
+import type { ApiEnvelope, PortfolioData } from "@/types/api";
+
+export const dynamic = "force-dynamic";
+
+export default async function PortfolioHomePage() {
+  const { data, error } = await fetchPortfolio();
+
+  return <PortfolioPage initialData={data} initialError={error} />;
+}
+
+async function fetchPortfolio(): Promise<{
+  data: PortfolioData | null;
+  error: string;
+}> {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
+    "https://api.mohammedzomlot.online/api/v1";
+  const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+
+  if (!apiKey) {
+    return {
+      data: null,
+      error: "NEXT_PUBLIC_API_KEY is missing from the frontend environment.",
+    };
+  }
+
+  try {
+    const response = await fetch(`${baseUrl}/portfolio`, {
+      headers: {
+        Accept: "application/json",
+        "x-api-key": apiKey,
+      },
+      cache: "no-store",
+    });
+
+    const payload = (await response.json()) as ApiEnvelope<PortfolioData>;
+
+    if (!response.ok || !payload.success) {
+      return {
+        data: null,
+        error: payload.message || `Portfolio request failed with ${response.status}.`,
+      };
+    }
+
+    return {
+      data: payload.data,
+      error: "",
+    };
+  } catch (error) {
+    console.error("Failed to server-fetch portfolio data:", error);
+
+    return {
+      data: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unable to load portfolio from the API.",
+    };
+  }
 }

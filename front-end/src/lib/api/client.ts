@@ -12,6 +12,7 @@ export type ApiRequestConfig = Omit<RequestInit, "body"> & {
   body?: BodyInit | Record<string, unknown> | unknown[] | null;
   auth?: boolean;
   query?: Record<string, string | number | boolean | null | undefined>;
+  timeoutMs?: number;
 };
 
 const requestInterceptors: RequestInterceptor[] = [];
@@ -75,7 +76,11 @@ export async function apiRequest<T>(
     normalizedConfig,
   );
 
-  const response = await fetch(buildUrl(path, config.query), interceptedConfig);
+  const response = await fetchWithTimeout(
+    buildUrl(path, config.query),
+    interceptedConfig,
+    config.timeoutMs,
+  );
 
   await Promise.all(
     responseInterceptors.map((interceptor) => interceptor(response)),
@@ -149,6 +154,32 @@ function buildUrl(
   return `${url.pathname}${url.search}`;
 }
 
+async function fetchWithTimeout(
+  url: string,
+  config: PreparedApiRequestConfig,
+  timeoutMs = 12000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...config,
+      signal: config.signal ?? controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(
+        `API request timed out after ${Math.round(timeoutMs / 1000)}s. Check NEXT_PUBLIC_API_BASE_URL and backend availability.`,
+      );
+    }
+
+    throw error;
+  } finally {
+    globalThis.clearTimeout(timeout);
+  }
+}
+
 function getUrlOrigin(): string {
   if (typeof window !== "undefined") {
     return window.location.origin;
@@ -164,5 +195,14 @@ async function parseJson<T>(response: Response): Promise<T | null> {
     return null;
   }
 
-  return JSON.parse(text) as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return {
+      success: false,
+      message: `API returned a non-JSON response from ${response.url || "the configured endpoint"}. Check NEXT_PUBLIC_API_BASE_URL.`,
+      data: null,
+      error_code: "INVALID_JSON_RESPONSE",
+    } as T;
+  }
 }
