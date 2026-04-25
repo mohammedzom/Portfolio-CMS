@@ -12,7 +12,7 @@ class StoreSkillRequest extends FormRequest
             'name' => 'required|string|max:255|unique:skills,name',
             'icon' => 'nullable|url',
             'proficiency' => 'required|integer|min:0|max:100',
-            'type' => 'required|string',
+            'skill_category_id' => 'required|exists:skill_categories,id',
         ];
     }
 
@@ -34,9 +34,9 @@ class StoreSkillRequest extends FormRequest
             'proficiency.min' => 'Proficiency cannot be less than 0.',
             'proficiency.max' => 'Proficiency cannot be more than 100.',
 
-            // Type
-            'type.required' => 'Type is required.',
-            'type.string' => 'Type must be a string.',
+            // Skill Category
+            'skill_category_id.required' => 'Skill category is required.',
+            'skill_category_id.exists' => 'Skill category does not exist.',
         ];
     }
 }

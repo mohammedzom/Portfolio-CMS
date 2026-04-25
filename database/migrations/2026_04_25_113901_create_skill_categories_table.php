@@ -8,13 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('skills', function (Blueprint $table) {
+        Schema::create('skill_categories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('skill_category_id')->constrained('skill_categories')->cascadeOnDelete();
-
             $table->string('name')->unique();
-            $table->string('icon')->nullable();
-            $table->unsignedTinyInteger('proficiency')->default(80);
+            $table->string('slug')->unique()->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
@@ -22,6 +19,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('skills');
+        Schema::dropIfExists('skill_categories');
     }
 };

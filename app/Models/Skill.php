@@ -5,9 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable('name', 'icon', 'proficiency', 'type', 'sort_order')]
+#[Fillable('skill_category_id', 'name', 'icon', 'proficiency')]
 class Skill extends Model
 {
     use HasFactory, SoftDeletes;
@@ -16,7 +17,6 @@ class Skill extends Model
     {
         return [
             'proficiency' => 'integer',
-            'sort_order' => 'integer',
             'deleted_at' => 'datetime',
         ];
     }
@@ -32,5 +32,10 @@ class Skill extends Model
             $this->proficiency >= 40 => 'Beginner',
             default => 'Novice',
         };
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(SkillCategory::class, 'skill_category_id');
     }
 }

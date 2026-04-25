@@ -18,7 +18,7 @@ class UpdateSkillRequest extends FormRequest
             ],
             'icon' => 'sometimes|url',
             'proficiency' => 'sometimes|integer|min:0|max:100',
-            'type' => 'sometimes|string',
+            'skill_category_id' => 'sometimes|exists:skill_categories,id',
         ];
     }
 
@@ -38,8 +38,8 @@ class UpdateSkillRequest extends FormRequest
             'proficiency.min' => 'Proficiency cannot be less than 0.',
             'proficiency.max' => 'Proficiency cannot be more than 100.',
 
-            // Type
-            'type.string' => 'Type must be a string.',
+            // Skill Category
+            'skill_category_id.exists' => 'Skill category does not exist.',
         ];
     }
 }
