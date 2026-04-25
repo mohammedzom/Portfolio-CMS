@@ -28,7 +28,7 @@ class PortfolioController extends Controller
         $ttl = now()->addHours($hours);
 
         $data = Cache::remember('portfolio_all', $ttl, function () {
-            $skills = Skill::active()->with('category')->orderBy('proficiency', 'desc')->get();
+            $skills = Skill::with('category')->orderBy('proficiency', 'desc')->get();
 
             $groupedSkills = $skills->groupBy('category.name')->map(function ($skillGroup) {
                 return SkillResource::collection($skillGroup)->resolve();
