@@ -18,7 +18,6 @@ class EducationController extends Controller
         $cacheKey = 'educations';
         $query = Education::orderBy('start_year', 'desc');
         if ($request->has('archived') && $request->input('archived') === true) {
-            $cacheKey .= '_archived';
             $query->withTrashed();
         }
 
@@ -79,7 +78,6 @@ class EducationController extends Controller
         $education = Education::withoutTrashed()->findOrFail($id);
         $education->delete();
 
-        Cache::forget('educations_archived');
         Cache::forget('educations');
         Cache::forget('portfolio_all');
 
@@ -94,7 +92,6 @@ class EducationController extends Controller
         $education = Education::onlyTrashed()->findOrFail($id);
         $education->restore();
 
-        Cache::forget('educations_archived');
         Cache::forget('educations');
         Cache::forget('portfolio_all');
 
@@ -107,15 +104,10 @@ class EducationController extends Controller
     public function forceDelete(string $id): JsonResponse
     {
         $education = Education::withTrashed()->findOrFail($id);
-        $isTrashed = $education->trashed();
         $education->forceDelete();
 
-        if ($isTrashed) {
-            Cache::forget('educations_archived');
-        } else {
-            Cache::forget('educations');
-            Cache::forget('portfolio_all');
-        }
+        Cache::forget('educations');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             null,

@@ -90,6 +90,7 @@ class ServiceController extends Controller
     {
         $service = Service::withoutTrashed()->findOrFail($id);
         $service->delete();
+        Cache::forget('portfolio_services_archived');
         Cache::forget('portfolio_services');
         Cache::forget('portfolio_all');
 
@@ -103,6 +104,7 @@ class ServiceController extends Controller
     {
         $service = Service::onlyTrashed()->findOrFail($id);
         $service->restore();
+        Cache::forget('portfolio_services_archived');
         Cache::forget('portfolio_services');
         Cache::forget('portfolio_all');
 
@@ -115,16 +117,11 @@ class ServiceController extends Controller
     public function forceDelete(string $id): JsonResponse
     {
         $service = Service::withTrashed()->findOrFail($id);
-        $isTrashed = $service->trashed();
         $service->forceDelete();
 
-        if ($isTrashed) {
-            Cache::forget('portfolio_services_archived');
-        } else {
-            Cache::forget('portfolio_services');
-            Cache::forget('portfolio_all');
-
-        }
+        Cache::forget('portfolio_services_archived');
+        Cache::forget('portfolio_services');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             [],

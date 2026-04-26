@@ -22,7 +22,6 @@ class ProjectController extends Controller
         $cache_key = 'portfolio_projects';
         if ($request->has('archived') && $request->archived) {
             $query->onlyTrashed();
-            $cache_key .= '_archived';
         } else {
             $query->withoutTrashed();
         }
@@ -63,6 +62,9 @@ class ProjectController extends Controller
             $request->hasFile('images') ? $request->file('images') : []
         );
 
+        Cache::forget('portfolio_projects');
+        Cache::forget('portfolio_all');
+
         return $this->successResponse(
             new ProjectResource($project),
             'Project created successfully.',
@@ -81,6 +83,9 @@ class ProjectController extends Controller
             $request->hasFile('images') ? $request->file('images') : []
         );
 
+        Cache::forget('portfolio_projects');
+        Cache::forget('portfolio_all');
+
         return $this->successResponse(
             new ProjectResource($project),
             'Project updated successfully.'
@@ -92,7 +97,6 @@ class ProjectController extends Controller
         $project = Project::withoutTrashed()->findOrFail($id);
         $project->delete();
         Cache::forget('portfolio_projects');
-        Cache::forget('portfolio_projects_archived');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -106,7 +110,6 @@ class ProjectController extends Controller
         $project = Project::onlyTrashed()->findOrFail($id);
         $project->restore();
         Cache::forget('portfolio_projects');
-        Cache::forget('portfolio_projects_archived');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -118,19 +121,14 @@ class ProjectController extends Controller
     public function forceDelete(string $id): JsonResponse
     {
         $project = Project::withTrashed()->findOrFail($id);
-        $isTrashed = $project->trashed();
         foreach (is_array($project->images) ? $project->images : [] as $pathToDelete) {
             $relativePath = 'projects/'.basename($pathToDelete);
             Storage::disk('public')->delete($relativePath);
         }
         $project->forceDelete();
 
-        if ($isTrashed) {
-            Cache::forget('portfolio_projects_archived');
-        } else {
-            Cache::forget('portfolio_projects');
-            Cache::forget('portfolio_all');
-        }
+        Cache::forget('portfolio_projects');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             [],

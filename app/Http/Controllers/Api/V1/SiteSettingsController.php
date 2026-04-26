@@ -33,6 +33,9 @@ class SiteSettingsController extends Controller
 
         $settings = $action->execute($settings, $request->validated(), $request->allFiles());
 
+        Cache::forget('portfolio_settings');
+        Cache::forget('portfolio_all');
+
         return $this->successResponse(
             new SiteSettingstResource($settings),
             'Site settings updated successfully.'

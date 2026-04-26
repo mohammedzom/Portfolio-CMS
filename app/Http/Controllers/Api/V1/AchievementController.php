@@ -20,7 +20,6 @@ class AchievementController extends Controller
         $cacheKey = 'achievements';
         $query = Achievement::orderBy('date', 'desc');
         if ($request->has('archived') && $request->input('archived') === true) {
-            $cacheKey .= '_archived';
             $query->withTrashed();
         }
 
@@ -83,7 +82,6 @@ class AchievementController extends Controller
         $achievement = Achievement::withoutTrashed()->findOrFail($id);
         $achievement->delete();
 
-        Cache::forget('achievements_archived');
         Cache::forget('achievements');
         Cache::forget('portfolio_all');
 
@@ -98,7 +96,6 @@ class AchievementController extends Controller
         $achievement = Achievement::onlyTrashed()->findOrFail($id);
         $achievement->restore();
 
-        Cache::forget('achievements_archived');
         Cache::forget('achievements');
         Cache::forget('portfolio_all');
 
@@ -111,15 +108,10 @@ class AchievementController extends Controller
     public function forceDelete(string $id): JsonResponse
     {
         $achievement = Achievement::withTrashed()->findOrFail($id);
-        $isTrashed = $achievement->trashed();
         $achievement->forceDelete();
 
-        if ($isTrashed) {
-            Cache::forget('achievements_archived');
-        } else {
-            Cache::forget('achievements');
-            Cache::forget('portfolio_all');
-        }
+        Cache::forget('achievements');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             null,
