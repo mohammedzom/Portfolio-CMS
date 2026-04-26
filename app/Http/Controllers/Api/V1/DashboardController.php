@@ -17,9 +17,13 @@ class DashboardController extends Controller
 {
     public function __invoke(): JsonResponse
     {
+        $skills = Skill::with('category')->orderBy('proficiency', 'desc')->get();
+
+        $groupedSkills = $skills->groupBy('category.name')->map(function ($skillGroup) {
+            return SkillResource::collection($skillGroup)->resolve();
+        });
+
         $projects = Project::orderBy('sort_order')->take(5)->get();
-        $technical_skills = Skill::where('type', 'technical')->orderBy('proficiency', 'desc')->take(6)->get();
-        $tool_skills = Skill::where('type', 'tool')->take(6)->get();
         $settings = SiteSettings::firstOrFail();
         $messages = Message::orderBy('read_at')->take(3)->get();
 
@@ -31,10 +35,7 @@ class DashboardController extends Controller
 
         return $this->successResponse([
             'projects' => ProjectResource::collection($projects),
-            'skills' => [
-                'technical' => SkillResource::collection($technical_skills),
-                'tool' => SkillResource::collection($tool_skills),
-            ],
+            'skills' => $groupedSkills,
             'messages' => MessageResource::collection($messages),
             'information' => SiteSettingstResource::make($settings),
             'projects_count' => $projectsCount,
