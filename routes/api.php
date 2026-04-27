@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\ServiceController;
 use App\Http\Controllers\Api\V1\SiteSettingsController;
 use App\Http\Controllers\Api\V1\SkillController;
+use App\Http\Controllers\SkillCategoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('check-api-key')->group(function () {
@@ -87,6 +88,16 @@ Route::prefix('v1')->middleware('check-api-key')->group(function () {
         });
 
         Route::prefix('education')->controller(EducationController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/{id}', 'show');
+            Route::post('/', 'store');
+            Route::patch('/{id}', 'update');
+            Route::delete('/{id}', 'destroy');
+            Route::patch('/{id}/restore', 'restore');
+            Route::delete('/{id}/force-delete', 'forceDelete');
+        });
+
+        Route::prefix('skill-categories')->controller(SkillCategoryController::class)->group(function () {
             Route::get('/', 'index');
             Route::get('/{id}', 'show');
             Route::post('/', 'store');

@@ -13,10 +13,10 @@ class UpdateProjectRequest extends FormRequest
         return [
             'title' => 'sometimes|string|max:255',
             'slug' => [
-                'nullable',
+                'sometimes',
                 'string',
                 'max:255',
-                Rule::unique(Project::class)->ignore($this->route('id')),
+                Rule::unique(Project::class)->ignore($this->id),
             ],
             'description' => 'sometimes|string',
             'category' => 'sometimes|in:Web,App,Mobile,Script,Other',

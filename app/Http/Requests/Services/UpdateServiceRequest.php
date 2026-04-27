@@ -3,13 +3,19 @@
 namespace App\Http\Requests\Services;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateServiceRequest extends FormRequest
 {
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:255',
+            'title' => [
+                'sometimes',
+                'string',
+                'max:255',
+                Rule::unique('services', 'title')->ignore($this->id),
+            ],
             'description' => 'required|string',
             'icon' => 'required|url|max:255',
             'sort_order' => 'required|integer',

@@ -18,10 +18,16 @@ class SkillController extends Controller
         $query = Skill::query();
         if ($request->has('archived') && $request->input('archived') == true) {
             $query->onlyTrashed();
+            $query->with(['category' => function ($q) {
+                $q->withTrashed();
+            }]);
+        } else {
+            $query->withoutTrashed();
+            $query->with('category');
         }
 
         if ($request->filled('category')) {
-            $query->where('category', $request->category);
+            $query->where('skill_category_id', $request->category);
         }
         if ($request->filled('search')) {
             $query->where('name', 'like', '%'.$request->search.'%');
@@ -82,9 +88,30 @@ class SkillController extends Controller
         );
     }
 
-    public function restore(string $id): JsonResponse
+    public function restore(Request $request, string $id): JsonResponse
     {
-        $skill = Skill::onlyTrashed()->findOrFail($id);
+        $validated = $request->validate([
+            'new_category_id' => 'nullable|exists:skill_categories,id,deleted_at,NULL',
+        ]);
+
+        $skill = Skill::onlyTrashed()->with(['category' => fn ($q) => $q->withTrashed()])->findOrFail($id);
+
+        $isCategoryTrashed = $skill->category && $skill->category->trashed();
+
+        if ($isCategoryTrashed && ! $request->has('new_category_id')) {
+
+            return $this->errorResponse(
+                'Category is Archived. Please restore the category first to restore the skill.\n Or send in body request new_category_id value to assign it to an active category.',
+                409,
+            );
+        }
+
+        if ($request->has('new_category_id') && $validated['new_category_id'] !== null) {
+            $skill->update([
+                'skill_category_id' => $validated['new_category_id'],
+            ]);
+        }
+
         $skill->restore();
         Cache::forget('portfolio_all');
 
