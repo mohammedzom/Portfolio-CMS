@@ -55,7 +55,7 @@ class SkillController extends Controller
 
     public function show(string $id): JsonResponse
     {
-        $skill = Skill::withoutTrashed()->findOrFail($id);
+        $skill = Skill::withoutTrashed()->with('category')->findOrFail($id);
 
         return $this->successResponse(
             new SkillResource($skill),

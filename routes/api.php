@@ -23,7 +23,7 @@ Route::prefix('v1')->middleware('check-api-key')->group(function () {
     Route::get('/portfolio', [PortfolioController::class, 'index'])->middleware('throttle:25,1');
 
     // Protected Routes
-    Route::prefix('admin')->middleware('auth:sanctum')->group(function () { // comment this for testing
+    Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::post('/logout', Logout::class);
         Route::get('/dashboard', DashboardController::class);
 
