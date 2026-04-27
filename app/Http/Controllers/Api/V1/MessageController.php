@@ -15,12 +15,9 @@ class MessageController extends Controller
     {
         $query = Message::query();
 
-        if ($request->has('archived') && $request->archived) {
+        if ($request->has('archived') && $request->input('archived') == true) {
             $query->onlyTrashed();
-        } else {
-            $query->withoutTrashed();
         }
-
         if ($request->filled('search')) {
             $query->where('name', 'like', '%'.$request->search.'%')
                 ->orWhere('email', 'like', '%'.$request->search.'%')

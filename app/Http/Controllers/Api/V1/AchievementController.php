@@ -20,7 +20,7 @@ class AchievementController extends Controller
         $cacheKey = 'achievements';
         $query = Achievement::orderBy('date', 'desc');
         if ($request->has('archived') && $request->input('archived') === true) {
-            $query->withTrashed();
+            $query->onlyTrashed();
         }
 
         $hours = intval(config('app.cache_ttl_hours', 24));

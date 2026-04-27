@@ -17,11 +17,8 @@ class ServiceController extends Controller
     {
         $query = Service::query();
         $cache_key = 'portfolio_services';
-        if ($request->has('archived') && $request->archived) {
+        if ($request->has('archived') && $request->input('archived') == true) {
             $query->onlyTrashed();
-            $cache_key .= '_archived';
-        } else {
-            $query->withoutTrashed();
         }
         if ($request->filled('search')) {
             $cache_key = null;
@@ -90,7 +87,6 @@ class ServiceController extends Controller
     {
         $service = Service::withoutTrashed()->findOrFail($id);
         $service->delete();
-        Cache::forget('portfolio_services_archived');
         Cache::forget('portfolio_services');
         Cache::forget('portfolio_all');
 
@@ -104,7 +100,6 @@ class ServiceController extends Controller
     {
         $service = Service::onlyTrashed()->findOrFail($id);
         $service->restore();
-        Cache::forget('portfolio_services_archived');
         Cache::forget('portfolio_services');
         Cache::forget('portfolio_all');
 
@@ -119,7 +114,6 @@ class ServiceController extends Controller
         $service = Service::withTrashed()->findOrFail($id);
         $service->forceDelete();
 
-        Cache::forget('portfolio_services_archived');
         Cache::forget('portfolio_services');
         Cache::forget('portfolio_all');
 

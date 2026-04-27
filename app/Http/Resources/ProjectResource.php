@@ -17,7 +17,7 @@ class ProjectResource extends JsonResource
             'category' => $this->category,
             'tech_stack' => $this->tech_stack,
             'images' => array_map(function ($image) {
-                return $image;
+                return asset('storage/'.$image);
             }, $this->images ?? []),
             'live_url' => $this->live_url,
             'repo_url' => $this->repo_url,

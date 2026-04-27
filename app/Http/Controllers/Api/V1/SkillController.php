@@ -16,10 +16,8 @@ class SkillController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Skill::query();
-        if ($request->has('archived') && $request->archived) {
+        if ($request->has('archived') && $request->input('archived') == true) {
             $query->onlyTrashed();
-        } else {
-            $query->withoutTrashed();
         }
 
         if ($request->filled('category')) {
