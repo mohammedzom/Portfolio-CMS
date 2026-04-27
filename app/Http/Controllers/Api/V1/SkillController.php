@@ -7,12 +7,19 @@ use App\Http\Requests\Skills\StoreSkillRequest;
 use App\Http\Requests\Skills\UpdateSkillRequest;
 use App\Http\Resources\SkillResource;
 use App\Models\Skill;
+use App\Traits\ManageSoftDeletes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class SkillController extends Controller
 {
+    use ManageSoftDeletes;
+
+    protected $modelClass = Skill::class;
+
+    protected $resourceClass = SkillResource::class;
+
     public function index(Request $request): JsonResponse
     {
         $query = Skill::query();
@@ -101,7 +108,7 @@ class SkillController extends Controller
         if ($isCategoryTrashed && ! $request->has('new_category_id')) {
 
             return $this->errorResponse(
-                'Category is Archived. Please restore the category first to restore the skill.\n Or send in body request new_category_id value to assign it to an active category.',
+                "Category is Archived. Please restore the category first to restore the skill.\n Or send in body request new_category_id value to assign it to an active category.",
                 409,
             );
         }
@@ -121,15 +128,8 @@ class SkillController extends Controller
         );
     }
 
-    public function forceDelete(string $id): JsonResponse
+    protected function afterForceDelete(): void
     {
-        $skill = Skill::withTrashed()->findOrFail($id);
-        $skill->forceDelete();
         Cache::forget('portfolio_all');
-
-        return $this->successResponse(
-            [],
-            'Skill deleted successfully.'
-        );
     }
 }

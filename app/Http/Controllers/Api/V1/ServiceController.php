@@ -7,12 +7,19 @@ use App\Http\Requests\Services\StoreServiceRequest;
 use App\Http\Requests\Services\UpdateServiceRequest;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
+use App\Traits\ManageSoftDeletes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class ServiceController extends Controller
 {
+    use ManageSoftDeletes;
+
+    protected $modelClass = Service::class;
+
+    protected $resourceClass = ServiceResource::class;
+
     public function index(Request $request): JsonResponse
     {
         $query = Service::query();
@@ -96,30 +103,15 @@ class ServiceController extends Controller
         );
     }
 
-    public function restore(string $id): JsonResponse
+    protected function afterRestore(): void
     {
-        $service = Service::onlyTrashed()->findOrFail($id);
-        $service->restore();
         Cache::forget('portfolio_services');
         Cache::forget('portfolio_all');
-
-        return $this->successResponse(
-            new ServiceResource($service),
-            'Service restored successfully.'
-        );
     }
 
-    public function forceDelete(string $id): JsonResponse
+    protected function afterForceDelete(): void
     {
-        $service = Service::withTrashed()->findOrFail($id);
-        $service->forceDelete();
-
         Cache::forget('portfolio_services');
         Cache::forget('portfolio_all');
-
-        return $this->successResponse(
-            [],
-            'Service deleted successfully.'
-        );
     }
 }

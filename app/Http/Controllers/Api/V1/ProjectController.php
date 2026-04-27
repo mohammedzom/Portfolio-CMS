@@ -9,6 +9,7 @@ use App\Http\Requests\Projects\StoreProjectRequest;
 use App\Http\Requests\Projects\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
+use App\Traits\ManageSoftDeletes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -16,6 +17,10 @@ use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
+    use ManageSoftDeletes;
+
+    protected $modelClass = Project::class;
+
     public function index(Request $request): JsonResponse
     {
         $query = Project::query();
@@ -108,35 +113,25 @@ class ProjectController extends Controller
         );
     }
 
-    public function restore(string $id): JsonResponse
+    protected function afterRestore(Project $project): void
     {
-        $project = Project::onlyTrashed()->findOrFail($id);
-        $project->restore();
         Cache::forget('project_'.$project->slug);
         Cache::forget('portfolio_projects');
         Cache::forget('portfolio_all');
-
-        return $this->successResponse(
-            new ProjectResource($project),
-            'Project restored successfully.'
-        );
     }
 
-    public function forceDelete(string $id): JsonResponse
+    protected function beforeForceDelete(Project $project): void
     {
-        $project = Project::withTrashed()->findOrFail($id);
         $images = $project->images;
         if (! empty($images) && is_array($images)) {
             Storage::disk('public')->delete($images);
         }
-        $project->forceDelete();
+    }
+
+    protected function afterForceDelete(Project $project): void
+    {
         Cache::forget('project_'.$project->slug);
         Cache::forget('portfolio_projects');
         Cache::forget('portfolio_all');
-
-        return $this->successResponse(
-            [],
-            'Project deleted successfully.'
-        );
     }
 }

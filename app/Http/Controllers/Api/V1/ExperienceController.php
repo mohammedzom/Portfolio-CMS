@@ -7,6 +7,7 @@ use App\Http\Requests\Experiences\StoreExperienceRequest;
 use App\Http\Requests\Experiences\UpdateExperienceRequest;
 use App\Http\Resources\ExperienceResource;
 use App\Models\Experience;
+use App\Traits\ManageSoftDeletes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -14,6 +15,12 @@ use Illuminate\Validation\ValidationException;
 
 class ExperienceController extends Controller
 {
+    use ManageSoftDeletes;
+
+    protected $modelClass = Experience::class;
+
+    protected $resourceClass = ExperienceResource::class;
+
     public function index(Request $request): JsonResponse
     {
         $query = Experience::query();
@@ -91,30 +98,16 @@ class ExperienceController extends Controller
         );
     }
 
-    public function restore(string $id): JsonResponse
+    protected function afterRestore(): void
     {
-        $experience = Experience::onlyTrashed()->findOrFail($id);
-        $experience->restore();
         Cache::forget('portfolio_experiences');
         Cache::forget('portfolio_all');
-
-        return $this->successResponse(
-            new ExperienceResource($experience),
-            'Experience restored successfully.'
-        );
     }
 
-    public function forceDelete(string $id): JsonResponse
+    protected function afterForceDelete(): void
     {
-        $experience = Experience::withTrashed()->findOrFail($id);
-        $experience->forceDelete();
         Cache::forget('portfolio_experiences');
         Cache::forget('portfolio_all');
-
-        return $this->successResponse(
-            [],
-            'Experience deleted successfully.'
-        );
     }
 
     protected function checkForbiddenFields(array $data)

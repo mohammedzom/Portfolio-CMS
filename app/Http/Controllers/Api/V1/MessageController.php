@@ -6,11 +6,18 @@ use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Messages\StoreMessageRequest;
 use App\Http\Resources\MessageResource;
 use App\Models\Message;
+use App\Traits\ManageSoftDeletes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MessageController extends Controller
 {
+    use ManageSoftDeletes;
+
+    protected $modelClass = Message::class;
+
+    protected $resourceClass = MessageResource::class;
+
     public function index(Request $request): JsonResponse
     {
         $query = Message::query();
@@ -67,17 +74,6 @@ class MessageController extends Controller
         );
     }
 
-    public function restore(string $id): JsonResponse
-    {
-        $message = Message::onlyTrashed()->findOrFail($id);
-        $message->restore();
-
-        return $this->successResponse(
-            new MessageResource($message),
-            'Message restored successfully.'
-        );
-    }
-
     public function markAsRead(string $id): JsonResponse
     {
         $message = Message::findOrFail($id);
@@ -112,17 +108,6 @@ class MessageController extends Controller
         return $this->successResponse(
             [],
             'Message marked as unread.'
-        );
-    }
-
-    public function forceDelete(string $id): JsonResponse
-    {
-        $message = Message::findOrFail($id);
-        $message->forceDelete();
-
-        return $this->successResponse(
-            [],
-            'Message deleted successfully.'
         );
     }
 

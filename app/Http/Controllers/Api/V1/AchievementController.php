@@ -9,12 +9,20 @@ use App\Http\Requests\Achievement\StoreAchievementRequest;
 use App\Http\Requests\Achievement\UpdateAchievementRequest;
 use App\Http\Resources\AchievementResource;
 use App\Models\Achievement;
+use App\Traits\ManageSoftDeletes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class AchievementController extends Controller
 {
+    use ManageSoftDeletes;
+
+    protected $modelClass = Achievement::class;
+
+    protected $resourceClass = AchievementResource::class;
+
     public function index(Request $request): JsonResponse
     {
         $cacheKey = 'achievements';
@@ -91,31 +99,22 @@ class AchievementController extends Controller
         );
     }
 
-    public function restore(string $id): JsonResponse
+    public function afterRestore(Achievement $achievement): void
     {
-        $achievement = Achievement::onlyTrashed()->findOrFail($id);
-        $achievement->restore();
-
         Cache::forget('achievements');
         Cache::forget('portfolio_all');
-
-        return $this->successResponse(
-            new AchievementResource($achievement),
-            'Achievement restored successfully.'
-        );
     }
 
-    public function forceDelete(string $id): JsonResponse
+    protected function beforeForceDelete(Achievement $achievement): void
     {
-        $achievement = Achievement::withTrashed()->findOrFail($id);
-        $achievement->forceDelete();
+        if ($achievement->certificate_url) {
+            Storage::disk('public')->delete($achievement->certificate_url);
+        }
+    }
 
+    protected function afterForceDelete(): void
+    {
         Cache::forget('achievements');
         Cache::forget('portfolio_all');
-
-        return $this->successResponse(
-            null,
-            'Achievement deleted permanently successfully.'
-        );
     }
 }
