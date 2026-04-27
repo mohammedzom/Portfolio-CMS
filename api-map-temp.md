@@ -198,7 +198,6 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
   "about_me": "string|null",
   "avatar": "https://host/storage/avatars/avatar.webp|null",
   "cv_file": "https://host/storage/cv/file.pdf|null",
-  "cv_file_name": "string|null",
   "url_prefix": "string|null",
   "url_suffix": "string|null",
   "languages": [{"name": "string", "level": "string"}],
@@ -666,7 +665,6 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
             "about_me": "Resilient Software Engineering student with a strong foundation in algorithmic problem-solving. I began my journey as a passionate Mobile Developer (Flutter), building several feature-rich applications. However, due to the war in Gaza and the resulting hardware limitations of my available device, I demonstrated adaptability by pivoting to Backend Development. I now specialize in PHP, Laravel, and RESTful APIs, leveraging my engineering mindset to build robust server-side solutions while continuing to excel in regional programming contests.",
             "avatar": "https://api.mohammedzomlot.online/storage/avatars/avatar.jpg",
             "cv_file": "https://api.mohammedzomlot.online/storage/cv/Mohammed_Zomlot-CV.pdf",
-            "cv_file_name": null,
             "url_prefix": "Mohammedzomlot",
             "url_suffix": "dev",
             "languages": [
@@ -1217,7 +1215,6 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 - Server behavior:
   - `avatar` is stored as `avatars/avatar.{ext}` and replaces existing avatar.
   - `cv_file` is stored under `cv/{original_name_with_spaces_replaced}` and replaces existing CV.
-  - `cv_file_name` is set server-side from the uploaded original file name.
 - Success `200`: `data` is `SiteSettingsResource`, message `Site settings updated successfully.`
 
 ## Skill Categories Gap

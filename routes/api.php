@@ -21,7 +21,7 @@ Route::prefix('v1')->middleware('check-api-key')->group(function () {
     Route::post('/admin/login', Login::class)->name('login')->middleware('throttle:10,1');
     Route::post('/message', [MessageController::class, 'store'])->middleware('throttle:contact_form');
     Route::get('/portfolio', [PortfolioController::class, 'index'])->middleware('throttle:25,1');
-
+    Route::get('/projects/{slug}', [ProjectController::class, 'show'])->middleware('throttle:25,1');
     // Protected Routes
     Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
         Route::post('/logout', Logout::class);
@@ -69,7 +69,6 @@ Route::prefix('v1')->middleware('check-api-key')->group(function () {
 
         Route::prefix('projects')->controller(ProjectController::class)->group(function () {
             Route::get('/', 'index');
-            Route::get('/{id}', 'show');
             Route::post('/', 'store');
             Route::patch('/{id}', 'update');
             Route::delete('/{id}', 'destroy');

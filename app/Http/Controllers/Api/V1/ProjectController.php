@@ -43,12 +43,16 @@ class ProjectController extends Controller
         );
     }
 
-    public function show(string $id): JsonResponse
+    public function show(string $slug): JsonResponse
     {
-        $project = Project::withoutTrashed()->findOrFail($id);
+        $hours = intval(config('app.cache_ttl_hours', 24));
+        $ttl = now()->addHours($hours);
+        $project = Cache::remember('project_'.$slug, $ttl, function () use ($slug) {
+            return $this->resolveForCache(new ProjectResource(Project::withoutTrashed()->where('slug', $slug)->firstOrFail()));
+        });
 
         return $this->successResponse(
-            new ProjectResource($project),
+            $project,
             'Project fetched successfully.'
         );
     }
@@ -80,7 +84,7 @@ class ProjectController extends Controller
             $request->deleted_images ?? [],
             $request->hasFile('images') ? $request->file('images') : []
         );
-
+        Cache::forget('project_'.$project->slug);
         Cache::forget('portfolio_projects');
         Cache::forget('portfolio_all');
 
@@ -94,6 +98,7 @@ class ProjectController extends Controller
     {
         $project = Project::withoutTrashed()->findOrFail($id);
         $project->delete();
+        Cache::forget('project_'.$project->slug);
         Cache::forget('portfolio_projects');
         Cache::forget('portfolio_all');
 
@@ -107,6 +112,7 @@ class ProjectController extends Controller
     {
         $project = Project::onlyTrashed()->findOrFail($id);
         $project->restore();
+        Cache::forget('project_'.$project->slug);
         Cache::forget('portfolio_projects');
         Cache::forget('portfolio_all');
 
@@ -119,12 +125,12 @@ class ProjectController extends Controller
     public function forceDelete(string $id): JsonResponse
     {
         $project = Project::withTrashed()->findOrFail($id);
-        foreach (is_array($project->images) ? $project->images : [] as $pathToDelete) {
-            $relativePath = 'projects/'.basename($pathToDelete);
-            Storage::disk('public')->delete($relativePath);
+        $images = $project->images;
+        if (! empty($images) && is_array($images)) {
+            Storage::disk('public')->delete($images);
         }
         $project->forceDelete();
-
+        Cache::forget('project_'.$project->slug);
         Cache::forget('portfolio_projects');
         Cache::forget('portfolio_all');
 

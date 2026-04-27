@@ -16,7 +16,7 @@ class Project extends Model
     {
         return [
             'tech_stack' => 'json',
-            'images' => 'json',
+            'images' => 'array',
             'is_featured' => 'boolean',
             'sort_order' => 'integer',
             'deleted_at' => 'datetime',

@@ -19,7 +19,6 @@ return new class extends Migration
             $table->text('about_me')->nullable();
             $table->string('avatar')->nullable();
             $table->string('cv_file')->nullable();
-            $table->string('cv_file_name')->nullable();
             $table->string('url_prefix')->nullable();
             $table->string('url_suffix')->nullable();
             $table->json('languages')->nullable();

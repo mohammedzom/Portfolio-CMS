@@ -23,6 +23,8 @@ class UpdateSiteSettingsRequest extends FormRequest
             'email' => 'sometimes|email|max:255',
             'phone' => ['sometimes', 'phone:AUTO,AR,US,GB,PS'],
             'location' => 'sometimes|string',
+            'delete_cv' => 'nullable|boolean',
+            'delete_avatar' => 'nullable|boolean',
 
             // Social Links
             'social_links' => 'nullable|array', // array of objects {name: string, url: string}
@@ -57,10 +59,12 @@ class UpdateSiteSettingsRequest extends FormRequest
             // Contact Info            'avatar.image' => 'Avatar must be an image.',
             'avatar.mimes' => 'Avatar must be a JPEG, PNG, GIF or JPG image.',
             'avatar.max' => 'Avatar cannot be larger than 15MB.',
+            'delete_avatar.boolean' => 'Delete avatar must be a boolean.',
 
             'cv_file.file' => 'CV file must be a file.',
             'cv_file.mimes' => 'CV file must be a PDF, DOC, or DOCX file.',
             'cv_file.max' => 'CV file cannot be larger than 15MB.',
+            'delete_cv.boolean' => 'Delete CV must be a boolean.',
 
             'email.email' => 'Email must be a valid email address.',
             'email.max' => 'Email cannot be longer than 255 characters.',

@@ -27,12 +27,14 @@ class SiteSettingsController extends Controller
         );
     }
 
-    public function update(UpdateSiteSettingsRequest $request, UpdateSiteSettingsAction $action): JsonResponse
+    public function update(UpdateSiteSettingsRequest $request): JsonResponse
     {
         $settings = SiteSettings::firstOrCreate();
-
-        $settings = $action->execute($settings, $request->validated(), $request->allFiles());
-
+        $settings = UpdateSiteSettingsAction::run(
+            $settings,
+            $request->validated(),
+            $request->allFiles()
+        );
         Cache::forget('portfolio_settings');
         Cache::forget('portfolio_all');
 

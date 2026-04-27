@@ -21,7 +21,6 @@ class SiteSettingstResource extends JsonResource
             'about_me' => $this->about_me,
             'avatar' => $this->avatar ? asset('storage/'.$this->avatar) : null,
             'cv_file' => $this->cv_file ? asset('storage/'.$this->cv_file) : null,
-            'cv_file_name' => $this->cv_file_name,
             'url_prefix' => $this->url_prefix,
             'url_suffix' => $this->url_suffix,
             'languages' => $this->languages,
