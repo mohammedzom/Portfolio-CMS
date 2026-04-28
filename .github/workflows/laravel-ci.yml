@@ -76,6 +76,8 @@ jobs:
             "$SHARED_DIR/storage/framework/views" \
             "$SHARED_DIR/storage/logs"
 
+          export GIT_SSH_COMMAND="ssh -i /home/mohammed/github-actions -o StrictHostKeyChecking=no"
+
           git clone --depth=1 --branch main git@github.com:${{ github.repository }}.git "$RELEASE_DIR"
 
           ln -sfn "$SHARED_DIR/.env" "$RELEASE_DIR/.env"
