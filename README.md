@@ -1,6 +1,7 @@
 # Portfolio CMS API 🚀
-
 A modern, high-performance headless Content Management System (CMS) built with **Laravel 13** and **PHP 8.5**. This API serves as the robust backend for a personal portfolio, featuring a "Cosmic Dark" aesthetic on the upcoming frontend.
+
+[![Laravel CI/CD](https://github.com/mohammedzom/Portfolio-CMS/actions/workflows/laravel-ci.yml/badge.svg)](https://github.com/mohammedzom/Portfolio-CMS/actions/workflows/laravel-ci.yml)
 
 ## 🌟 Features
 
