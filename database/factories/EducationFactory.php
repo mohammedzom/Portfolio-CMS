@@ -18,8 +18,8 @@ class EducationFactory extends Factory
     public function definition(): array
     {
         return [
-            'degree' => $this->faker->word() . ' Degree',
-            'institution' => $this->faker->company() . ' University',
+            'degree' => $this->faker->word().' Degree',
+            'institution' => $this->faker->company().' University',
             'field_of_study' => $this->faker->jobTitle(),
             'start_year' => $this->faker->numberBetween(2010, 2015),
             'end_year' => $this->faker->numberBetween(2016, 2020),
