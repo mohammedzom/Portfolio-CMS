@@ -31,6 +31,7 @@ class ExperienceController extends Controller
             $cacheKey .= '_archived';
         }
         if ($request->filled('search')) {
+            $cacheKey = null;
             $query->where('job_title', 'like', '%'.$request->search.'%')
                 ->orWhere('company', 'like', '%'.$request->search.'%')
                 ->orWhere('description', 'like', '%'.$request->search.'%');
