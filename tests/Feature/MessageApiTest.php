@@ -7,7 +7,11 @@ uses(RefreshDatabase::class);
 it('validates contact form payloads', function () {
     $this->postJson('/api/v1/message', [])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['name', 'email', 'subject', 'body']);
+        ->assertJsonStructure([
+            'data' => [
+                'name', 'email', 'subject', 'body',
+            ],
+        ]);
 });
 
 it('rate limits contact form submissions', function () {

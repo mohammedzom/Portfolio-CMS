@@ -20,6 +20,8 @@ class ApiException extends Exception
 
     public const INTERNAL_ERROR = 'INTERNAL_ERROR';
 
+    public const TOO_MANY_REQUESTS = 'TOO_MANY_REQUESTS';
+
     public function __construct(
         string $message,
         private readonly mixed $details = null,
@@ -72,6 +74,15 @@ class ApiException extends Exception
             message: $message,
             httpCode: 500,
             internalCode: self::INTERNAL_ERROR,
+        );
+    }
+
+    public static function tooManyRequests(string $message = 'Too Many Attempts.'): static
+    {
+        return new static(
+            message: $message,
+            httpCode: 429,
+            internalCode: self::TOO_MANY_REQUESTS,
         );
     }
 

@@ -8,6 +8,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -86,6 +87,14 @@ return Application::configure(basePath: dirname(__DIR__))
             return ApiException::conflict(
                 'This entry already exists.'
             )->render($request);
+        });
+
+        $exceptions->render(function (ThrottleRequestsException $e, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiException::tooManyRequests()->render($request);
         });
 
         $exceptions->render(function (Throwable $e, Request $request) {
