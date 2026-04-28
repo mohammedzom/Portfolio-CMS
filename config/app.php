@@ -30,6 +30,8 @@ return [
 
     'cache_ttl_hours' => env('CACHE_TTL', 24),
 
+    'api_key' => env('API_KEY'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Debug Mode

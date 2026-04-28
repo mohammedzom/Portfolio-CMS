@@ -14,7 +14,7 @@ class CheckApiKey
     {
         $apiKey = $request->header('x-api-key');
         Log::debug('Atempting to access API From ip : '.$request->ip().' With API Key: '.$apiKey);
-        if (! $apiKey || $apiKey !== env('API_KEY')) {
+        if (! $apiKey || $apiKey !== config('app.api_key')) {
             throw new AccessDeniedHttpException('Unauthorized');
         }
 
