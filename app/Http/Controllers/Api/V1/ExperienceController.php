@@ -24,8 +24,11 @@ class ExperienceController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Experience::query();
+
+        $cacheKey = 'experiences';
         if ($request->has('archived') && $request->input('archived') == true) {
             $query->onlyTrashed();
+            $cacheKey .= '_archived';
         }
         if ($request->filled('search')) {
             $query->where('job_title', 'like', '%'.$request->search.'%')
@@ -35,7 +38,7 @@ class ExperienceController extends Controller
         $hours = intval(config('app.cache_ttl_hours', 24));
         $ttl = now()->addHours($hours);
 
-        $experiences = Cache::remember('portfolio_experiences', $ttl, function () use ($query) {
+        $experiences = Cache::remember($cacheKey, $ttl, function () use ($query) {
             return $this->resolveForCache(ExperienceResource::collection($query->orderBy('start_date', 'desc')->get()));
         });
 
@@ -50,7 +53,7 @@ class ExperienceController extends Controller
         $data = $request->validated();
         $this->checkForbiddenFields($data);
         $experience = Experience::create($data);
-        Cache::forget('portfolio_experiences');
+        Cache::forget('experiences');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -76,7 +79,7 @@ class ExperienceController extends Controller
         $data = $request->validated();
         $this->checkForbiddenFields($data);
         $experience->update($data);
-        Cache::forget('portfolio_experiences');
+        Cache::forget('experiences');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -89,7 +92,8 @@ class ExperienceController extends Controller
     {
         $experience = Experience::withoutTrashed()->findOrFail($id);
         $experience->delete();
-        Cache::forget('portfolio_experiences');
+        Cache::forget('experiences');
+        Cache::forget('experiences_archived');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -100,13 +104,15 @@ class ExperienceController extends Controller
 
     protected function afterRestore(): void
     {
-        Cache::forget('portfolio_experiences');
+        Cache::forget('experiences');
+        Cache::forget('experiences_archived');
         Cache::forget('portfolio_all');
     }
 
     protected function afterForceDelete(): void
     {
-        Cache::forget('portfolio_experiences');
+        Cache::forget('experiences');
+        Cache::forget('experiences_archived');
         Cache::forget('portfolio_all');
     }
 

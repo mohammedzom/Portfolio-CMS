@@ -11,8 +11,8 @@ use App\Http\Controllers\Api\V1\PortfolioController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\ServiceController;
 use App\Http\Controllers\Api\V1\SiteSettingsController;
+use App\Http\Controllers\Api\V1\SkillCategoryController;
 use App\Http\Controllers\Api\V1\SkillController;
-use App\Http\Controllers\SkillCategoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('check-api-key')->group(function () {

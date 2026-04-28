@@ -28,6 +28,7 @@ class AchievementController extends Controller
         $cacheKey = 'achievements';
         $query = Achievement::orderBy('date', 'desc');
         if ($request->has('archived') && $request->input('archived') === true) {
+            $cacheKey .= '_archived';
             $query->onlyTrashed();
         }
 
@@ -50,6 +51,8 @@ class AchievementController extends Controller
             $request->validated(),
             $request->hasFile('file') ? $request->file('file') : null
         );
+        Cache::forget('achievements');
+        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new AchievementResource($achievement),
@@ -89,8 +92,8 @@ class AchievementController extends Controller
     {
         $achievement = Achievement::withoutTrashed()->findOrFail($id);
         $achievement->delete();
-
         Cache::forget('achievements');
+        Cache::forget('achievements_archived');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -102,6 +105,7 @@ class AchievementController extends Controller
     public function afterRestore(Achievement $achievement): void
     {
         Cache::forget('achievements');
+        Cache::forget('achievements_archived');
         Cache::forget('portfolio_all');
     }
 
@@ -115,6 +119,7 @@ class AchievementController extends Controller
     protected function afterForceDelete(): void
     {
         Cache::forget('achievements');
+        Cache::forget('achievements_archived');
         Cache::forget('portfolio_all');
     }
 }

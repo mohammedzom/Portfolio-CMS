@@ -23,9 +23,10 @@ class ServiceController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Service::query();
-        $cache_key = 'portfolio_services';
+        $cache_key = 'services';
         if ($request->has('archived') && $request->input('archived') == true) {
             $query->onlyTrashed();
+            $cache_key .= '_archived';
         }
         if ($request->filled('search')) {
             $cache_key = null;
@@ -50,7 +51,7 @@ class ServiceController extends Controller
     public function store(StoreServiceRequest $request): JsonResponse
     {
         $service = Service::create($request->validated());
-        Cache::forget('portfolio_services');
+        Cache::forget('services');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -81,7 +82,7 @@ class ServiceController extends Controller
             'sort_order' => $request->sort_order,
             'tags' => $request->tags,
         ]);
-        Cache::forget('portfolio_services');
+        Cache::forget('services');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -94,7 +95,8 @@ class ServiceController extends Controller
     {
         $service = Service::withoutTrashed()->findOrFail($id);
         $service->delete();
-        Cache::forget('portfolio_services');
+        Cache::forget('services');
+        Cache::forget('services_archived');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -105,13 +107,15 @@ class ServiceController extends Controller
 
     protected function afterRestore(): void
     {
-        Cache::forget('portfolio_services');
+        Cache::forget('services');
+        Cache::forget('services_archived');
         Cache::forget('portfolio_all');
     }
 
     protected function afterForceDelete(): void
     {
-        Cache::forget('portfolio_services');
+        Cache::forget('services');
+        Cache::forget('services_archived');
         Cache::forget('portfolio_all');
     }
 }

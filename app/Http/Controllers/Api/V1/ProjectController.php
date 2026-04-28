@@ -26,9 +26,10 @@ class ProjectController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Project::query();
-        $cache_key = 'portfolio_projects';
+        $cache_key = 'projects';
         if ($request->has('archived') && $request->input('archived') == true) {
             $query->onlyTrashed();
+            $cache_key .= '_archived';
         }
         if ($request->filled('search')) {
             $cache_key = null;
@@ -71,7 +72,7 @@ class ProjectController extends Controller
             $request->hasFile('images') ? $request->file('images') : []
         );
 
-        Cache::forget('portfolio_projects');
+        Cache::forget('projects');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -92,7 +93,7 @@ class ProjectController extends Controller
             $request->hasFile('images') ? $request->file('images') : []
         );
         Cache::forget('project_'.$project->slug);
-        Cache::forget('portfolio_projects');
+        Cache::forget('projects');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -106,7 +107,8 @@ class ProjectController extends Controller
         $project = Project::withoutTrashed()->findOrFail($id);
         $project->delete();
         Cache::forget('project_'.$project->slug);
-        Cache::forget('portfolio_projects');
+        Cache::forget('projects');
+        Cache::forget('projects_archived');
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
@@ -118,7 +120,8 @@ class ProjectController extends Controller
     protected function afterRestore(Project $project): void
     {
         Cache::forget('project_'.$project->slug);
-        Cache::forget('portfolio_projects');
+        Cache::forget('projects');
+        Cache::forget('projects_archived');
         Cache::forget('portfolio_all');
     }
 
@@ -133,7 +136,8 @@ class ProjectController extends Controller
     protected function afterForceDelete(Project $project): void
     {
         Cache::forget('project_'.$project->slug);
-        Cache::forget('portfolio_projects');
+        Cache::forget('projects');
+        Cache::forget('projects_archived');
         Cache::forget('portfolio_all');
     }
 }
