@@ -12,7 +12,7 @@ class CheckApiKey
     public function handle(Request $request, Closure $next): Response
     {
         $apiKey = $request->header('x-api-key');
-
+        Log::debug('Atempting to access API From ip : '.$request->ip().' With API Key: '.$apiKey);
         if (! $apiKey || $apiKey !== env('API_KEY')) {
             throw new AccessDeniedHttpException('Unauthorized');
         }
