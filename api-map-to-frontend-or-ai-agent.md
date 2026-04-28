@@ -312,6 +312,19 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
     "success": true,
     "message": "Dashboard Data Retrieved Successfully",
     "data": {
+        "analytics_data": {
+            "total_visits": 150,
+            "chart_data": [
+                {
+                    "visited_at": "2026-04-20",
+                    "count": 12
+                },
+                {
+                    "visited_at": "2026-04-21",
+                    "count": 15
+                }
+            ]
+        },
         "projects": [
             {
                 "id": 1,

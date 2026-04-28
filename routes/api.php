@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\ServiceController;
 use App\Http\Controllers\Api\V1\SiteSettingsController;
 use App\Http\Controllers\Api\V1\SkillCategoryController;
 use App\Http\Controllers\Api\V1\SkillController;
+use App\Http\Middleware\LogVisitor;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('check-api-key')->group(function () {
@@ -20,7 +21,7 @@ Route::prefix('v1')->middleware('check-api-key')->group(function () {
     // Public Routes
     Route::post('/admin/login', Login::class)->name('login')->middleware('throttle:10,1');
     Route::post('/message', [MessageController::class, 'store'])->middleware('throttle:contact_form');
-    Route::get('/portfolio', [PortfolioController::class, 'index'])->middleware('throttle:25,1');
+    Route::get('/portfolio', [PortfolioController::class, 'index'])->middleware([LogVisitor::class, 'throttle:25,1']);
     Route::get('/projects/{slug}', [ProjectController::class, 'show'])->middleware('throttle:25,1');
     // Protected Routes
     Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
