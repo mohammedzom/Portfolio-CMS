@@ -291,6 +291,7 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 }
 ```
 
+
 ## Admin Endpoints
 
 ### `POST /api/v1/admin/logout`
@@ -714,6 +715,15 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 
 ## Projects
 
+### `GET /api/v1/projects/{slug}`
+
+- Auth: `x-api-key` only.
+- Success `200`: `data` is `ProjectResource`, message `Project fetched successfully.`
+- Caching:
+  - Cached for 24 hours (default) or value of `app.cache_ttl_hours`.
+  - Cache key: `project_{slug}`.
+  - Cleared on project update, destroy, restore, or force delete.
+
 ### `GET /api/v1/admin/projects`
 
 - Auth: admin.
@@ -722,11 +732,6 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
   - `search`: filters title or description with `LIKE`.
 - Success: `data` is array of `ProjectResource`, message `Projects retreived successfully.`
 
-### `GET /api/v1/admin/projects/{id}`
-
-- Auth: admin.
-- Only non-trashed project.
-- Success: `data` is `ProjectResource`, message `Project fetched successfully.`
 
 ### `POST /api/v1/admin/projects`
 
@@ -1209,12 +1214,16 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
   - `projects_count`: sometimes, integer
   - `clients_count`: sometimes, integer
   - `available_for_freelance`: sometimes, boolean
+  - `delete_avatar`: nullable, boolean
+  - `delete_cv`: nullable, boolean
   - `about_me`: sometimes, string
   - `url_prefix`: sometimes, string, max 255
   - `url_suffix`: sometimes, string, max 255
 - Server behavior:
   - `avatar` is stored as `avatars/avatar.{ext}` and replaces existing avatar.
   - `cv_file` is stored under `cv/{original_name_with_spaces_replaced}` and replaces existing CV.
+  - If `delete_avatar` is true, deletes existing avatar file and sets field to null.
+  - If `delete_cv` is true, deletes existing CV file and sets field to null.
 - Success `200`: `data` is `SiteSettingsResource`, message `Site settings updated successfully.`
 
 ## Skill Categories Gap
