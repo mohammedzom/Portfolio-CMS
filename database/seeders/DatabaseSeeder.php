@@ -60,6 +60,7 @@ class DatabaseSeeder extends Seeder
             ExperienceSeeder::class,
             AchievementSeeder::class,
             EducationSeeder::class,
+            VisitSeeder::class,
         ]);
     }
 }
