@@ -15,6 +15,20 @@ class UpdateSiteSettingsAction
     public function handle(SiteSettings $settings, array $validated, array $files): SiteSettings
     {
         return DB::transaction(function () use ($settings, $validated, $files) {
+            if (isset($validated['delete_avatar']) && $validated['delete_avatar'] == true) {
+                if ($settings->avatar) {
+                    Storage::disk('public')->delete($settings->avatar);
+                }
+                $validated['avatar'] = null;
+            }
+
+            if (isset($validated['delete_cv']) && $validated['delete_cv'] == true) {
+                if ($settings->cv_file) {
+                    Storage::disk('public')->delete($settings->cv_file);
+                }
+                $validated['cv_file'] = null;
+            }
+
             if (isset($files['avatar'])) {
                 if ($settings->avatar) {
                     Storage::disk('public')->delete($settings->avatar);
@@ -34,15 +48,6 @@ class UpdateSiteSettingsAction
                 $validated['cv_file'] = $files['cv_file']->storeAs('cv', $fileName, 'public');
             }
 
-            if (isset($validated['delete_avatar']) && $validated['delete_avatar'] == true) {
-                Storage::disk('public')->delete($settings->avatar);
-                $validated['avatar'] = null;
-            }
-
-            if (isset($validated['delete_cv']) && $validated['delete_cv'] == true) {
-                Storage::disk('public')->delete($settings->cv_file);
-                $validated['cv_file'] = null;
-            }
             $settings->save();
             $settings->update($validated);
 
