@@ -8,52 +8,104 @@ use Illuminate\Http\Request;
 
 class ApiException extends Exception
 {
-    protected $httpCode;
+    public const VALIDATION_ERROR = 'VALIDATION_ERROR';
 
-    protected $details;
+    public const UNAUTHENTICATED = 'UNAUTHENTICATED';
 
-    protected $internalCode;
+    public const FORBIDDEN = 'FORBIDDEN';
 
-    public function __construct($message, $details = null, $httpCode = 400, $internalCode = null)
-    {
+    public const NOT_FOUND = 'NOT_FOUND';
+
+    public const CONFLICT = 'CONFLICT';
+
+    public const INTERNAL_ERROR = 'INTERNAL_ERROR';
+
+    public function __construct(
+        string $message,
+        private readonly mixed $details = null,
+        private readonly int $httpCode = 400,
+        private readonly ?string $internalCode = null,
+    ) {
         parent::__construct($message);
+    }
 
-        $this->details = $details;
-        $this->httpCode = $httpCode;
-        $this->internalCode = $internalCode;
+    public static function validation(array $errors): static
+    {
+        return new static(
+            message: 'The given data was invalid.',
+            details: $errors,
+            httpCode: 422,
+            internalCode: self::VALIDATION_ERROR,
+        );
+    }
+
+    public static function notFound(string $resource = 'Resource'): static
+    {
+        return new static(
+            message: "{$resource} not found.",
+            httpCode: 404,
+            internalCode: self::NOT_FOUND,
+        );
+    }
+
+    public static function forbidden(string $message = 'Forbidden.'): static
+    {
+        return new static(
+            message: $message,
+            httpCode: 403,
+            internalCode: self::FORBIDDEN,
+        );
+    }
+
+    public static function conflict(string $message): static
+    {
+        return new static(
+            message: $message,
+            httpCode: 409,
+            internalCode: self::CONFLICT,
+        );
+    }
+
+    public static function internal(string $message = 'An unexpected error occurred.'): static
+    {
+        return new static(
+            message: $message,
+            httpCode: 500,
+            internalCode: self::INTERNAL_ERROR,
+        );
     }
 
     public function render(Request $request): JsonResponse
     {
+        return response()->json($this->buildResponse(), $this->httpCode);
+    }
+
+    private function buildResponse(): array
+    {
         $response = [
             'success' => false,
             'message' => $this->getMessage(),
-            'data' => $this->getResponseData(),
+            'error_code' => $this->internalCode,
+            'data' => $this->resolveData(),
         ];
 
-        if ($this->internalCode) {
-            $response['error_code'] = $this->internalCode;
-        }
-
-        return response()->json($response, $this->httpCode);
+        return array_filter($response, fn ($v) => $v !== null);
     }
 
-    private function getResponseData()
+    private function resolveData(): mixed
     {
         if (empty($this->details)) {
             return null;
         }
 
-        if ($this->internalCode === 'VALIDATION_ERROR') {
+        if ($this->internalCode === self::VALIDATION_ERROR) {
             return $this->details;
         }
 
-        if (! config('app.debug')) {
-            return is_array($this->details) && isset($this->details['errorInfo'])
-                ? $this->details['errorInfo']
-                : null;
+        if (config('app.debug')) {
+            return $this->details;
         }
 
-        return $this->details;
+        return null;
     }
 }

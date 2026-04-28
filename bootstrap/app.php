@@ -29,84 +29,77 @@ return Application::configure(basePath: dirname(__DIR__))
             'check-api-key' => CheckApiKey::class,
         ]);
     })
-
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
-            if ($request->is('api/*')) {
-
-                $previous = $e->getPrevious();
-                if ($previous instanceof ModelNotFoundException) {
-                    $modelName = class_basename($previous->getModel());
-
-                    return (new ApiException(
-                        "No results found for {$modelName}.",
-                        null,
-                        404,
-                        'MODEL_NOT_FOUND'
-                    ))->render($request);
-                }
-
-                return (new ApiException(
-                    'The resource or endpoint you are looking for could not be found.',
-                    null,
-                    404,
-                    'ENDPOINT_NOT_FOUND'
-                ))->render($request);
+            if (! $request->is('api/*')) {
+                return null;
             }
+
+            $previous = $e->getPrevious();
+
+            if ($previous instanceof ModelNotFoundException) {
+                return ApiException::notFound(
+                    class_basename($previous->getModel())
+                )->render($request);
+            }
+
+            return (new ApiException(
+                message: 'The endpoint you are looking for does not exist.',
+                httpCode: 404,
+                internalCode: ApiException::NOT_FOUND,
+            ))->render($request);
         });
 
         $exceptions->render(function (ValidationException $e, Request $request) {
-            if ($request->is('api/*')) {
-                return (new ApiException(
-                    'Validation Error',
-                    $e->errors(),
-                    422,
-                    'VALIDATION_ERROR'
-                ))->render($request);
+            if (! $request->is('api/*')) {
+                return null;
             }
+
+            return ApiException::validation($e->errors())->render($request);
         });
 
         $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
-            if ($request->is('api/*')) {
-                return (new ApiException(
-                    'You are not authorized to perform this action.',
-                    null,
-                    403,
-                    'FORBIDDEN'
-                ))->render($request);
+            if (! $request->is('api/*')) {
+                return null;
             }
+
+            return ApiException::forbidden()->render($request);
         });
 
         $exceptions->render(function (AuthenticationException $e, Request $request) {
-            if ($request->is('api/*')) {
-                return (new ApiException(
-                    'Unauthenticated. Please log in first.',
-                    null,
-                    401,
-                    'UNAUTHENTICATED'
-                ))->render($request);
+            if (! $request->is('api/*')) {
+                return null;
             }
+
+            return (new ApiException(
+                message: 'Unauthenticated. Please log in first.',
+                httpCode: 401,
+                internalCode: ApiException::UNAUTHENTICATED,
+            ))->render($request);
         });
 
         $exceptions->render(function (UniqueConstraintViolationException $e, Request $request) {
-            if ($request->is('api/*')) {
-                return (new ApiException(
-                    'Conflict: The entry already exists in the database.',
-                    $e->getMessage(),
-                    409,
-                    'CONFLICT'
-                ))->render($request);
+            if (! $request->is('api/*')) {
+                return null;
             }
+
+            return ApiException::conflict(
+                'This entry already exists.'
+            )->render($request);
         });
 
         $exceptions->render(function (Throwable $e, Request $request) {
-            if ($request->is('api/*')) {
-                return (new ApiException(
-                    app()->isLocal() ? $e->getMessage() : 'Something went wrong.',
-                    app()->isLocal() ? $e->getTrace() : null,
-                    500,
-                    'SERVER_ERROR'
-                ))->render($request);
+            if ($e instanceof ApiException) {
+                return null;
             }
+
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiException::internal(
+                app()->isLocal() ? $e->getMessage() : 'Something went wrong.'
+            )->render($request);
         });
+
     })->create();

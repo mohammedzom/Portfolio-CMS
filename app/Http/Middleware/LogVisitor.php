@@ -21,7 +21,7 @@ class LogVisitor
                     'ip_address' => $request->ip(),
                     'visited_at' => now()->toDateString(),
                 ], [
-                    'user_agent' => substr($request->userAgent(), 0, 255),
+                    'user_agent' => $request->userAgent() ? substr($request->userAgent(), 0, 255) : null,
                 ]);
             } catch (Exception $e) {
                 Log::warning('Failed to log visit: '.$e->getMessage());
@@ -31,7 +31,7 @@ class LogVisitor
         return $response;
     }
 
-    private function isBot(string $userAgent): bool
+    private function isBot(?string $userAgent): bool
     {
         if (empty($userAgent)) {
             return false;
