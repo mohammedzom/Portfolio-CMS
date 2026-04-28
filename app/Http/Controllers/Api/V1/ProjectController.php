@@ -21,6 +21,8 @@ class ProjectController extends Controller
 
     protected $modelClass = Project::class;
 
+    protected $resourceClass = ProjectResource::class;
+
     public function index(Request $request): JsonResponse
     {
         $query = Project::query();
