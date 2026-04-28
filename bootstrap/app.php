@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: [
+            '10.0.0.0/8',
+            '127.0.0.1',
+        ]);
         $middleware->alias([
             'check-api-key' => CheckApiKey::class,
         ]);
