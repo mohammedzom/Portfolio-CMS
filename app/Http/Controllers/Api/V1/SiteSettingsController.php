@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\UpdateSiteSettingsAction;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\UpdateSiteSettingsRequest;
-use App\Http\Resources\SiteSettingstResource;
+use App\Http\Resources\SiteSettingsResource;
 use App\Models\SiteSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -18,7 +18,7 @@ class SiteSettingsController extends Controller
         $ttl = now()->addHours($hours);
 
         $settings = Cache::remember('portfolio_settings', $ttl, function () {
-            return $this->resolveForCache(new SiteSettingstResource(SiteSettings::firstOrFail()));
+            return $this->resolveForCache(new SiteSettingsResource(SiteSettings::firstOrFail()));
         });
 
         return $this->successResponse(
@@ -39,7 +39,7 @@ class SiteSettingsController extends Controller
         Cache::forget('portfolio_all');
 
         return $this->successResponse(
-            new SiteSettingstResource($settings),
+            new SiteSettingsResource($settings),
             'Site settings updated successfully.'
         );
     }

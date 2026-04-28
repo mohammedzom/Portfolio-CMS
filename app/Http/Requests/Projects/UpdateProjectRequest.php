@@ -10,13 +10,15 @@ class UpdateProjectRequest extends FormRequest
 {
     public function rules(): array
     {
+        $project = $this->route('project');
+
         return [
             'title' => 'sometimes|string|max:255',
             'slug' => [
                 'sometimes',
                 'string',
                 'max:255',
-                Rule::unique(Project::class)->ignore($this->id),
+                Rule::unique(Project::class)->ignore($project),
             ],
             'description' => 'sometimes|string',
             'category' => 'sometimes|in:Web,App,Mobile,Script,Other',

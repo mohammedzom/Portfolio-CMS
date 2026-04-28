@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
-use App\Http\Resources\AchievementResource;
-use App\Http\Resources\EducationResource;
-use App\Http\Resources\ExperienceResource;
-use App\Http\Resources\ProjectResource;
-use App\Http\Resources\ServiceResource;
-use App\Http\Resources\SiteSettingstResource;
-use App\Http\Resources\SkillResource;
+use App\Http\Resources\Public\AchievementResource;
+use App\Http\Resources\Public\EducationResource;
+use App\Http\Resources\Public\ExperienceResource;
+use App\Http\Resources\Public\ProjectResource;
+use App\Http\Resources\Public\ServiceResource;
+use App\Http\Resources\Public\SkillResource;
+use App\Http\Resources\SiteSettingsResource;
 use App\Models\Achievement;
 use App\Models\Education;
 use App\Models\Experience;
@@ -45,7 +45,7 @@ class PortfolioController extends Controller
                 'skills' => $groupedSkills,
                 'projects' => ProjectResource::collection($projects)->resolve(),
                 'services' => ServiceResource::collection($services)->resolve(),
-                'information' => (new SiteSettingstResource($settings))->resolve(),
+                'information' => (new SiteSettingsResource($settings))->resolve(),
                 'experiences' => ExperienceResource::collection($experiences)->resolve(),
                 'achievements' => AchievementResource::collection($achievements)->resolve(),
                 'educations' => EducationResource::collection($educations)->resolve(),

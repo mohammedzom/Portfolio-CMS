@@ -11,11 +11,9 @@ class UpdateAchievementAction
 {
     use AsAction;
 
-    public function handle(array $data, $file, string $id): Achievement
+    public function handle(Achievement $achievement, array $data, $file): Achievement
     {
-        return DB::transaction(function () use ($data, $file, $id) {
-            $achievement = Achievement::findOrFail($id);
-
+        return DB::transaction(function () use ($achievement, $data, $file) {
             if ($file) {
                 if (! empty($achievement->certificate_url)) {
                     Storage::disk('public')->delete($achievement->certificate_url);

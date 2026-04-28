@@ -2,34 +2,37 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Messages\DestroyMessageAction;
+use App\Actions\Messages\ForceDeleteMessageAction;
+use App\Actions\Messages\MarkMessageReadAction;
+use App\Actions\Messages\MarkMessageUnreadAction;
+use App\Actions\Messages\RestoreMessageAction;
+use App\Actions\Messages\StoreMessageAction;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Messages\StoreMessageRequest;
 use App\Http\Resources\MessageResource;
 use App\Models\Message;
-use App\Traits\ManageSoftDeletes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MessageController extends Controller
 {
-    use ManageSoftDeletes;
-
-    protected $modelClass = Message::class;
-
-    protected $resourceClass = MessageResource::class;
-
     public function index(Request $request): JsonResponse
     {
         $query = Message::query();
 
-        if ($request->has('archived') && $request->input('archived') == true) {
+        if ($request->boolean('archived')) {
             $query->onlyTrashed();
         }
+
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%'.$request->search.'%')
-                ->orWhere('email', 'like', '%'.$request->search.'%')
-                ->orWhere('subject', 'like', '%'.$request->search.'%')
-                ->orWhere('message', 'like', '%'.$request->search.'%');
+            $search = $request->string('search')->toString();
+            $query->where(function ($query) use ($search): void {
+                $query->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%')
+                    ->orWhere('subject', 'like', '%'.$search.'%')
+                    ->orWhere('body', 'like', '%'.$search.'%');
+            });
         }
 
         $messages = $query->latest()->paginate(10);
@@ -52,10 +55,9 @@ class MessageController extends Controller
         ], 'Messages retrieved successfully.');
     }
 
-    public function show(string $id): JsonResponse
+    public function show(Message $message): JsonResponse
     {
-        $message = Message::withoutTrashed()->findOrFail($id);
-        $message->update(['read_at' => now()]);
+        $message = MarkMessageReadAction::run($message, false);
 
         return $this->successResponse(
             new MessageResource($message),
@@ -63,10 +65,9 @@ class MessageController extends Controller
         );
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Message $message): JsonResponse
     {
-        $message = Message::withoutTrashed()->findOrFail($id);
-        $message->delete();
+        DestroyMessageAction::run($message);
 
         return $this->successResponse(
             [],
@@ -74,16 +75,9 @@ class MessageController extends Controller
         );
     }
 
-    public function markAsRead(string $id): JsonResponse
+    public function markAsRead(Message $message): JsonResponse
     {
-        $message = Message::findOrFail($id);
-        if ($message->read_at) {
-            return $this->errorResponse(
-                'Message is already read.',
-            );
-        }
-        $message->read_at = now();
-        $message->save();
+        $message = MarkMessageReadAction::run($message);
 
         return $this->successResponse(
             [
@@ -93,17 +87,9 @@ class MessageController extends Controller
         );
     }
 
-    public function markAsUnread(string $id): JsonResponse
+    public function markAsUnread(Message $message): JsonResponse
     {
-        $message = Message::findOrFail($id);
-        if (! $message->read_at) {
-            return $this->errorResponse(
-                'Message is already unread.'
-            );
-        }
-
-        $message->read_at = null;
-        $message->save();
+        MarkMessageUnreadAction::run($message);
 
         return $this->successResponse(
             [],
@@ -113,12 +99,32 @@ class MessageController extends Controller
 
     public function store(StoreMessageRequest $request): JsonResponse
     {
-        Message::create($request->validated());
+        StoreMessageAction::run($request->validated());
 
         return $this->successResponse(
             [],
             'Thank you for your message. I will get back to you as soon as possible.',
             201
+        );
+    }
+
+    public function restore(Message $message): JsonResponse
+    {
+        $message = RestoreMessageAction::run($message);
+
+        return $this->successResponse(
+            new MessageResource($message),
+            'Message restored successfully.'
+        );
+    }
+
+    public function forceDelete(Message $message): JsonResponse
+    {
+        ForceDeleteMessageAction::run($message);
+
+        return $this->successResponse(
+            [],
+            'Message deleted permanently.'
         );
     }
 }

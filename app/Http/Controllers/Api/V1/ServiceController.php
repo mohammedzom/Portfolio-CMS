@@ -2,36 +2,39 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Services\DestroyServiceAction;
+use App\Actions\Services\ForceDeleteServiceAction;
+use App\Actions\Services\RestoreServiceAction;
+use App\Actions\Services\StoreServiceAction;
+use App\Actions\Services\UpdateServiceAction;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Services\StoreServiceRequest;
 use App\Http\Requests\Services\UpdateServiceRequest;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
-use App\Traits\ManageSoftDeletes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class ServiceController extends Controller
 {
-    use ManageSoftDeletes;
-
-    protected $modelClass = Service::class;
-
-    protected $resourceClass = ServiceResource::class;
-
     public function index(Request $request): JsonResponse
     {
         $query = Service::query();
         $cache_key = 'services';
-        if ($request->has('archived') && $request->input('archived') == true) {
+
+        if ($request->boolean('archived')) {
             $query->onlyTrashed();
             $cache_key .= '_archived';
         }
+
         if ($request->filled('search')) {
             $cache_key = null;
-            $query->where('title', 'like', '%'.$request->search.'%');
-            $query->orWhere('description', 'like', '%'.$request->search.'%');
+            $search = $request->string('search')->toString();
+            $query->where(function ($query) use ($search): void {
+                $query->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('description', 'like', '%'.$search.'%');
+            });
         }
 
         $hours = intval(config('app.cache_ttl_hours', 24));
@@ -50,9 +53,7 @@ class ServiceController extends Controller
 
     public function store(StoreServiceRequest $request): JsonResponse
     {
-        $service = Service::create($request->validated());
-        Cache::forget('services');
-        Cache::forget('portfolio_all');
+        $service = StoreServiceAction::run($request->validated());
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -61,29 +62,17 @@ class ServiceController extends Controller
         );
     }
 
-    public function show(string $id): JsonResponse
+    public function show(Service $service): JsonResponse
     {
-        $service = Service::withoutTrashed()->findOrFail($id);
-
         return $this->successResponse(
             new ServiceResource($service),
             'Service fetched successfully.'
         );
     }
 
-    public function update(UpdateServiceRequest $request, string $id): JsonResponse
+    public function update(UpdateServiceRequest $request, Service $service): JsonResponse
     {
-        $service = Service::withoutTrashed()->findOrFail($id);
-
-        $service->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'icon' => $request->icon,
-            'sort_order' => $request->sort_order,
-            'tags' => $request->tags,
-        ]);
-        Cache::forget('services');
-        Cache::forget('portfolio_all');
+        $service = UpdateServiceAction::run($service, $request->validated());
 
         return $this->successResponse(
             new ServiceResource($service),
@@ -91,13 +80,9 @@ class ServiceController extends Controller
         );
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Service $service): JsonResponse
     {
-        $service = Service::withoutTrashed()->findOrFail($id);
-        $service->delete();
-        Cache::forget('services');
-        Cache::forget('services_archived');
-        Cache::forget('portfolio_all');
+        DestroyServiceAction::run($service);
 
         return $this->successResponse(
             [],
@@ -105,17 +90,23 @@ class ServiceController extends Controller
         );
     }
 
-    protected function afterRestore(): void
+    public function restore(Service $service): JsonResponse
     {
-        Cache::forget('services');
-        Cache::forget('services_archived');
-        Cache::forget('portfolio_all');
+        $service = RestoreServiceAction::run($service);
+
+        return $this->successResponse(
+            new ServiceResource($service),
+            'Service restored successfully.'
+        );
     }
 
-    protected function afterForceDelete(): void
+    public function forceDelete(Service $service): JsonResponse
     {
-        Cache::forget('services');
-        Cache::forget('services_archived');
-        Cache::forget('portfolio_all');
+        ForceDeleteServiceAction::run($service);
+
+        return $this->successResponse(
+            [],
+            'Service deleted permanently.'
+        );
     }
 }

@@ -9,12 +9,14 @@ class UpdateSkillRequest extends FormRequest
 {
     public function rules(): array
     {
+        $skill = $this->route('skill');
+
         return [
             'name' => [
                 'sometimes',
                 'string',
                 'max:255',
-                Rule::unique('skills', 'name')->ignore($this->id),
+                Rule::unique('skills', 'name')->ignore($skill),
             ],
             'icon' => 'sometimes|url',
             'proficiency' => 'sometimes|integer|min:0|max:100',

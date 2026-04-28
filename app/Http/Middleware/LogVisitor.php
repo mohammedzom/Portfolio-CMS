@@ -2,11 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Visit;
+use App\Jobs\LogVisitJob;
 use Closure;
-use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class LogVisitor
@@ -14,18 +12,14 @@ class LogVisitor
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
+        $ipAddress = $request->ip();
 
-        if ($response->status() === 200 && ! $this->isBot($request->userAgent())) {
-            try {
-                Visit::updateOrCreate([
-                    'ip_address' => $request->ip(),
-                    'visited_at' => now()->toDateString(),
-                ], [
-                    'user_agent' => $request->userAgent() ? substr($request->userAgent(), 0, 255) : null,
-                ]);
-            } catch (Exception $e) {
-                Log::warning('Failed to log visit: '.$e->getMessage());
-            }
+        if ($response->status() === 200 && $ipAddress !== null && ! $this->isBot($request->userAgent())) {
+            dispatch(new LogVisitJob(
+                $ipAddress,
+                $request->userAgent(),
+                now()->toDateString(),
+            ));
         }
 
         return $response;

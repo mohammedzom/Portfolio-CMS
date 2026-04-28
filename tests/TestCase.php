@@ -9,9 +9,16 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->withHeaders([
-            'x-api-key' => env('API_KEY', 'test-api-key'),
+            'x-api-key' => config('app.api_key', 'test-api-key'),
         ]);
+    }
+
+    protected function withoutApiKey(): static
+    {
+        unset($this->defaultHeaders['x-api-key']);
+
+        return $this;
     }
 }

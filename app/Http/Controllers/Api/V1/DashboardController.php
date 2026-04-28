@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\ProjectResource;
-use App\Http\Resources\SiteSettingstResource;
+use App\Http\Resources\SiteSettingsResource;
 use App\Http\Resources\SkillResource;
 use App\Models\Message;
 use App\Models\Project;
@@ -39,7 +39,7 @@ class DashboardController extends Controller
             'projects' => ProjectResource::collection($projects),
             'skills' => $groupedSkills,
             'messages' => MessageResource::collection($messages),
-            'information' => SiteSettingstResource::make($settings),
+            'information' => SiteSettingsResource::make($settings),
             'projects_count' => $projectsCount,
             'messages_count' => [
                 'total' => $messagesCount,
@@ -49,7 +49,7 @@ class DashboardController extends Controller
         ], 'Dashboard Data Retrieved Successfully');
     }
 
-    public function getAnalytics()
+    public function getAnalytics(): array
     {
         $stats = Visit::selectRaw('visited_at, count(*) as count')
             ->where('visited_at', '>=', now()->subDays(30))

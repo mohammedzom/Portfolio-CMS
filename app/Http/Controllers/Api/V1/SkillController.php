@@ -2,28 +2,26 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Skills\DestroySkillAction;
+use App\Actions\Skills\ForceDeleteSkillAction;
+use App\Actions\Skills\RestoreSkillAction;
+use App\Actions\Skills\StoreSkillAction;
+use App\Actions\Skills\UpdateSkillAction;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Skills\StoreSkillRequest;
 use App\Http\Requests\Skills\UpdateSkillRequest;
 use App\Http\Resources\SkillResource;
 use App\Models\Skill;
-use App\Traits\ManageSoftDeletes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class SkillController extends Controller
 {
-    use ManageSoftDeletes;
-
-    protected $modelClass = Skill::class;
-
-    protected $resourceClass = SkillResource::class;
-
     public function index(Request $request): JsonResponse
     {
         $query = Skill::query();
-        if ($request->has('archived') && $request->input('archived') == true) {
+
+        if ($request->boolean('archived')) {
             $query->onlyTrashed();
             $query->with(['category' => function ($q) {
                 $q->withTrashed();
@@ -50,8 +48,7 @@ class SkillController extends Controller
 
     public function store(StoreSkillRequest $request): JsonResponse
     {
-        $skill = Skill::create($request->validated());
-        Cache::forget('portfolio_all');
+        $skill = StoreSkillAction::run($request->validated());
 
         return $this->successResponse(
             new SkillResource($skill),
@@ -60,9 +57,9 @@ class SkillController extends Controller
         );
     }
 
-    public function show(string $id): JsonResponse
+    public function show(Skill $skill): JsonResponse
     {
-        $skill = Skill::withoutTrashed()->with('category')->findOrFail($id);
+        $skill->load('category');
 
         return $this->successResponse(
             new SkillResource($skill),
@@ -70,12 +67,9 @@ class SkillController extends Controller
         );
     }
 
-    public function update(UpdateSkillRequest $request, string $id): JsonResponse
+    public function update(UpdateSkillRequest $request, Skill $skill): JsonResponse
     {
-        $skill = Skill::withoutTrashed()->findOrFail($id);
-        $skill->update($request->validated());
-
-        Cache::forget('portfolio_all');
+        $skill = UpdateSkillAction::run($skill, $request->validated());
 
         return $this->successResponse(
             new SkillResource($skill),
@@ -83,11 +77,9 @@ class SkillController extends Controller
         );
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Skill $skill): JsonResponse
     {
-        $skill = Skill::withoutTrashed()->findOrFail($id);
-        $skill->delete();
-        Cache::forget('portfolio_all');
+        DestroySkillAction::run($skill);
 
         return $this->successResponse(
             [],
@@ -95,32 +87,16 @@ class SkillController extends Controller
         );
     }
 
-    public function restore(Request $request, string $id): JsonResponse
+    public function restore(Request $request, Skill $skill): JsonResponse
     {
         $validated = $request->validate([
             'new_category_id' => 'nullable|exists:skill_categories,id,deleted_at,NULL',
         ]);
 
-        $skill = Skill::onlyTrashed()->with(['category' => fn ($q) => $q->withTrashed()])->findOrFail($id);
-
-        $isCategoryTrashed = $skill->category && $skill->category->trashed();
-
-        if ($isCategoryTrashed && ! $request->has('new_category_id')) {
-
-            return $this->errorResponse(
-                "Category is Archived. Please restore the category first to restore the skill.\n Or send in body request new_category_id value to assign it to an active category.",
-                409,
-            );
-        }
-
-        if ($request->has('new_category_id') && $validated['new_category_id'] !== null) {
-            $skill->update([
-                'skill_category_id' => $validated['new_category_id'],
-            ]);
-        }
-
-        $skill->restore();
-        Cache::forget('portfolio_all');
+        $skill = RestoreSkillAction::run(
+            $skill,
+            isset($validated['new_category_id']) ? (int) $validated['new_category_id'] : null
+        );
 
         return $this->successResponse(
             new SkillResource($skill),
@@ -128,8 +104,13 @@ class SkillController extends Controller
         );
     }
 
-    protected function afterForceDelete(): void
+    public function forceDelete(Skill $skill): JsonResponse
     {
-        Cache::forget('portfolio_all');
+        ForceDeleteSkillAction::run($skill);
+
+        return $this->successResponse(
+            [],
+            'Skill deleted permanently.'
+        );
     }
 }

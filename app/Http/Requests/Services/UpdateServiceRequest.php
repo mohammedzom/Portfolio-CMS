@@ -9,18 +9,20 @@ class UpdateServiceRequest extends FormRequest
 {
     public function rules(): array
     {
+        $service = $this->route('service');
+
         return [
             'title' => [
                 'sometimes',
                 'string',
                 'max:255',
-                Rule::unique('services', 'title')->ignore($this->id),
+                Rule::unique('services', 'title')->ignore($service),
             ],
             'description' => 'required|string',
             'icon' => 'required|url|max:255',
             'sort_order' => 'required|integer',
             'tags' => 'nullable|array',
-            'tags.*.string' => 'Tag must be a string.',
+            'tags.*' => 'string',
         ];
     }
 

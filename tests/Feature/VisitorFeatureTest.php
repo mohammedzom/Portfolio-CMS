@@ -1,15 +1,15 @@
 <?php
 
-use App\Models\SiteSettings;
 use App\Models\Visit;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use function Pest\Laravel\getJson;
+
 use function Pest\Laravel\withHeaders;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->seed(\Database\Seeders\DatabaseSeeder::class);
+    $this->seed(DatabaseSeeder::class);
 });
 
 it('logs a visit when accessing portfolio', function () {

@@ -2,29 +2,28 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Education\DestroyEducationAction;
+use App\Actions\Education\ForceDeleteEducationAction;
+use App\Actions\Education\RestoreEducationAction;
+use App\Actions\Education\StoreEducationAction;
+use App\Actions\Education\UpdateEducationAction;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Education\StoreEducationRequest;
 use App\Http\Requests\Education\UpdateEducationRequest;
 use App\Http\Resources\EducationResource;
 use App\Models\Education;
-use App\Traits\ManageSoftDeletes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class EducationController extends Controller
 {
-    use ManageSoftDeletes;
-
-    protected $modelClass = Education::class;
-
-    protected $resourceClass = EducationResource::class;
-
     public function index(Request $request): JsonResponse
     {
         $query = Education::orderBy('start_year', 'desc');
         $cacheKey = 'educations';
-        if ($request->has('archived') && $request->input('archived') === true) {
+
+        if ($request->boolean('archived')) {
             $query->onlyTrashed();
             $cacheKey .= '_archived';
         }
@@ -44,11 +43,7 @@ class EducationController extends Controller
 
     public function store(StoreEducationRequest $request): JsonResponse
     {
-        $validated = $request->validated();
-        $education = Education::create($validated);
-
-        Cache::forget('educations');
-        Cache::forget('portfolio_all');
+        $education = StoreEducationAction::run($request->validated());
 
         return $this->successResponse(
             new EducationResource($education),
@@ -56,24 +51,17 @@ class EducationController extends Controller
         );
     }
 
-    public function show(string $id): JsonResponse
+    public function show(Education $education): JsonResponse
     {
-        $education = Education::findOrFail($id);
-
         return $this->successResponse(
             new EducationResource($education),
             'Education fetched successfully.'
         );
     }
 
-    public function update(UpdateEducationRequest $request, string $id): JsonResponse
+    public function update(UpdateEducationRequest $request, Education $education): JsonResponse
     {
-        $validated = $request->validated();
-        $education = Education::findOrFail($id);
-        $education->update($validated);
-
-        Cache::forget('educations');
-        Cache::forget('portfolio_all');
+        $education = UpdateEducationAction::run($education, $request->validated());
 
         return $this->successResponse(
             new EducationResource($education),
@@ -81,14 +69,9 @@ class EducationController extends Controller
         );
     }
 
-    public function destroy(string $id): JsonResponse
+    public function destroy(Education $education): JsonResponse
     {
-        $education = Education::withoutTrashed()->findOrFail($id);
-        $education->delete();
-
-        Cache::forget('educations');
-        Cache::forget('educations_archived');
-        Cache::forget('portfolio_all');
+        DestroyEducationAction::run($education);
 
         return $this->successResponse(
             null,
@@ -96,17 +79,23 @@ class EducationController extends Controller
         );
     }
 
-    protected function afterRestore(): void
+    public function restore(Education $education): JsonResponse
     {
-        Cache::forget('educations');
-        Cache::forget('educations_archived');
-        Cache::forget('portfolio_all');
+        $education = RestoreEducationAction::run($education);
+
+        return $this->successResponse(
+            new EducationResource($education),
+            'Education restored successfully.'
+        );
     }
 
-    protected function afterForceDelete(): void
+    public function forceDelete(Education $education): JsonResponse
     {
-        Cache::forget('educations');
-        Cache::forget('educations_archived');
-        Cache::forget('portfolio_all');
+        ForceDeleteEducationAction::run($education);
+
+        return $this->successResponse(
+            [],
+            'Education deleted permanently.'
+        );
     }
 }

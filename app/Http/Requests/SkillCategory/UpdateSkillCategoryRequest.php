@@ -9,13 +9,15 @@ class UpdateSkillCategoryRequest extends FormRequest
 {
     public function rules(): array
     {
+        $skillCategory = $this->route('skill_category');
+
         return [
             'name' => [
                 'sometimes',
                 'string',
                 'min:1',
                 'max:100',
-                Rule::unique('skill_categories', 'name')->ignore($this->id),
+                Rule::unique('skill_categories', 'name')->ignore($skillCategory),
             ],
         ];
     }
