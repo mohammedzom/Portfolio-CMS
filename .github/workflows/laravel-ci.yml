@@ -34,17 +34,14 @@ jobs:
     - name: Create Database for Testing
       run: |
         touch database/database.sqlite
-        sed -i -e 's/^DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
+        sed -i -e 's/DB_CONNECTION=mysql/DB_CONNECTION=sqlite/' .env
         sed -i -e '/DB_DATABASE/d' .env
-
-    - name: Clear Cached Configuration
-      run: php artisan config:clear
 
     - name: Run Migrations
       run: php artisan migrate --force
 
     - name: Run Tests
-      run: php artisan test --compact
+      run: php artisan test
 
   # CD
   deploy:
@@ -60,46 +57,18 @@ jobs:
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
-          set -eu
+          cd /home/mohammed/web/api.mohammedzomlot.online/public_html
 
-          APP_ROOT="/home/mohammed/web/api.mohammedzomlot.online"
-          RELEASES_DIR="$APP_ROOT/releases"
-          SHARED_DIR="$APP_ROOT/shared"
-          CURRENT_LINK="$APP_ROOT/current"
-          RELEASE_NAME="$(date +%Y%m%d%H%M%S)"
-          RELEASE_DIR="$RELEASES_DIR/$RELEASE_NAME"
+          php artisan down || true
 
-          mkdir -p "$RELEASES_DIR" \
-            "$SHARED_DIR/storage/app/public" \
-            "$SHARED_DIR/storage/framework/cache" \
-            "$SHARED_DIR/storage/framework/sessions" \
-            "$SHARED_DIR/storage/framework/views" \
-            "$SHARED_DIR/storage/logs"
+          git pull origin main
 
-          export GIT_SSH_COMMAND="ssh -i /home/mohammed/github-actions -o StrictHostKeyChecking=no"
-
-          git clone --depth=1 --branch main git@github.com:${{ github.repository }}.git "$RELEASE_DIR"
-
-          ln -sfn "$SHARED_DIR/.env" "$RELEASE_DIR/.env"
-          rm -rf "$RELEASE_DIR/storage"
-          ln -sfn "$SHARED_DIR/storage" "$RELEASE_DIR/storage"
-
-          cd "$RELEASE_DIR"
-
-          composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+          composer install --no-interaction --prefer-dist --optimize-autoloader
 
           php artisan migrate --force
+
           php artisan optimize:clear
           php artisan config:cache
           php artisan route:cache
-          php artisan view:cache
-          php artisan storage:link || true
 
-          ln -sfn "$RELEASE_DIR" "$APP_ROOT/current_tmp"
-          mv -Tf "$APP_ROOT/current_tmp" "$CURRENT_LINK"
-
-          cd "$CURRENT_LINK"
-          php artisan queue:restart
-          php -r 'if (function_exists("opcache_reset")) { opcache_reset(); }'
-
-          ls -1dt "$RELEASES_DIR"/* | tail -n +4 | xargs -r rm -rf
+          php artisan up
