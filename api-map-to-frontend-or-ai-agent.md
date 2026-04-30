@@ -1,6 +1,135 @@
 # Portfolio CMS API Map
 
+**Pure Laravel API Application** - This is a backend-only RESTful API with no frontend components.
+
 Generated from `routes/api.php`, `app/Http/Controllers/Api`, `app/Http/Requests`, `app/Http/Resources`, `app/Models`, related actions, middleware, and API exception handling.
+
+## Project Overview
+
+This is a **pure Laravel API** application designed to serve as a backend content management system for personal portfolios. All frontend build tooling has been removed, and the application focuses exclusively on providing robust RESTful API endpoints.
+
+### Technology Stack
+- **PHP 8.5** with **Laravel 13** framework
+- **Laravel Sanctum v4** for API authentication
+- **Laravel Boost v2** for enhanced development experience
+- **Pest v4** for testing
+- **MySQL** database with soft deletes
+- **RESTful API** architecture with versioning
+
+### API-Only Architecture
+This application has been converted to a pure API with the following characteristics:
+- **No frontend build tools**: Removed Vite, npm, Tailwind CSS, and all frontend dependencies
+- **No Blade templates**: All responses are JSON via API Resources
+- **No compiled assets**: Public directory contains only storage links and index.php
+- **API-first design**: All functionality exposed through RESTful endpoints
+- **Postman collection**: Available at `resources/Portfolio-cms.postman_collection.json`
+
+### Development Guidelines
+This project follows Laravel Boost guidelines and best practices:
+- Use `laravel-best-practices` skill for all Laravel PHP code
+- Use `pest-testing` skill for all test development
+- Follow Laravel conventions and patterns
+- Use Eloquent API Resources for consistent responses
+- Implement proper error handling and validation
+
+### Available Commands
+```bash
+# Setup project (no npm steps)
+composer run setup
+
+# Development (API server only)
+composer run dev
+
+# Run tests
+php artisan test --compact
+
+# API routes
+php artisan route:list --path=api
+```
+
+## API Security & Best Practices
+
+### Authentication
+- **API Key**: Required for all endpoints via `x-api-key` header
+- **Sanctum Tokens**: Required for admin endpoints via `Authorization: Bearer <token>`
+- **Rate Limiting**: Applied to public endpoints to prevent abuse
+
+### Security Features
+- **Input Validation**: All requests validated using Form Request classes
+- **SQL Injection Protection**: Eloquent ORM with parameter binding
+- **XSS Protection**: Input sanitization and output encoding
+- **CSRF Protection**: Disabled for API endpoints (stateless)
+- **CORS**: Configure as needed for cross-origin requests
+
+### Error Handling
+- **Standardized Error Format**: Consistent JSON error responses
+- **HTTP Status Codes**: Proper status codes for different scenarios
+- **Exception Handling**: Global exception handler for API errors
+- **Logging**: Comprehensive error logging for debugging
+
+### Performance Optimization
+- **Database Indexing**: Proper indexes on frequently queried columns
+- **Eager Loading**: Prevent N+1 queries with proper relationships
+- **API Caching**: Cache responses where appropriate
+- **Pagination**: Large datasets paginated to prevent memory issues
+
+## Laravel Boost Integration
+
+This project leverages Laravel Boost for enhanced development:
+
+### Available Skills
+- **laravel-best-practices**: Ensures code follows Laravel conventions
+- **pest-testing**: Provides modern PHP testing capabilities
+- **laravel-boost**: Enhanced development tools and commands
+
+### Boost Features
+- **Database Tools**: Schema inspection and query capabilities
+- **Documentation Search**: Version-specific Laravel documentation
+- **Error Analysis**: Enhanced error logging and debugging
+- **Code Quality**: Automated code formatting and analysis
+
+## API Client Integration
+
+### Postman Collection
+A comprehensive Postman collection is available at:
+`resources/Portfolio-cms.postman_collection.json`
+
+This collection includes:
+- All API endpoints with examples
+- Authentication setup (API key and Sanctum tokens)
+- Sample requests and responses
+- Environment variables configuration
+
+### Example cURL Commands
+
+#### Public Endpoints
+```bash
+# Get portfolio data
+curl -H "x-api-key: your-api-key" \
+  https://api.example.com/api/v1/portfolio
+
+# Submit contact message
+curl -X POST \
+  -H "x-api-key: your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"John Doe","email":"john@example.com","subject":"Hello","body":"Test message"}' \
+  https://api.example.com/api/v1/message
+```
+
+#### Admin Endpoints
+```bash
+# Login
+curl -X POST \
+  -H "x-api-key: your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"password"}' \
+  https://api.example.com/api/v1/admin/login
+
+# Get dashboard (requires token)
+curl -H "x-api-key: your-api-key" \
+  -H "Authorization: Bearer your-token" \
+  https://api.example.com/api/v1/admin/dashboard
+```
 
 ## Global Contract
 
@@ -335,9 +464,8 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
                 "tech_stack": [
                     "PHP 8.5",
                     "Laravel 13",
-                    "Tailwind CSS v4",
-                    "Alpine.js v3",
-                    "MySQL"
+                    "MySQL",
+                    "RESTful API"
                 ],
                 "images": [
                     "https://api.mohammedzomlot.online/storage/projects/project_Screenshot_2026-04-25_12-52-41_69ec8f181caf5.png"
@@ -360,9 +488,8 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
                 "tech_stack": [
                     "PHP 8.5",
                     "Laravel 13",
-                    "Tailwind CSS v4",
-                    "Alpine.js v3",
-                    "MySQL"
+                    "MySQL",
+                    "RESTful API"
                 ],
                 "images": [
                     "https://api.mohammedzomlot.online/storage/projects/project_screencapture-mohammedzom-online-2026-04-25-12_55_22_69ec90431b945.png",
@@ -851,7 +978,7 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
   - `icon`: required, url, max 255
   - `sort_order`: required, integer
   - `tags`: nullable, array
-  - Current rule contains `tags.*.string` as a key instead of `tags.* => string`; frontend should still submit an array of strings.
+  - Current rule contains `tags.*.string` as a key instead of `tags.* => string`; API clients should still submit an array of strings.
 - Success `200`: `data` is `ServiceResource`, message `Service updated successfully.`
 
 ### `DELETE /api/v1/admin/services/{id}`
@@ -1249,4 +1376,54 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
   - updating skill categories
   - deleting/restoring skill categories
 - The requested future admin dashboard includes Skill Categories CRUD, but the backend currently does not expose API endpoints for that feature.
+
+## Testing & Quality Assurance
+
+This project uses **Pest v4** for testing with the following approach:
+
+### Test Structure
+- **Feature tests**: Test API endpoints, authentication, and business logic
+- **Unit tests**: Test individual components and services
+- **Integration tests**: Test database interactions and model relationships
+
+### Running Tests
+```bash
+# Run all tests
+php artisan test --compact
+
+# Run specific test
+php artisan test --compact --filter=testName
+
+# Run with coverage
+php artisan test --coverage
+```
+
+### Test Best Practices
+- Use factories for test data generation
+- Test both success and failure scenarios
+- Mock external dependencies when appropriate
+- Use RefreshDatabase trait for database tests
+- Follow AAA pattern (Arrange, Act, Assert)
+
+## API Development Workflow
+
+When working on this API:
+
+1. **Create/Update Models**: Use `php artisan make:model` with appropriate flags
+2. **Define Validation**: Create Form Request classes for input validation
+3. **Implement Controllers**: Follow Laravel best practices with proper error handling
+4. **Create Resources**: Use Eloquent API Resources for consistent JSON responses
+5. **Write Tests**: Create comprehensive tests using Pest
+6. **Run Pint**: Format code with `vendor/bin/pint --dirty --format agent`
+7. **Test Routes**: Verify with `php artisan route:list --path=api`
+
+## Deployment Considerations
+
+As a pure API application:
+- **Environment variables**: Configure `APP_URL`, `API_KEY`, and database settings
+- **Storage**: Ensure `storage:link` is run for file uploads
+- **Queue**: Configure queue workers for background jobs
+- **Caching**: Configure cache driver for API response caching
+- **Rate limiting**: Configure appropriate rate limits for production
+- **SSL**: Use HTTPS in production for secure API communication
 
