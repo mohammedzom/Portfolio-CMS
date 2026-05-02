@@ -13,7 +13,7 @@ This is a **pure Laravel API** application designed to serve as a backend conten
 - **Laravel Sanctum v4** for API authentication
 - **Laravel Boost v2** for enhanced development experience
 - **Pest v4** for testing
-- **MySQL** database with soft deletes
+- **MySQL/MariaDB** database with soft deletes
 - **RESTful API** architecture with versioning
 
 ### API-Only Architecture
@@ -68,7 +68,7 @@ php artisan route:list --path=api
 - **Logging**: Comprehensive error logging for debugging
 
 ### Performance Optimization
-- **Database Indexing**: Proper indexes on frequently queried columns
+- **Database Indexing**: Proper indexes on frequently queried columns including `read_at` and `sort_order`
 - **Eager Loading**: Prevent N+1 queries with proper relationships
 - **API Caching**: Cache responses where appropriate
 - **Pagination**: Large datasets paginated to prevent memory issues
@@ -238,7 +238,7 @@ curl -H "x-api-key: your-api-key" \
 }
 ```
 
-Important: the `Skill` model belongs to `SkillCategory`, and skill create/update requests require `skill_category_id`. There is currently no API endpoint for listing or managing skill categories.
+Important: the `Skill` model belongs to `SkillCategory`, and skill create/update requests require `skill_category_id`. Skill categories can be managed via dedicated endpoints.
 
 ### Experience
 
@@ -434,6 +434,7 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 
 - Auth: `x-api-key` + Sanctum bearer token.
 - Query: none.
+- Uses `GetAnalyticsAction` for analytics data.
 - Success `200`:
 
 ```json
@@ -454,398 +455,16 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
                 }
             ]
         },
-        "projects": [
-            {
-                "id": 1,
-                "title": "Shaghalni — Backoffice Dashboard",
-                "slug": "shaghalni-backoffice-dashboard",
-                "description": "A modern, feature-rich administration panel for the Shaghalni Job Platform. This panel gives platform administrators and company managers full control over every entity inside the system.",
-                "category": "Web",
-                "tech_stack": [
-                    "PHP 8.5",
-                    "Laravel 13",
-                    "MySQL",
-                    "RESTful API"
-                ],
-                "images": [
-                    "https://api.mohammedzomlot.online/storage/projects/project_Screenshot_2026-04-25_12-52-41_69ec8f181caf5.png"
-                ],
-                "live_url": "https://dashboard.mohammedzom.online",
-                "repo_url": "https://github.com/mohammedzom/job-backoffice",
-                "is_featured": true,
-                "sort_order": 1,
-                "deleted_at_human": null,
-                "deleted_at": null,
-                "created_at": "2026-04-25T14:57:00.000000Z",
-                "updated_at": "2026-04-25T14:57:00.000000Z"
-            },
-            {
-                "id": 2,
-                "title": "Shaghalni — Job Platform",
-                "slug": "shaghalni-job-platform",
-                "description": "A modern, bilingual (Arabic/English) job marketplace connecting employers and job seekers. Features integrated Resume Parsing and AI Analysis, providing a seamless experience for job seekers.",
-                "category": "Web",
-                "tech_stack": [
-                    "PHP 8.5",
-                    "Laravel 13",
-                    "MySQL",
-                    "RESTful API"
-                ],
-                "images": [
-                    "https://api.mohammedzomlot.online/storage/projects/project_screencapture-mohammedzom-online-2026-04-25-12_55_22_69ec90431b945.png",
-                    "https://api.mohammedzomlot.online/storage/https://api.mohammedzomlot.online/storage/projects/project_screencapture-mohammedzom-online-resumes-2026-04-25-12_57_23_69ec90431be4d.png",
-                    "https://api.mohammedzomlot.online/storage/https://api.mohammedzomlot.online/storage/projects/project_screencapture-mohammedzom-online-job-applications-2026-04-25-12_57_08_69ec90431c0c5.png",
-                    "https://api.mohammedzomlot.online/storage/https://api.mohammedzomlot.online/storage/projects/project_Screenshot_2026-04-25_12-56-57_69ec90431c33f.png"
-                ],
-                "live_url": "https://mohammedzom.online",
-                "repo_url": "https://github.com/mohammedzom/job-app",
-                "is_featured": false,
-                "sort_order": 2,
-                "deleted_at_human": null,
-                "deleted_at": null,
-                "created_at": "2026-04-25T14:57:00.000000Z",
-                "updated_at": "2026-04-25T14:57:00.000000Z"
-            },
-            {
-                "id": 3,
-                "title": "Portfolio CMS",
-                "slug": "portfolio-cms",
-                "description": "A robust backend content management system designed to manage personal portfolios, including dynamic projects, skills, services, and site settings.",
-                "category": "Web",
-                "tech_stack": [
-                    "PHP",
-                    "Laravel",
-                    "MySQL"
-                ],
-                "images": [
-                    "https://api.mohammedzomlot.online/storage/projects/project_Screenshot_2026-04-27_06-02-06_69eed1d47d23c.png"
-                ],
-                "live_url": "https://mohammedzomlot.dev/",
-                "repo_url": "https://github.com/mohammedzom/Portfolio-CMS",
-                "is_featured": true,
-                "sort_order": 3,
-                "deleted_at_human": null,
-                "deleted_at": null,
-                "created_at": "2026-04-25T14:57:00.000000Z",
-                "updated_at": "2026-04-27T03:02:44.000000Z"
-            },
-            {
-                "id": 4,
-                "title": "HR System API",
-                "slug": "hr-system-api",
-                "description": "An advanced HR system built for the future. Manage attendance, payroll, leaves, and assets with a powerful RESTful API and sleek interface. Features enterprise-grade security with Laravel Sanctum.",
-                "category": "Web",
-                "tech_stack": [
-                    "PHP",
-                    "Laravel 12",
-                    "REST API",
-                    "MySQL"
-                ],
-                "images": [
-                    "https://api.mohammedzomlot.online/storage/projects/project_screencapture-api-mohammedzom-online-2026-04-25-13_01_59_69ec9314e57d8.png",
-                    "https://api.mohammedzomlot.online/storage/projects/project_Screenshot_2026-04-25_13-01-35_69ec9314e5c67.png"
-                ],
-                "live_url": "https://api.mohammedzom.online/",
-                "repo_url": "https://github.com/mohammedzom/HR-System-API",
-                "is_featured": false,
-                "sort_order": 4,
-                "deleted_at_human": null,
-                "deleted_at": null,
-                "created_at": "2026-04-25T14:57:00.000000Z",
-                "updated_at": "2026-04-25T15:07:19.000000Z"
-            }
-        ],
+        "projects": ["ProjectResource"],
         "skills": {
-            "Backend Development": [
-                {
-                    "id": 1,
-                    "name": "PHP",
-                    "proficiency": 95,
-                    "icon": "https://cdn-icons-png.flaticon.com/512/5968/5968332.png",
-                    "category": "Backend Development",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 2,
-                    "name": "Laravel",
-                    "proficiency": 90,
-                    "icon": "https://icon.icepanel.io/Technology/svg/Laravel.svg",
-                    "category": "Backend Development",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 3,
-                    "name": "RESTful APIs",
-                    "proficiency": 90,
-                    "icon": "https://www.svgrepo.com/show/489281/api.svg",
-                    "category": "Backend Development",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 4,
-                    "name": "MySQL",
-                    "proficiency": 90,
-                    "icon": "https://icon.icepanel.io/Technology/svg/MySQL.svg",
-                    "category": "Backend Development",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 5,
-                    "name": "Database Design",
-                    "proficiency": 85,
-                    "icon": "https://cdn-icons-png.flaticon.com/512/2758/2758751.png",
-                    "category": "Backend Development",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                }
-            ],
-            "Programming & Tools": [
-                {
-                    "id": 9,
-                    "name": "Linux/Unix",
-                    "proficiency": 95,
-                    "icon": "https://icon.icepanel.io/Technology/png-shadow-512/Linux.png",
-                    "category": "Programming & Tools",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 8,
-                    "name": "Git & GitHub",
-                    "proficiency": 90,
-                    "icon": "https://icon.icepanel.io/Technology/png-shadow-512/GitHub.png",
-                    "category": "Programming & Tools",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 10,
-                    "name": "Postman",
-                    "proficiency": 90,
-                    "icon": "https://icon.icepanel.io/Technology/svg/Postman.svg",
-                    "category": "Programming & Tools",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 11,
-                    "name": "Python",
-                    "proficiency": 85,
-                    "icon": "https://icon.icepanel.io/Technology/svg/Python.svg",
-                    "category": "Programming & Tools",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 12,
-                    "name": "C++",
-                    "proficiency": 80,
-                    "icon": "https://icon.icepanel.io/Technology/svg/C%2B%2B-%28CPlusPlus%29.svg",
-                    "category": "Programming & Tools",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 13,
-                    "name": "Java",
-                    "proficiency": 70,
-                    "icon": "https://icon.icepanel.io/Technology/svg/Java.svg",
-                    "category": "Programming & Tools",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                }
-            ],
-            "Core Concepts": [
-                {
-                    "id": 17,
-                    "name": "DevOps Basics",
-                    "proficiency": 90,
-                    "icon": "https://api.mohammedzomlot.online/storage/icons/devops.png",
-                    "category": "Core Concepts",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 14,
-                    "name": "Problem Solving",
-                    "proficiency": 80,
-                    "icon": "https://api.mohammedzomlot.online/storage/icons/problem_solving.svg",
-                    "category": "Core Concepts",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 15,
-                    "name": "System Design",
-                    "proficiency": 80,
-                    "icon": "https://api.mohammedzomlot.online/storage/icons/system-design.png",
-                    "category": "Core Concepts",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 16,
-                    "name": "Algorithms",
-                    "proficiency": 80,
-                    "icon": "https://icon.icepanel.io/Technology/svg/The-Algorithms.svg",
-                    "category": "Core Concepts",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                }
-            ],
-            "Mobile Development": [
-                {
-                    "id": 6,
-                    "name": "Flutter",
-                    "proficiency": 70,
-                    "icon": "https://icon.icepanel.io/Technology/svg/Flutter.svg",
-                    "category": "Mobile Development",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                },
-                {
-                    "id": 7,
-                    "name": "Dart",
-                    "proficiency": 70,
-                    "icon": "https://icon.icepanel.io/Technology/svg/Dart.svg",
-                    "category": "Mobile Development",
-                    "deleted_at_human": null,
-                    "deleted_at": null,
-                    "created_at": "2026-04-25T14:57:00.000000Z",
-                    "updated_at": "2026-04-25T14:57:00.000000Z"
-                }
-            ]
+            "Category Name": ["SkillResource"]
         },
-        "messages": [
-            {
-                "id": 9,
-                "name": "Beverly Harris",
-                "email": "schulist.triston@yahoo.com",
-                "subject": "Placeat veniam voluptatem non animi ullam illo.",
-                "body": "Neque reprehenderit magnam occaecati. Et velit officia sed. Voluptatem fugiat accusamus facere aut consequuntur vel. Deserunt officia nihil nisi aliquid.",
-                "is_read": false,
-                "read_at_human": null,
-                "read_at": null,
-                "deleted_at_human": null,
-                "deleted_at": null,
-                "created_at": "2026-04-25T14:57:00.000000Z",
-                "updated_at": "2026-04-25T14:57:00.000000Z"
-            },
-            {
-                "id": 1,
-                "name": "Kali Goldner",
-                "email": "zschmitt@pagac.com",
-                "subject": "Voluptatem est in maxime voluptatem.",
-                "body": "Cumque sed fugiat quas debitis alias amet. Cupiditate error voluptas accusantium eum reprehenderit. Corrupti quia quia aut quo. Numquam quasi ab quidem molestiae quaerat quia est.",
-                "is_read": true,
-                "read_at_human": "1 day ago",
-                "read_at": "2026-04-25 14:57",
-                "deleted_at_human": null,
-                "deleted_at": null,
-                "created_at": "2026-04-25T14:57:00.000000Z",
-                "updated_at": "2026-04-25T14:57:00.000000Z"
-            },
-            {
-                "id": 2,
-                "name": "Mr. Nicola Torphy II",
-                "email": "trinity72@williamson.com",
-                "subject": "Consequatur tempora aut repellendus error et reiciendis voluptatem tenetur.",
-                "body": "Voluptatem eum veritatis distinctio labore. Consequatur dolorem cupiditate velit vel. Enim et ipsum est quia.",
-                "is_read": true,
-                "read_at_human": "1 day ago",
-                "read_at": "2026-04-25 14:57",
-                "deleted_at_human": null,
-                "deleted_at": null,
-                "created_at": "2026-04-25T14:57:00.000000Z",
-                "updated_at": "2026-04-25T14:57:00.000000Z"
-            }
-        ],
-        "information": {
-            "id": 1,
-            "first_name": "Mohammed",
-            "last_name": "Zomlot",
-            "full_name": "Mohammed Zomlot",
-            "tagline": "Software Engineer",
-            "bio": "Specialized in building robust, scalable server-side architectures using PHP & Laravel. Passionate about clean code, RESTful APIs, and database optimization.",
-            "about_me": "Resilient Software Engineering student with a strong foundation in algorithmic problem-solving. I began my journey as a passionate Mobile Developer (Flutter), building several feature-rich applications. However, due to the war in Gaza and the resulting hardware limitations of my available device, I demonstrated adaptability by pivoting to Backend Development. I now specialize in PHP, Laravel, and RESTful APIs, leveraging my engineering mindset to build robust server-side solutions while continuing to excel in regional programming contests.",
-            "avatar": "https://api.mohammedzomlot.online/storage/avatars/avatar.jpg",
-            "cv_file": "https://api.mohammedzomlot.online/storage/cv/Mohammed_Zomlot-CV.pdf",
-            "url_prefix": "Mohammedzomlot",
-            "url_suffix": "dev",
-            "languages": [
-                {
-                    "name": "Arabic",
-                    "level": "Native"
-                },
-                {
-                    "name": "English",
-                    "level": "Intermediate"
-                }
-            ],
-            "email": "mohammedzomlot2@gmail.com",
-            "phone": "+970593628153",
-            "location": "Gaza Strip, Palestine",
-            "social_links": [
-                {
-                    "name": "github",
-                    "url": "https://github.com/mohammedzom"
-                },
-                {
-                    "name": "linkedin",
-                    "url": "https://www.linkedin.com/in/mohammedzom/"
-                },
-                {
-                    "name": "Telegram",
-                    "url": "https://t.me/mohammedzom"
-                }
-            ],
-            "years_experience": 1,
-            "projects_count": 4,
-            "clients_count": 3,
-            "available_for_freelance": true,
-            "created_at": "2026-04-25T14:57:00.000000Z",
-            "updated_at": "2026-04-25T14:57:00.000000Z"
-        },
+        "messages": ["MessageResource"],
+        "information": "SiteSettingsResource",
         "projects_count": 4,
         "messages_count": {
             "total": 14,
-            "unread": 1
+            "archived": 1
         },
         "skills_count": 17
     }
@@ -894,7 +513,7 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
   - Adds unique suffix if slug exists.
   - Stores images under `storage/app/public/projects`.
   - Defaults `is_featured` to false.
-  - Defaults `sort_order` to current max + 1.
+  - **Automatic Sort Order Assignment**: If `sort_order` is null, automatically assigns `MAX(sort_order) + 1` via model boot event.
 - Success `201`: `data` is `ProjectResource`, message `Project created successfully.`
 
 ### `PATCH /api/v1/admin/projects/{id}`
@@ -931,13 +550,27 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 
 - Auth: admin.
 - Restores trashed project.
+- Uses `RestoreProjectRequest` for validation.
 - Success `200`: `data` is `ProjectResource`, message `Project restored successfully.`
 
 ### `DELETE /api/v1/admin/projects/{id}/force-delete`
 
 - Auth: admin.
 - Force deletes project and deletes stored images.
-- Success `200`: `data: []`, message `Project deleted successfully.`
+- Success `200`: `data: []`, message `Project deleted permanently.`
+
+### `POST /api/v1/admin/projects/reorder`
+
+- Auth: admin.
+- Body: JSON.
+- Validation:
+  - `items`: required, array
+  - `items.*.id`: required, integer, exists in `projects.id`
+  - `items.*.sort_order`: required, integer
+- Server behavior:
+  - Uses `UpdateSortOrderAction` to bulk update sort orders within a database transaction.
+  - Clears `services` cache after reordering.
+- Success `200`: `data: []`, message `Projects reordered successfully.`
 
 ## Services
 
@@ -966,6 +599,8 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
   - `sort_order`: required, integer
   - `tags`: nullable, array
   - `tags.*`: string
+- Server behavior:
+  - **Automatic Sort Order Assignment**: If `sort_order` is null, automatically assigns `MAX(sort_order) + 1` via model boot event.
 - Success `201`: `data` is `ServiceResource`, message `Service created successfully.`
 
 ### `PATCH /api/v1/admin/services/{id}`
@@ -997,7 +632,20 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 
 - Auth: admin.
 - Force deletes service.
-- Success `200`: `data: []`, message `Service deleted successfully.`
+- Success `200`: `data: []`, message `Service deleted permanently.`
+
+### `POST /api/v1/admin/services/reorder`
+
+- Auth: admin.
+- Body: JSON.
+- Validation:
+  - `items`: required, array
+  - `items.*.id`: required, integer, exists in `services.id`
+  - `items.*.sort_order`: required, integer
+- Server behavior:
+  - Uses `UpdateSortOrderAction` to bulk update sort orders within a database transaction.
+  - Clears `services` cache after reordering.
+- Success `200`: `data: []`, message `Services reordered successfully.`
 
 ## Skills
 
@@ -1048,6 +696,7 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 
 - Auth: admin.
 - Restores trashed skill.
+- Uses `RestoreSkillRequest` for validation with optional `new_category_id` field.
 - Success `200`: `data` is `SkillResource`, message `Skill restored successfully.`
 
 ### `DELETE /api/v1/admin/skills/{id}/force-delete`
@@ -1055,6 +704,53 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 - Auth: admin.
 - Force deletes skill.
 - Success `200`: `data: []`, message `Skill deleted successfully.`
+
+## Skill Categories
+
+### `GET /api/v1/admin/skill-categories`
+
+- Auth: admin.
+- Query:
+  - `archived`: truthy value uses `onlyTrashed`; otherwise active records.
+- Success: `data` is array of `SkillCategoryResource`, message `Skill categories retrieved successfully.`
+
+### `POST /api/v1/admin/skill-categories`
+
+- Auth: admin.
+- Body: JSON.
+- Validation:
+  - `name`: required, string, max 255
+- Server behavior:
+  - Automatically generates slug from name.
+- Success `201`: `data` is `SkillCategoryResource`, message `Skill category created successfully.`
+
+### `PATCH /api/v1/admin/skill-categories/{id}`
+
+- Auth: admin.
+- Body: JSON.
+- Validation:
+  - `name`: sometimes, string, max 255
+- Server behavior:
+  - Automatically regenerates slug from name if changed.
+- Success `200`: `data` is `SkillCategoryResource`, message `Skill category updated successfully.`
+
+### `DELETE /api/v1/admin/skill-categories/{id}`
+
+- Auth: admin.
+- Soft deletes non-trashed skill category.
+- Success `200`: `data: []`, message `Skill category archived successfully.`
+
+### `PATCH /api/v1/admin/skill-categories/{id}/restore`
+
+- Auth: admin.
+- Restores trashed skill category.
+- Success `200`: `data` is `SkillCategoryResource`, message `Skill category restored successfully.`
+
+### `DELETE /api/v1/admin/skill-categories/{id}/force-delete`
+
+- Auth: admin.
+- Force deletes skill category.
+- Success `200`: `data: []`, message `Skill category deleted permanently.`
 
 ## Experiences
 
@@ -1366,16 +1062,67 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
   - If `delete_cv` is true, deletes existing CV file and sets field to null.
 - Success `200`: `data` is `SiteSettingsResource`, message `Site settings updated successfully.`
 
-## Skill Categories Gap
+## Architecture Patterns
 
-- Model/table exists: `SkillCategory` with fields `id`, `name`, `slug`, `created_at`, `updated_at`, `deleted_at`.
-- Skills require `skill_category_id`.
-- No routes exist for:
-  - listing skill categories
-  - creating skill categories
-  - updating skill categories
-  - deleting/restoring skill categories
-- The requested future admin dashboard includes Skill Categories CRUD, but the backend currently does not expose API endpoints for that feature.
+### Action Pattern
+
+This application uses the Action Pattern for encapsulating business logic:
+
+- **GetAnalyticsAction**: Retrieves analytics data for the dashboard
+- **UpdateSortOrderAction**: Handles bulk reordering of Projects and Services
+- **Store/Update/Destroy/Restore/ForceDelete Actions**: Separate actions for each entity (Projects, Services, Skills, etc.)
+
+Actions are located in `app/Actions/{Entity}/` and follow Laravel's `lorisleiva/laravel-actions` package conventions.
+
+### Form Requests
+
+All API endpoints use Form Request classes for validation:
+
+- **Auth**: `LoginRequest`
+- **Projects**: `StoreProjectRequest`, `UpdateProjectRequest`, `RestoreProjectRequest`
+- **Services**: `StoreServiceRequest`, `UpdateServiceRequest`
+- **Skills**: `StoreSkillRequest`, `UpdateSkillRequest`, `RestoreSkillRequest`
+- **Skill Categories**: `StoreSkillCategoryRequest`, `UpdateSkillCategoryRequest`
+- **Experiences**: `StoreExperienceRequest`, `UpdateExperienceRequest`
+- **Education**: `StoreEducationRequest`, `UpdateEducationRequest`
+- **Achievements**: `StoreAchievementRequest`, `UpdateAchievementRequest`
+- **Messages**: `StoreMessageRequest`
+- **Site Settings**: `UpdateSiteSettingsRequest`
+- **Reorder**: `ReorderRequest` (shared for Projects and Services)
+
+### Local Scopes
+
+Models use local scopes for common query patterns:
+
+- **Project**: `ordered()` (sorts by `sort_order`), `featured()` (filters `is_featured = true`)
+- **Service**: `ordered()` (sorts by `sort_order`)
+
+### Sort Order Logic
+
+**Automatic Assignment on Creation**:
+- Both `Project` and `Service` models have a boot event that automatically assigns `sort_order = MAX(sort_order) + 1` when creating a new record if `sort_order` is null.
+- This ensures new items are always added to the end of the list.
+
+**Bulk Reordering**:
+- `POST /api/v1/admin/projects/reorder` and `POST /api/v1/admin/services/reorder` endpoints allow bulk reordering.
+- Uses `UpdateSortOrderAction` which wraps updates in a database transaction for atomicity.
+- Clears relevant cache after reordering.
+
+### Database Indexes
+
+The following indexes are in place for optimized performance:
+
+- **Projects**:
+  - `projects_sort_order_index` on `sort_order`
+  - `projects_category_sort_order_index` on `category, sort_order`
+  - `projects_is_featured_index` on `is_featured`
+  - `projects_slug_unique` on `slug`
+
+- **Services**:
+  - `services_sort_order_index` on `sort_order`
+
+- **Messages**:
+  - `messages_read_at_index` on `read_at`
 
 ## Testing & Quality Assurance
 
@@ -1402,8 +1149,18 @@ php artisan test --coverage
 - Use factories for test data generation
 - Test both success and failure scenarios
 - Mock external dependencies when appropriate
-- Use RefreshDatabase trait for database tests
+- Use `LazilyRefreshDatabase` trait for database tests
 - Follow AAA pattern (Arrange, Act, Assert)
+- Use Pest assertions like `assertModelExists()`, `assertSoftDeleted()`, `expect()`
+
+### Test Coverage
+The project maintains comprehensive test coverage including:
+- Authentication and authorization
+- CRUD operations for all entities
+- Soft delete and restore functionality
+- Sort order and reordering
+- Caching behavior
+- API validation and error handling
 
 ## API Development Workflow
 
@@ -1411,11 +1168,12 @@ When working on this API:
 
 1. **Create/Update Models**: Use `php artisan make:model` with appropriate flags
 2. **Define Validation**: Create Form Request classes for input validation
-3. **Implement Controllers**: Follow Laravel best practices with proper error handling
-4. **Create Resources**: Use Eloquent API Resources for consistent JSON responses
-5. **Write Tests**: Create comprehensive tests using Pest
-6. **Run Pint**: Format code with `vendor/bin/pint --dirty --format agent`
-7. **Test Routes**: Verify with `php artisan route:list --path=api`
+3. **Implement Actions**: Create Action classes for business logic
+4. **Implement Controllers**: Follow Laravel best practices with proper error handling
+5. **Create Resources**: Use Eloquent API Resources for consistent JSON responses
+6. **Write Tests**: Create comprehensive tests using Pest
+7. **Run Pint**: Format code with `vendor/bin/pint --dirty --format agent`
+8. **Test Routes**: Verify with `php artisan route:list --path=api`
 
 ## Deployment Considerations
 
@@ -1426,4 +1184,3 @@ As a pure API application:
 - **Caching**: Configure cache driver for API response caching
 - **Rate limiting**: Configure appropriate rate limits for production
 - **SSL**: Use HTTPS in production for secure API communication
-
