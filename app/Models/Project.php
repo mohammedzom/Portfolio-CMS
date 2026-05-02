@@ -22,4 +22,14 @@ class Project extends Model
             'deleted_at' => 'datetime',
         ];
     }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order');
+    }
+
+    public function scopeFeatured($query)
+    {
+        return $query->where('is_featured', true);
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\Projects\StoreProjectAction;
 use App\Actions\Projects\UpdateProjectAction;
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Projects\RestoreProjectRequest;
 use App\Http\Requests\Projects\StoreProjectRequest;
 use App\Http\Requests\Projects\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
@@ -42,9 +43,9 @@ class ProjectController extends Controller
         $hours = intval(config('app.cache_ttl_hours', 24));
         $ttl = now()->addHours($hours);
         if ($cache_key) {
-            $projects = Cache::remember($cache_key, $ttl, fn () => $this->resolveForCache(ProjectResource::collection($query->orderBy('sort_order')->get())));
+            $projects = Cache::remember($cache_key, $ttl, fn () => $this->resolveForCache(ProjectResource::collection($query->ordered()->get())));
         } else {
-            $projects = $this->resolveForCache(ProjectResource::collection($query->orderBy('sort_order')->get()));
+            $projects = $this->resolveForCache(ProjectResource::collection($query->ordered()->get()));
         }
 
         return $this->successResponse(
@@ -126,7 +127,7 @@ class ProjectController extends Controller
         $this->forgetProjectCache($project->slug);
     }
 
-    public function restore(Project $project): JsonResponse
+    public function restore(RestoreProjectRequest $request, Project $project): JsonResponse
     {
         $project->restore();
         $this->afterRestore($project);

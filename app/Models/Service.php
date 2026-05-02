@@ -20,4 +20,9 @@ class Service extends Model
             'deleted_at' => 'datetime',
         ];
     }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order');
+    }
 }

@@ -40,9 +40,9 @@ class ServiceController extends Controller
         $hours = intval(config('app.cache_ttl_hours', 24));
         $ttl = now()->addHours($hours);
         if ($cache_key) {
-            $services = Cache::remember($cache_key, $ttl, fn () => $this->resolveForCache(ServiceResource::collection($query->orderBy('sort_order')->get())));
+            $services = Cache::remember($cache_key, $ttl, fn () => $this->resolveForCache(ServiceResource::collection($query->ordered()->get())));
         } else {
-            $services = $this->resolveForCache(ServiceResource::collection($query->orderBy('sort_order')->get()));
+            $services = $this->resolveForCache(ServiceResource::collection($query->ordered()->get()));
         }
 
         return $this->successResponse(

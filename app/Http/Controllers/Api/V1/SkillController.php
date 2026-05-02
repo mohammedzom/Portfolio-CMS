@@ -8,6 +8,7 @@ use App\Actions\Skills\RestoreSkillAction;
 use App\Actions\Skills\StoreSkillAction;
 use App\Actions\Skills\UpdateSkillAction;
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Skills\RestoreSkillRequest;
 use App\Http\Requests\Skills\StoreSkillRequest;
 use App\Http\Requests\Skills\UpdateSkillRequest;
 use App\Http\Resources\SkillResource;
@@ -87,15 +88,12 @@ class SkillController extends Controller
         );
     }
 
-    public function restore(Request $request, Skill $skill): JsonResponse
+    public function restore(RestoreSkillRequest $request, Skill $skill): JsonResponse
     {
-        $validated = $request->validate([
-            'new_category_id' => 'nullable|exists:skill_categories,id,deleted_at,NULL',
-        ]);
 
         $skill = RestoreSkillAction::run(
             $skill,
-            isset($validated['new_category_id']) ? (int) $validated['new_category_id'] : null
+            $request->validated()['new_category_id'] ?? null
         );
 
         return $this->successResponse(

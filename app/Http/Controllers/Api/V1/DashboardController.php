@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Dashboard\GetAnalyticsAction;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\ProjectResource;
@@ -11,7 +12,6 @@ use App\Models\Message;
 use App\Models\Project;
 use App\Models\SiteSettings;
 use App\Models\Skill;
-use App\Models\Visit;
 use Illuminate\Http\JsonResponse;
 
 class DashboardController extends Controller
@@ -35,7 +35,7 @@ class DashboardController extends Controller
         $skillsCount = Skill::withoutTrashed()->count();
 
         return $this->successResponse([
-            'analytics_data' => $this->getAnalytics(),
+            'analytics_data' => GetAnalyticsAction::run(),
             'projects' => ProjectResource::collection($projects),
             'skills' => $groupedSkills,
             'messages' => MessageResource::collection($messages),
@@ -47,19 +47,5 @@ class DashboardController extends Controller
             ],
             'skills_count' => $skillsCount,
         ], 'Dashboard Data Retrieved Successfully');
-    }
-
-    public function getAnalytics(): array
-    {
-        $stats = Visit::selectRaw('visited_at, count(*) as count')
-            ->where('visited_at', '>=', now()->subDays(30))
-            ->groupBy('visited_at')
-            ->orderBy('visited_at', 'asc')
-            ->get();
-
-        return [
-            'total_visits' => Visit::count(),
-            'chart_data' => $stats,
-        ];
     }
 }
