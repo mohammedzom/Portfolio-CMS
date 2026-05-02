@@ -38,6 +38,7 @@ Route::prefix('v1')->middleware('check-api-key')->group(function () {
         Route::apiResource('services', ServiceController::class);
         Route::patch('/services/{service}/restore', [ServiceController::class, 'restore'])->withTrashed();
         Route::delete('/services/{service}/force-delete', [ServiceController::class, 'forceDelete'])->withTrashed();
+        Route::post('/services/reorder', [ServiceController::class, 'reorder']);
 
         Route::apiResource('experiences', ExperienceController::class);
         Route::patch('/experiences/{experience}/restore', [ExperienceController::class, 'restore'])->withTrashed();
@@ -50,6 +51,7 @@ Route::prefix('v1')->middleware('check-api-key')->group(function () {
         Route::apiResource('projects', ProjectController::class);
         Route::patch('/projects/{project}/restore', [ProjectController::class, 'restore'])->withTrashed();
         Route::delete('/projects/{project}/force-delete', [ProjectController::class, 'forceDelete'])->withTrashed();
+        Route::post('/projects/reorder', [ProjectController::class, 'reorder']);
 
         Route::apiResource('achievements', AchievementController::class);
         Route::patch('/achievements/{achievement}/restore', [AchievementController::class, 'restore'])->withTrashed();

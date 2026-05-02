@@ -12,6 +12,17 @@ class Service extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($service) {
+            if ($service->sort_order === null) {
+                $service->sort_order = self::max('sort_order') + 1;
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

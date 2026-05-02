@@ -7,7 +7,9 @@ use App\Actions\Services\ForceDeleteServiceAction;
 use App\Actions\Services\RestoreServiceAction;
 use App\Actions\Services\StoreServiceAction;
 use App\Actions\Services\UpdateServiceAction;
+use App\Actions\UpdateSortOrderAction;
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\ReorderRequest;
 use App\Http\Requests\Services\StoreServiceRequest;
 use App\Http\Requests\Services\UpdateServiceRequest;
 use App\Http\Resources\ServiceResource;
@@ -107,6 +109,17 @@ class ServiceController extends Controller
         return $this->successResponse(
             [],
             'Service deleted permanently.'
+        );
+    }
+
+    public function reorder(ReorderRequest $request): JsonResponse
+    {
+        UpdateSortOrderAction::run(Service::class, $request->validated()['items']);
+        Cache::forget('services');
+
+        return $this->successResponse(
+            [],
+            'Services reordered successfully.'
         );
     }
 }

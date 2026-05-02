@@ -24,7 +24,7 @@ class DashboardController extends Controller
             return SkillResource::collection($skillGroup)->resolve();
         });
 
-        $projects = Project::withoutTrashed()->orderBy('sort_order')->take(5)->get();
+        $projects = Project::withoutTrashed()->ordered()->take(5)->get();
         $settings = SiteSettings::firstOrFail();
         $messages = Message::withoutTrashed()->orderBy('read_at')->take(3)->get();
 

@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Projects\StoreProjectAction;
 use App\Actions\Projects\UpdateProjectAction;
+use App\Actions\UpdateSortOrderAction;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Projects\RestoreProjectRequest;
 use App\Http\Requests\Projects\StoreProjectRequest;
 use App\Http\Requests\Projects\UpdateProjectRequest;
+use App\Http\Requests\ReorderRequest;
 use App\Http\Resources\ProjectResource;
 use App\Http\Resources\Public\ProjectResource as PublicProjectResource;
 use App\Models\Project;
@@ -161,5 +163,16 @@ class ProjectController extends Controller
     protected function afterForceDelete(Project $project): void
     {
         $this->forgetProjectCache($project->slug);
+    }
+
+    public function reorder(ReorderRequest $request): JsonResponse
+    {
+        UpdateSortOrderAction::run(Project::class, $request->validated()['items']);
+        Cache::forget('projects');
+
+        return $this->successResponse(
+            [],
+            'Projects reordered successfully.'
+        );
     }
 }

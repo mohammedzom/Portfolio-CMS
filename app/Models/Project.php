@@ -12,6 +12,17 @@ class Project extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($project) {
+            if ($project->sort_order === null) {
+                $project->sort_order = self::max('sort_order') + 1;
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

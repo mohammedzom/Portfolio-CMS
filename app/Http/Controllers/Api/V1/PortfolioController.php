@@ -34,8 +34,8 @@ class PortfolioController extends Controller
                 return SkillResource::collection($skillGroup)->resolve();
             });
 
-            $projects = Project::orderBy('sort_order')->get();
-            $services = Service::orderBy('sort_order')->get();
+            $projects = Project::ordered()->get();
+            $services = Service::ordered()->get();
             $experiences = Experience::orderBy('start_date', 'desc')->get();
             $settings = SiteSettings::firstOrFail();
             $achievements = Achievement::orderBy('date', 'desc')->get();
