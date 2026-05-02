@@ -3,13 +3,13 @@
 namespace App\Actions\Projects;
 
 use App\Models\Project;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Illuminate\Support\Facades\DB;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class StoreProjectAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(array $data, array $files = []): Project
     {
@@ -42,8 +42,7 @@ class StoreProjectAction
                 'images' => $paths,
             ]);
 
-            Cache::forget('portfolio_projects');
-            Cache::forget('portfolio_all');
+            $this->forgetProjectCache($slug);
 
             return $project;
         });

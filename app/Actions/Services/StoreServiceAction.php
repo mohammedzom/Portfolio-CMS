@@ -3,19 +3,18 @@
 namespace App\Actions\Services;
 
 use App\Models\Service;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class StoreServiceAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(array $data): Service
     {
         $service = Service::create($data);
 
-        Cache::forget('services');
-        Cache::forget('portfolio_all');
+        $this->forgetServicesCache();
 
         return $service;
     }

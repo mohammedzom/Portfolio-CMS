@@ -3,13 +3,13 @@
 namespace App\Actions\SkillCategory;
 
 use App\Models\SkillCategory;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Illuminate\Support\Facades\DB;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class DestroySkillCategoryAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(SkillCategory $skillCategory): void
     {
@@ -21,6 +21,6 @@ class DestroySkillCategoryAction
             $skillCategory->delete();
         });
 
-        Cache::forget('portfolio_all');
+        $this->forgetPortfolioCache();
     }
 }

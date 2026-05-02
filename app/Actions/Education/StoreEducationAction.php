@@ -3,19 +3,18 @@
 namespace App\Actions\Education;
 
 use App\Models\Education;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class StoreEducationAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(array $data): Education
     {
         $education = Education::create($data);
 
-        Cache::forget('educations');
-        Cache::forget('portfolio_all');
+        $this->forgetEducationCache();
 
         return $education;
     }

@@ -26,7 +26,9 @@ class SkillCategoryController extends Controller
         } else {
             $query->withoutTrashed();
         }
-        $skillCategories = $query->with('skills')->get();
+        $skillCategories = $query->with(['skills' => function ($q) {
+            $q->with('category');
+        }])->get();
 
         return $this->successResponse(SkillCategoryResource::collection($skillCategories), 'Skill categories fetched successfully');
     }

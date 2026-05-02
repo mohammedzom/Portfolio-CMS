@@ -3,13 +3,14 @@
 namespace App\Actions\Achievement;
 
 use App\Models\Achievement;
+use App\Traits\ManagesCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class UpdateAchievementAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(Achievement $achievement, array $data, $file): Achievement
     {
@@ -30,6 +31,8 @@ class UpdateAchievementAction
                 'description' => $data['description'] ?? $achievement->description,
                 'certificate_url' => $path ?? $achievement->certificate_url,
             ]);
+
+            $this->forgetAchievementsCache();
 
             return $achievement;
         });

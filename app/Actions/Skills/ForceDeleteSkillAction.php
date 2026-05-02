@@ -3,17 +3,17 @@
 namespace App\Actions\Skills;
 
 use App\Models\Skill;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class ForceDeleteSkillAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(Skill $skill): void
     {
         $skill->forceDelete();
 
-        Cache::forget('portfolio_all');
+        $this->forgetSkillsCache();
     }
 }

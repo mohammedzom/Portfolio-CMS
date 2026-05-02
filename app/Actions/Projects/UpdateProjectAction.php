@@ -3,14 +3,14 @@
 namespace App\Actions\Projects;
 
 use App\Models\Project;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class UpdateProjectAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(Project $project, array $data, array $deletedImages = [], array $newFiles = []): Project
     {
@@ -56,8 +56,7 @@ class UpdateProjectAction
                 'images' => $currentImages,
             ]);
 
-            Cache::forget('portfolio_projects');
-            Cache::forget('portfolio_all');
+            $this->forgetProjectCache($slug);
 
             return $project;
         });

@@ -3,13 +3,13 @@
 namespace App\Actions\SkillCategory;
 
 use App\Models\SkillCategory;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Illuminate\Support\Facades\DB;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class RestoreSkillCategoryAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(SkillCategory $skillCategory): SkillCategory
     {
@@ -29,7 +29,7 @@ class RestoreSkillCategoryAction
             }
         });
 
-        Cache::forget('portfolio_all');
+        $this->forgetPortfolioCache();
 
         return $skillCategory->load('skills');
     }

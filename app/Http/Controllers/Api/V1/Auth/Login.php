@@ -4,18 +4,16 @@ namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class Login extends Controller
 {
     public function __invoke(LoginRequest $request): JsonResponse
     {
         $credentials = $request->validated();
-        $user = User::where('email', $credentials['email'])->first();
 
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+        if (! Auth::attempt($credentials)) {
             return $this->errorResponse(
                 'Invalid credentials',
                 401,
@@ -25,7 +23,7 @@ class Login extends Controller
             );
         }
 
-        $token = $user->createToken('api_token');
+        $token = Auth::user()->createToken('api_token');
 
         return $this->successResponse(
             [

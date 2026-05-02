@@ -7,11 +7,14 @@ use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\UpdateSiteSettingsRequest;
 use App\Http\Resources\SiteSettingsResource;
 use App\Models\SiteSettings;
+use App\Traits\ManagesCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
 class SiteSettingsController extends Controller
 {
+    use ManagesCache;
+
     public function index(): JsonResponse
     {
         $hours = intval(config('app.cache_ttl_hours', 24));
@@ -35,8 +38,7 @@ class SiteSettingsController extends Controller
             $request->validated(),
             $request->allFiles()
         );
-        Cache::forget('portfolio_settings');
-        Cache::forget('portfolio_all');
+        $this->forgetPortfolioCache();
 
         return $this->successResponse(
             new SiteSettingsResource($settings),

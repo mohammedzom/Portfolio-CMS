@@ -3,13 +3,13 @@
 namespace App\Actions\Experiences;
 
 use App\Models\Experience;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Illuminate\Validation\ValidationException;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class UpdateExperienceAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(Experience $experience, array $data): Experience
     {
@@ -21,8 +21,7 @@ class UpdateExperienceAction
 
         $experience->update($data);
 
-        Cache::forget('experiences');
-        Cache::forget('portfolio_all');
+        $this->forgetExperiencesCache();
 
         return $experience;
     }

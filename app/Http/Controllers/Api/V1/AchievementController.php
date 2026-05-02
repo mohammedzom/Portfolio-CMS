@@ -9,13 +9,15 @@ use App\Http\Requests\Achievement\StoreAchievementRequest;
 use App\Http\Requests\Achievement\UpdateAchievementRequest;
 use App\Http\Resources\AchievementResource;
 use App\Models\Achievement;
+use App\Traits\ManagesCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class AchievementController extends Controller
 {
+    use ManagesCache;
+
     public function index(Request $request): JsonResponse
     {
         $cacheKey = 'achievements';
@@ -82,9 +84,7 @@ class AchievementController extends Controller
     public function destroy(Achievement $achievement): JsonResponse
     {
         $achievement->delete();
-        Cache::forget('achievements');
-        Cache::forget('achievements_archived');
-        Cache::forget('portfolio_all');
+        $this->forgetAchievementsCache();
 
         return $this->successResponse(
             null,
@@ -94,9 +94,7 @@ class AchievementController extends Controller
 
     public function afterRestore(Achievement $achievement): void
     {
-        Cache::forget('achievements');
-        Cache::forget('achievements_archived');
-        Cache::forget('portfolio_all');
+        $this->forgetAchievementsCache();
     }
 
     public function restore(Achievement $achievement): JsonResponse
@@ -131,8 +129,6 @@ class AchievementController extends Controller
 
     protected function afterForceDelete(): void
     {
-        Cache::forget('achievements');
-        Cache::forget('achievements_archived');
-        Cache::forget('portfolio_all');
+        $this->forgetAchievementsCache();
     }
 }

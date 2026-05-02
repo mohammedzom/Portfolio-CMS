@@ -4,12 +4,12 @@ namespace App\Actions\Skills;
 
 use App\Exceptions\ApiException;
 use App\Models\Skill;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class RestoreSkillAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(Skill $skill, ?int $newCategoryId = null): Skill
     {
@@ -27,7 +27,7 @@ class RestoreSkillAction
 
         $skill->restore();
 
-        Cache::forget('portfolio_all');
+        $this->forgetSkillsCache();
 
         return $skill->load('category');
     }

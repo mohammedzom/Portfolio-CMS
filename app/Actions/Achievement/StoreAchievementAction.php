@@ -3,14 +3,14 @@
 namespace App\Actions\Achievement;
 
 use App\Models\Achievement;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class StoreAchievementAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(array $data, mixed $file = null): Achievement
     {
@@ -34,8 +34,7 @@ class StoreAchievementAction
                 'certificate_url' => $file ?? null,
             ]);
 
-            Cache::forget('achievements');
-            Cache::forget('portfolio_all');
+            $this->forgetAchievementsCache();
 
             return $achievement;
         });

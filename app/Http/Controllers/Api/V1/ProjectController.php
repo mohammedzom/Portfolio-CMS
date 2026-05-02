@@ -10,13 +10,15 @@ use App\Http\Requests\Projects\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Http\Resources\Public\ProjectResource as PublicProjectResource;
 use App\Models\Project;
+use App\Traits\ManagesCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
+    use ManagesCache;
+
     public function index(Request $request): JsonResponse
     {
         $query = Project::query();
@@ -79,8 +81,7 @@ class ProjectController extends Controller
             $request->hasFile('images') ? $request->file('images') : []
         );
 
-        Cache::forget('projects');
-        Cache::forget('portfolio_all');
+        $this->forgetProjectCache($project->slug);
 
         return $this->successResponse(
             new ProjectResource($project),
@@ -99,10 +100,8 @@ class ProjectController extends Controller
             $request->deleted_images ?? [],
             $request->hasFile('images') ? $request->file('images') : []
         );
-        Cache::forget('project_'.$oldSlug);
-        Cache::forget('project_'.$project->slug);
-        Cache::forget('projects');
-        Cache::forget('portfolio_all');
+        $this->forgetProjectCache($oldSlug);
+        $this->forgetProjectCache($project->slug);
 
         return $this->successResponse(
             new ProjectResource($project),
@@ -113,10 +112,7 @@ class ProjectController extends Controller
     public function destroy(Project $project): JsonResponse
     {
         $project->delete();
-        Cache::forget('project_'.$project->slug);
-        Cache::forget('projects');
-        Cache::forget('projects_archived');
-        Cache::forget('portfolio_all');
+        $this->forgetProjectCache($project->slug);
 
         return $this->successResponse(
             [],
@@ -126,10 +122,7 @@ class ProjectController extends Controller
 
     protected function afterRestore(Project $project): void
     {
-        Cache::forget('project_'.$project->slug);
-        Cache::forget('projects');
-        Cache::forget('projects_archived');
-        Cache::forget('portfolio_all');
+        $this->forgetProjectCache($project->slug);
     }
 
     public function restore(Project $project): JsonResponse
@@ -165,9 +158,6 @@ class ProjectController extends Controller
 
     protected function afterForceDelete(Project $project): void
     {
-        Cache::forget('project_'.$project->slug);
-        Cache::forget('projects');
-        Cache::forget('projects_archived');
-        Cache::forget('portfolio_all');
+        $this->forgetProjectCache($project->slug);
     }
 }

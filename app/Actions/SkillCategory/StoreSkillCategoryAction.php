@@ -3,18 +3,18 @@
 namespace App\Actions\SkillCategory;
 
 use App\Models\SkillCategory;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class StoreSkillCategoryAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(array $data): SkillCategory
     {
         $category = SkillCategory::create($data);
 
-        Cache::forget('portfolio_all');
+        $this->forgetPortfolioCache();
 
         return $category;
     }

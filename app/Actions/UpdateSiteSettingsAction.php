@@ -3,14 +3,14 @@
 namespace App\Actions;
 
 use App\Models\SiteSettings;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class UpdateSiteSettingsAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(SiteSettings $settings, array $validated, array $files): SiteSettings
     {
@@ -51,8 +51,7 @@ class UpdateSiteSettingsAction
             $settings->save();
             $settings->update($validated);
 
-            Cache::forget('portfolio_settings');
-            Cache::forget('portfolio_all');
+            $this->forgetPortfolioCache();
 
             return $settings;
         });

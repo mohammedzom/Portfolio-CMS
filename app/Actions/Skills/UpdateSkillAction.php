@@ -3,18 +3,18 @@
 namespace App\Actions\Skills;
 
 use App\Models\Skill;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class UpdateSkillAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(Skill $skill, array $data): Skill
     {
         $skill->update($data);
 
-        Cache::forget('portfolio_all');
+        $this->forgetSkillsCache();
 
         return $skill->load('category');
     }

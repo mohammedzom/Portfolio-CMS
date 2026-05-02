@@ -3,13 +3,13 @@
 namespace App\Actions\Experiences;
 
 use App\Models\Experience;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Illuminate\Validation\ValidationException;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class StoreExperienceAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(array $data): Experience
     {
@@ -21,8 +21,7 @@ class StoreExperienceAction
 
         $experience = Experience::create($data);
 
-        Cache::forget('experiences');
-        Cache::forget('portfolio_all');
+        $this->forgetExperiencesCache();
 
         return $experience;
     }
