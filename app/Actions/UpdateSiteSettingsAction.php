@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\SiteSettings;
 use App\Traits\ManagesCache;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\Concerns\AsAction;
@@ -29,23 +30,27 @@ class UpdateSiteSettingsAction
                 $validated['cv_file'] = null;
             }
 
-            if (isset($files['avatar'])) {
+            $avatarFile = $files['avatar'] ?? $validated['avatar'] ?? null;
+
+            if ($avatarFile instanceof UploadedFile) {
                 if ($settings->avatar) {
                     Storage::disk('public')->delete($settings->avatar);
                 }
-                $validated['avatar'] = $files['avatar']->storeAs(
+                $validated['avatar'] = $avatarFile->storeAs(
                     'avatars',
-                    'avatar.'.$files['avatar']->getClientOriginalExtension(),
+                    'avatar.' . $avatarFile->getClientOriginalExtension(),
                     'public'
                 );
             }
 
-            if (isset($files['cv_file'])) {
+            $cvFile = $files['cv_file'] ?? $validated['cv_file'] ?? null;
+
+            if ($cvFile instanceof UploadedFile) {
                 if ($settings->cv_file) {
                     Storage::disk('public')->delete($settings->cv_file);
                 }
-                $fileName = str_replace(' ', '_', $files['cv_file']->getClientOriginalName());
-                $validated['cv_file'] = $files['cv_file']->storeAs('cv', $fileName, 'public');
+                $fileName = str_replace(' ', '_', $cvFile->getClientOriginalName());
+                $validated['cv_file'] = $cvFile->storeAs('cv', $fileName, 'public');
             }
 
             $settings->save();
