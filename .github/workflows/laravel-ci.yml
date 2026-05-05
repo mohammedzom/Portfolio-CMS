@@ -57,7 +57,7 @@ jobs:
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
-          cd /home/mohammed/web/api.mohammedzomlot.dev/public_html
+          cd ${{ secrets.PROJECT_PATH }}
 
           php artisan down || true
 
