@@ -1,6 +1,6 @@
 # Portfolio CMS API 🚀
 
-<a href="https://mohammedzomlot.dev"><img src="./portfolio.jpg" alt="Portfolio CMS" width="100%"></a>
+<a href="https://mohammedzomlot.dev"><img src="./portfolio.png" alt="Portfolio CMS" width="100%"></a>
 
 A modern, high-performance headless Content Management System (CMS) built with **Laravel 13** and **PHP 8.5**. This application serves as a pure backend API for my personal portfolio at [mohammedzomlot.dev](https://mohammedzomlot.dev). It is designed with an API-first approach, providing exclusively RESTful JSON endpoints without any integrated frontend tooling or templates.
 
