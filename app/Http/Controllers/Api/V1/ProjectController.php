@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Projects\ForceDeleteProjectAction;
 use App\Actions\Projects\StoreProjectAction;
 use App\Actions\Projects\UpdateProjectAction;
 use App\Actions\UpdateSortOrderAction;
@@ -16,7 +17,6 @@ use App\Traits\ManagesCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -139,29 +139,14 @@ class ProjectController extends Controller
         );
     }
 
-    protected function beforeForceDelete(Project $project): void
-    {
-        $images = $project->images;
-        if (! empty($images) && is_array($images)) {
-            Storage::disk('public')->delete($images);
-        }
-    }
-
     public function forceDelete(Project $project): JsonResponse
     {
-        $this->beforeForceDelete($project);
-        $project->forceDelete();
-        $this->afterForceDelete($project);
+        ForceDeleteProjectAction::run($project);
 
         return $this->successResponse(
             [],
             'Project deleted permanently.'
         );
-    }
-
-    protected function afterForceDelete(Project $project): void
-    {
-        $this->forgetProjectCache($project->slug);
     }
 
     public function reorder(ReorderRequest $request): JsonResponse

@@ -4,24 +4,23 @@ namespace App\Actions\Projects;
 
 use App\Models\Project;
 use App\Traits\ManagesCache;
-use Illuminate\Support\Facades\DB;
+use App\Traits\ManagesUploadedFiles;
+use Illuminate\Http\UploadedFile;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class StoreProjectAction
 {
-    use AsAction, ManagesCache;
+    use AsAction, ManagesCache, ManagesUploadedFiles;
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<int, UploadedFile>  $files
+     */
     public function handle(array $data, array $files = []): Project
     {
-        return DB::transaction(function () use ($data, $files) {
-            $paths = [];
-            foreach ($files as $file) {
-                $fileOriginalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $extension = $file->getClientOriginalExtension();
-                $fileName = 'project_'.$fileOriginalName.'_'.uniqid().'.'.$extension;
-                $paths[] = $file->storeAs('projects', $fileName, 'public');
-            }
+        $imagePaths = $this->storeUploadedFiles($files, 'projects');
 
+        $project = $this->commitFileChanges(function () use ($data, $imagePaths): Project {
             $slug = $data['slug'] ?? str()->slug($data['title']);
             if (Project::where('slug', $slug)->exists()) {
                 $slug .= '-'.uniqid();
@@ -29,7 +28,7 @@ class StoreProjectAction
 
             $maxSortOrder = Project::withoutTrashed()->max('sort_order') + 1;
 
-            $project = Project::create([
+            return Project::create([
                 'title' => $data['title'],
                 'slug' => $slug,
                 'description' => $data['description'],
@@ -39,12 +38,12 @@ class StoreProjectAction
                 'repo_url' => $data['repo_url'] ?? null,
                 'is_featured' => $data['is_featured'] ?? false,
                 'sort_order' => $data['sort_order'] ?? $maxSortOrder,
-                'images' => $paths,
+                'images' => $imagePaths,
             ]);
+        }, newPaths: $imagePaths);
 
-            $this->forgetProjectCache($slug);
+        $this->forgetProjectCache($project->slug);
 
-            return $project;
-        });
+        return $project;
     }
 }
