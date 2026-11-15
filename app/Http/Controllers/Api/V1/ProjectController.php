@@ -6,7 +6,6 @@ use App\Actions\Projects\StoreProjectAction;
 use App\Actions\Projects\UpdateProjectAction;
 use App\Actions\UpdateSortOrderAction;
 use App\Http\Controllers\Api\Controller;
-use App\Http\Requests\Projects\RestoreProjectRequest;
 use App\Http\Requests\Projects\StoreProjectRequest;
 use App\Http\Requests\Projects\UpdateProjectRequest;
 use App\Http\Requests\ReorderRequest;
@@ -129,7 +128,7 @@ class ProjectController extends Controller
         $this->forgetProjectCache($project->slug);
     }
 
-    public function restore(RestoreProjectRequest $request, Project $project): JsonResponse
+    public function restore(Project $project): JsonResponse
     {
         $project->restore();
         $this->afterRestore($project);
