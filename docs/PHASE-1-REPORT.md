@@ -5,8 +5,8 @@ Status: **in progress**. This file is updated as each Phase 1 task is merged int
 | Task | Branch | PR | Status |
 | --- | --- | --- | --- |
 | 01 Environment audit & bootstrap | `chore/phase1-task-01-bootstrap` | [#7](https://github.com/mohammedzom/Portfolio-CMS/pull/7) | merged (`b8e16e8`) |
-| 02 Soft deletes & resource recovery | `fix/phase1-task-02-soft-deletes` | — | in progress |
-| 03 Safe file lifecycle | `fix/phase1-task-03-file-lifecycle` | — | pending |
+| 02 Soft deletes & resource recovery | `fix/phase1-task-02-soft-deletes` | [#8](https://github.com/mohammedzom/Portfolio-CMS/pull/8) | merged (`ba68b6f`) |
+| 03 Safe file lifecycle | `fix/phase1-task-03-file-lifecycle` | — | in progress |
 | 04 Security & authentication hardening | `fix/phase1-task-04-security` | — | pending |
 | 05 Cache & visitor tracking | `refactor/phase1-task-05-cache-visitors` | — | pending |
 | 06 CI/CD, quality & web readiness | `chore/phase1-task-06-ci-documentation` | — | pending |
@@ -160,9 +160,80 @@ php artisan test --compact
 Tests: 65 passed (258 assertions)
 ```
 
+### Task 02 result
+
+PR [#8](https://github.com/mohammedzom/Portfolio-CMS/pull/8) was squash-merged into `dev` as `ba68b6f` (branch commit `25f9b1b`).
+CI `test` passed and `deploy` was skipped.
+
 ---
 
-## 4. Remaining sections
+## 4. Task 03 — Safe file lifecycle
+
+### Strategy
+
+A single trait, `App\Traits\ManagesUploadedFiles`, sits next to the existing `ManagesCache` trait and is used by
+every action that touches uploads. Database transactions cannot roll back the filesystem, so every operation now follows one order:
+
+1. **Write new files first** under generated names (`<slugged-original-name>-<16 random chars>.<extension>`). The
+   extension comes from the detected MIME type and the client name only contributes a slug. If one upload in a
+   batch fails, the files already written for that batch are removed.
+2. **Run the database work in a transaction.**
+3. **On failure**, delete only the files written in step 1. The previous files are never touched.
+4. **On success**, delete the replaced or removed files in `DB::afterCommit()`, i.e. only once the new state is durable.
+
+Deletion is restricted to `achievements/`, `avatars/`, `cv/` and `projects/` paths of the form `<dir>/<file>`.
+Anything else is ignored, including `..`, backslashes, nested paths, dotfiles and other directories. Project
+image deletions are additionally intersected with the project's own `images`, so one project can never delete
+another project's file.
+
+### Defects fixed
+
+| # | Defect | Fix |
+| --- | --- | --- |
+| F4 | Old project images, certificates, avatar and CV were deleted before the DB update committed (a failed update lost the valid file); new files written before a failing DB write were orphaned. | Ordered write → transaction → cleanup, as above. |
+| F5 | Project/achievement force delete removed files before the row (a failed delete lost the files). | New `ForceDeleteProjectAction` / `ForceDeleteAchievementAction` delete files after commit; controllers delegate to them, consistent with other resources (F3). |
+| F6 | Certificates and CVs were stored under the raw client filename, so uploads with the same name overwrote each other. | Unique generated names. |
+| F7 | The avatar was always `avatars/avatar.<ext>` and the old file was deleted first. | Unique names; the old avatar is deleted after commit. |
+| F8 | Raw client filenames were embedded in project image names. | Slugged base name plus random suffix. |
+| F9 | `StoreAchievementAction` contained a latent "delete `$data['certificate_url']`" primitive. | Removed. |
+| F22 | `POST /admin/achievements` without the optional `url`/`description` fields returned 500 (`Undefined array key`). Found while writing the tests. | Optional fields default to `null`. |
+
+### API compatibility
+
+Request and response shapes are unchanged. New uploads get different file names (and therefore different URLs).
+Existing stored paths keep working: they are read as before and are deleted only through the same managed-path rules.
+
+### Test evidence
+
+`tests/Feature/FileLifecycleTest.php` (17 tests, isolated with `Storage::fake('public')`; failures simulated with
+model events):
+
+- safe names
+- rollback of uploads when create, update or force delete fails
+- replacement only after commit
+- refusal to delete files belonging to other projects, path-traversal inputs and paths outside managed directories
+- certificate collisions
+- avatar and CV replacement and removal
+- non-image upload rejection
+
+```
+php artisan test --compact tests/Feature/FileLifecycleTest.php
+Tests: 17 passed (63 assertions)
+# Same tests against the previous app/ code: 9 failed, 8 passed
+
+php artisan test --compact
+Tests: 82 passed (321 assertions)
+```
+
+### Known limitations
+
+- If the process crashes between writing a new file and the transaction finishing, that file can still be orphaned.
+  A periodic orphan sweep (compare disk vs DB) is deferred to Phase 2.
+- Files are deleted after the commit. If that deletion fails, the obsolete file stays on disk (a safe failure mode).
+
+---
+
+## 5. Remaining sections
 
 Filled in as each task is merged: implemented solutions, test evidence, CI verification, commit SHAs, PR URLs,
 known limitations, and Phase 2 readiness.
