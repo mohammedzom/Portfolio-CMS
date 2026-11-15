@@ -65,6 +65,15 @@ No configuration change was needed.
 | `package-lock.json` (untracked) | Empty lockfile (`"packages": {}`) produced by an `npm install` run before a `package.json` existed. | **Deleted.** |
 | `GEMINI.md`, `.gemini/settings.json` | Still tracked, but `gemini` is no longer listed in `boost.json`, so they will no longer be regenerated. | Left in place; **deferred** to the owner (delete if Gemini is no longer used). |
 
+### CI bootstrap
+
+`dev` was created from `origin/main` (`7902e1e`) and published. The workflow previously triggered only on `main`,
+so the first change was to add `dev` to the `push` and `pull_request` triggers. The `deploy` job keeps its guard
+(`github.ref == 'refs/heads/main' && github.event_name == 'push'`), so activity on `dev` and on PRs cannot deploy.
+Neither `main` nor `dev` has branch protection, so merges are gated by the documented workflow
+(local tests + CI + diff review) rather than by GitHub rules. Enabling protection on `dev` with the `test` check
+required is recommended to the owner.
+
 ### `boost:update` failure
 
 `composer.json` runs `@php artisan boost:update --ansi` after every `composer update`. The command defaults to

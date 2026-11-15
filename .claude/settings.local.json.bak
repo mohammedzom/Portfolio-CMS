@@ -1,0 +1,41 @@
+{
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ],
+  "enableAllProjectMcpServers": true,
+  "permissions": {
+    "allow": [
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git ls-files*)",
+      "Bash(git check-ignore*)",
+      "Bash(ls*)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(sed -n *)",
+      "Bash(php -v)",
+      "Bash(php artisan --version)",
+      "Bash(php artisan test*)",
+      "Bash(php artisan route:list*)",
+      "Bash(php artisan config:show*)",
+      "Bash(composer show*)",
+      "Bash(vendor/bin/pint*)",
+      "Bash(vendor/bin/pest*)",
+      "Bash(npm run build)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Bash(cat .env)",
+      "Bash(cat ./.env)",
+      "Bash(head .env*)",
+      "Bash(tail .env*)",
+      "Bash(git push*)"
+    ]
+  }
+}
