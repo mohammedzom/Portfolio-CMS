@@ -6,8 +6,8 @@ Status: **in progress**. This file is updated as each Phase 1 task is merged int
 | --- | --- | --- | --- |
 | 01 Environment audit & bootstrap | `chore/phase1-task-01-bootstrap` | [#7](https://github.com/mohammedzom/Portfolio-CMS/pull/7) | merged (`b8e16e8`) |
 | 02 Soft deletes & resource recovery | `fix/phase1-task-02-soft-deletes` | [#8](https://github.com/mohammedzom/Portfolio-CMS/pull/8) | merged (`ba68b6f`) |
-| 03 Safe file lifecycle | `fix/phase1-task-03-file-lifecycle` | — | in progress |
-| 04 Security & authentication hardening | `fix/phase1-task-04-security` | — | pending |
+| 03 Safe file lifecycle | `fix/phase1-task-03-file-lifecycle` | [#9](https://github.com/mohammedzom/Portfolio-CMS/pull/9) | merged (`5ee16a6`) |
+| 04 Security & authentication hardening | `fix/phase1-task-04-security` | — | in progress |
 | 05 Cache & visitor tracking | `refactor/phase1-task-05-cache-visitors` | — | pending |
 | 06 CI/CD, quality & web readiness | `chore/phase1-task-06-ci-documentation` | — | pending |
 
@@ -231,9 +231,65 @@ Tests: 82 passed (321 assertions)
   A periodic orphan sweep (compare disk vs DB) is deferred to Phase 2.
 - Files are deleted after the commit. If that deletion fails, the obsolete file stays on disk (a safe failure mode).
 
+### Task 03 result
+
+PR [#9](https://github.com/mohammedzom/Portfolio-CMS/pull/9) was squash-merged into `dev` as `5ee16a6` (branch commit `d8b3c9c`).
+CI `test` passed and `deploy` was skipped.
+
 ---
 
-## 5. Remaining sections
+## 5. Task 04 — Security & authentication hardening
+
+### Changes
+
+| # | Issue | Change | Compatibility |
+| --- | --- | --- | --- |
+| F10 | Login returned 422 "The email address is not registered." for unknown emails (account enumeration). | Removed the `exists:users,email` rule. Unknown email and wrong password now return the identical 401 `Invalid credentials` body. Credential checks stay timeboxed by Laravel (`SessionGuard::validate`). | An unknown email now gets 401 instead of 422. Valid logins are unchanged. |
+| T4-a | The API login called `Auth::attempt()`, which also logged the user into the `web` session guard. Sanctum checks the `web` guard *before* the bearer token, so token checks (including expiry) could be bypassed whenever that in-memory session state survived (observed in tests). | Login now uses `Auth::guard('web')->validate()` + `getLastAttempted()` and only issues a token. API token auth and future web session auth stay independent. | None. |
+| F11 | Sanctum tokens never expired and were never pruned. | `sanctum.expiration` = `SANCTUM_EXPIRATION` minutes (default **10080 = 7 days**). `sanctum:prune-expired --hours=24` is scheduled daily. | Admin clients must log in again after 7 days. **The prune only runs if the server cron runs `php artisan schedule:run`.** |
+| F12 | Every unmapped HTTP exception (405, 413, 503 maintenance mode, …) was rendered as 500 "Something went wrong." | New `HttpExceptionInterface` renderer keeps the status code and headers (`Allow`, `Retry-After`), uses the generic status text (never the internal exception message), and adds error codes `METHOD_NOT_ALLOWED`, `PAYLOAD_TOO_LARGE`, `SERVICE_UNAVAILABLE`, `HTTP_ERROR`. | Same JSON envelope; only the status code and `error_code` become accurate. |
+| F13 | The public contact form `body` had no length limit. | `max:10000`. | Longer messages now get 422. |
+
+### Reviewed and kept as is
+
+- **API key middleware.** Constant-time `hash_equals`, and an empty or missing server key fails closed. The key gates every
+  `/api/v1` route, including public ones, so it is a client identifier, not a secret, once it ships to a browser. **Future
+  Blade pages must not call the API from browser JavaScript with this key.** Server-rendered controllers should call the
+  shared Actions directly, so no key reaches the client.
+- **Throttling.** Login 10/min per IP, public portfolio and project 25/min, contact form 3/hour per IP. Proxy trust is limited
+  to `10.0.0.0/8` and `127.0.0.1`, so `request->ip()` is reliable behind the load balancer.
+- **Authorization.** All admin routes require `auth:sanctum`. There is a single admin role, and every authenticated user is
+  an admin. **If more than one user account will ever exist, Policies/Gates are required (Phase 2).**
+- **Validation and mass assignment.** All writes use Form Requests and `validated()`; models declare `#[Fillable]`.
+  Search filters use bound parameters.
+- **Uploads.** MIME and size rules on every file field; safe storage covered in Task 03.
+- **Sensitive data.** `User` hides `password`/`remember_token` and is never serialized by a resource. Exception details are
+  only shown when `APP_ENV=local` or `APP_DEBUG=true` (production must keep `APP_DEBUG=false`).
+- **CORS.** No `config/cors.php`, so the framework default allows any origin for `api/*`. Acceptable for bearer-token auth
+  without cookies; restrict `allowed_origins` when the Blade/SPA origin is known.
+
+### Preparation for web session authentication (not implemented)
+
+- The `web` guard (session driver) is already configured and the API no longer touches it.
+- The API login route is named `login`. Laravel's `Authenticate` middleware redirects non-JSON guests to `route('login')`.
+  When the web login page is added in Phase 2, rename the API route (e.g. `api.v1.login`) **in the same change** and set
+  `$middleware->redirectGuestsTo(...)` so API requests keep getting 401 JSON.
+- Web admin routes should use the `web` middleware group + `auth` (session) + CSRF and call the same Actions as the API.
+
+### Test evidence
+
+```
+php artisan test --compact tests/Feature/AuthApiTest.php tests/Feature/ApiErrorResponseTest.php
+Tests: 13 passed (37 assertions)
+# Same tests with the previous app/, bootstrap/ and config/: 8 failed, 5 passed
+
+php artisan test --compact
+Tests: 91 passed (350 assertions)
+```
+
+---
+
+## 6. Remaining sections
 
 Filled in as each task is merged: implemented solutions, test evidence, CI verification, commit SHAs, PR URLs,
 known limitations, and Phase 2 readiness.
