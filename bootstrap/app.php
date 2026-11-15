@@ -12,6 +12,7 @@ use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -95,6 +96,16 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return ApiException::tooManyRequests()->render($request);
+        });
+
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiException::fromHttpException($e)
+                ->render($request)
+                ->withHeaders($e->getHeaders());
         });
 
         $exceptions->render(function (Throwable $e, Request $request) {
