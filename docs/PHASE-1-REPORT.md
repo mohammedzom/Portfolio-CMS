@@ -1,6 +1,6 @@
 # Phase 1 Report — Foundation, Hardening & Web Readiness
 
-Status: **in progress**. This file is updated as each Phase 1 task is merged into `dev`.
+Status: **complete on `dev`** (Phase 2 not started). Updated as each Phase 1 task was merged into `dev`.
 
 | Task | Branch | PR | Status |
 | --- | --- | --- | --- |
@@ -8,8 +8,8 @@ Status: **in progress**. This file is updated as each Phase 1 task is merged int
 | 02 Soft deletes & resource recovery | `fix/phase1-task-02-soft-deletes` | [#8](https://github.com/mohammedzom/Portfolio-CMS/pull/8) | merged (`ba68b6f`) |
 | 03 Safe file lifecycle | `fix/phase1-task-03-file-lifecycle` | [#9](https://github.com/mohammedzom/Portfolio-CMS/pull/9) | merged (`5ee16a6`) |
 | 04 Security & authentication hardening | `fix/phase1-task-04-security` | [#10](https://github.com/mohammedzom/Portfolio-CMS/pull/10) | merged (`ec8b058`) |
-| 05 Cache & visitor tracking | `refactor/phase1-task-05-cache-visitors` | — | in progress |
-| 06 CI/CD, quality & web readiness | `chore/phase1-task-06-ci-documentation` | — | pending |
+| 05 Cache & visitor tracking | `refactor/phase1-task-05-cache-visitors` | [#11](https://github.com/mohammedzom/Portfolio-CMS/pull/11) | merged (`da720c7`) |
+| 06 CI/CD, quality & web readiness | `chore/phase1-task-06-ci-documentation` | — | in progress |
 
 ---
 
@@ -351,9 +351,143 @@ php artisan test --compact
 Tests: 107 passed (421 assertions)
 ```
 
+### Task 05 result
+
+PR [#11](https://github.com/mohammedzom/Portfolio-CMS/pull/11) was squash-merged into `dev` as `da720c7` (branch commit `38815d3`).
+CI `test` passed and `deploy` was skipped.
+
 ---
 
-## 7. Remaining sections
+## 7. Task 06 — CI/CD, quality & web readiness
 
-Filled in as each task is merged: implemented solutions, test evidence, CI verification, commit SHAs, PR URLs,
-known limitations, and Phase 2 readiness.
+### Workflow changes (`.github/workflows/laravel-ci.yml`)
+
+| Area | Before | After |
+| --- | --- | --- |
+| Triggers | push/PR on `main` (Task 01 added `dev`) | push/PR on `main` and `dev` |
+| Permissions | default token permissions | `contents: read` |
+| Validation | `composer install`, migrate a file DB, `php artisan test` | `composer validate`, cached `composer install`, **`pint --test`**, `php artisan test` (the redundant file-DB migration step was removed; the tests migrate in-memory SQLite) |
+| Deploy gate | `needs: test`, main push only | unchanged gate, plus `environment: production` and a non-cancelling `production-deploy` concurrency group (no overlapping deploys) |
+| What is deployed | `git pull origin main`, i.e. whatever `main` is at deploy time, possibly a newer, untested commit | **exactly `github.sha`**, the commit the `test` job validated, fast-forward only |
+| Failure handling | no `set -e`; `php artisan down \|\| true`; any failure later could leave the site in maintenance mode or half-updated | `set -Eeuo pipefail`. Pre-flight checks (clean working tree, fast-forward) run **before** `down`. An `ERR` trap registered before `down` restores the previous commit, reinstalls dependencies, rebuilds caches and always runs `php artisan up`. |
+| Rollback readiness | none | previous and target SHAs printed in the job log; automatic code rollback; `queue:restart` so workers load new code |
+| Shell | remote login shell | `bash -s` heredoc, independent of the server's default shell |
+
+**Verification of the deploy script (no server touched).** The script was extracted verbatim from the workflow and run in
+a sandbox with throwaway git repositories and stub `php`/`composer` binaries:
+
+| Scenario | Exit | Code on server | Maintenance mode |
+| --- | --- | --- | --- |
+| success | 0 | new commit | off |
+| `composer install` fails | 4 | previous | off |
+| `migrate` fails | 3 | previous | off |
+| `config:cache` fails | 3 | previous | off |
+| `artisan down` fails | 3 | previous | off |
+| dirty server working tree | 1 | previous | never entered |
+| target not a fast-forward | 1 | previous | never entered |
+
+The first version left maintenance mode on when `artisan down` itself failed. Registering the trap before `down` fixed it.
+
+**Not verifiable here:** the real SSH deploy. It only runs on pushes to `main`, which Phase 1 does not touch. The first
+production deploy after merging `dev` into `main` should be watched.
+
+### Build provenance and documentation accuracy
+
+- The README said the CI/CD badge covered the project, but CI covered `main` only. It now covers `main` and `dev`.
+- The old deploy pulled `origin/main` at deploy time, so the deployed commit could differ from the tested commit. It now deploys the tested SHA.
+- No build artifacts are produced. `public/build/` is git-ignored and only exists locally from older frontend branches. The README now says the repository ships no frontend tooling yet.
+- `api-map-to-frontend-or-ai-agent.md` had error codes that the code does not emit (`403` for a bad API key, `MODEL_NOT_FOUND`, `ENDPOINT_NOT_FOUND`, `SERVER_ERROR`) and a reorder validation rule that does not exist. Corrected, along with the Phase 1 behaviour changes (login, token expiry, message length, HTTP error codes, reorder cache).
+- The README now documents `SANCTUM_EXPIRATION`, `CACHE_TTL`, and the production queue worker and scheduler requirements.
+
+### Test evidence
+
+```
+vendor/bin/pint --test   → passed (whole repository)
+php artisan test --compact
+Tests: 107 passed (421 assertions)
+```
+
+---
+
+## 8. Recommended architecture for Blade integration
+
+Goal: one set of business rules serving two delivery mechanisms.
+
+```
+app/
+├── Actions/                     # shared — the only place business rules live (already true for all writes)
+├── Http/
+│   ├── Controllers/
+│   │   ├── Api/V1/              # existing JSON API (x-api-key + Sanctum tokens) — unchanged
+│   │   └── Web/                 # new: returns Blade views / redirects (session auth + CSRF)
+│   │       ├── PortfolioController.php        # public pages
+│   │       └── Admin/ProjectController.php …  # admin dashboard
+│   ├── Requests/                # shared Form Requests (they redirect with errors for web, JSON 422 for API automatically)
+│   └── Resources/               # API only; Blade reads models directly
+├── Models/                      # shared
+└── Traits/ManagesCache, ManagesUploadedFiles  # shared via Actions
+resources/views/
+├── layouts/ (app, admin)
+├── components/                  # reusable Blade components (x-button, x-card, x-form.input …)
+├── portfolio/                   # public pages
+└── admin/                       # dashboard pages
+routes/web.php                   # public routes + Route::middleware('auth')->prefix('admin') group
+```
+
+Rules:
+
+1. **Web controllers never call the API** and never need `API_KEY`. They call Actions directly, so no secret reaches the browser.
+2. **Reads:** the public portfolio payload is built inline in `Api\V1\PortfolioController`. Extract it into a
+   `GetPortfolioDataAction` (cached, same key `portfolio_all`) so the Blade homepage and the API share one cache and one
+   query set. Do the same for the public project page (`project_{slug}`).
+3. **Writes:** web admin controllers call the existing `Store*/Update*/Destroy*/Restore*/ForceDelete*` Actions and only
+   differ in their response (redirect + flash). Project and achievement archive/restore still live in their API
+   controllers. Move them into Actions before building the web admin, so they are not duplicated.
+4. **Auth:** web admin uses the `web` guard (session) with `auth` middleware, login throttling and CSRF. The API keeps
+   Sanctum tokens. API login no longer touches the session guard (Task 04). Rename the API route name `login` when the web
+   login route is added, and configure `redirectGuestsTo` so API requests still get JSON 401.
+5. **Errors:** the custom JSON exception renderers only apply to `api/*`, so web routes get standard HTML error pages.
+6. `routes/web.php` currently redirects `/` to the external portfolio domain. That redirect is replaced when the Blade
+   homepage ships.
+
+### Minimum Vite + Tailwind CSS setup (evaluated, not installed)
+
+Adding npm dependencies requires owner approval, so nothing was installed. The minimum for Phase 2:
+
+- **Packages:** `package.json` with dev dependencies `vite`, `laravel-vite-plugin`, `tailwindcss` (v4) and `@tailwindcss/vite`.
+- **`vite.config.js`:** `laravel({ input: ['resources/css/app.css', 'resources/js/app.js'], refresh: true })` and `tailwindcss()`.
+- **`resources/css/app.css`:** `@import "tailwindcss";` (v4 needs no `tailwind.config.js`) plus `@source` for `resources/views`.
+- **`resources/js/app.js`:** lightweight JavaScript only.
+- **Layout:** `@vite(['resources/css/app.css', 'resources/js/app.js'])` in the Blade layout.
+- **CI:** `npm ci && npm run build`.
+- **Deploy:** decide whether assets are built in CI and shipped (better provenance, no Node on the server) or built on the server with `npm ci && npm run build`.
+- **Git:** `public/build/` is already git-ignored.
+
+---
+
+## 9. Remaining limitations and risks
+
+| Risk | Impact | Mitigation / owner action |
+| --- | --- | --- |
+| No branch protection on `main`/`dev` | A direct push could bypass CI | Protect both branches and require the `test` check |
+| `gh` OAuth token lacks the `workflow` scope | HTTPS pushes that change workflows are rejected; Phase 1 pushed over the owner's SSH key | `gh auth refresh -s workflow` |
+| Production deploy script changed but unexercised against the real server | First `main` deploy could hit an environment difference | Watch the first deploy; the script refuses rather than proceeds on unexpected state |
+| A partially applied migration followed by code rollback | Previous code runs against a newer schema | Keep migrations backward compatible (expand/contract); review manually after a failed deploy |
+| Scheduler and queue worker may not be configured on the server | Expired tokens are rejected but not pruned; visits not recorded | Configure cron `schedule:run` and a supervised `queue:work` |
+| Raw visitor IPs stored indefinitely | Privacy | Choose HMAC or retention pruning (section 6) |
+| Process crash between file write and commit | Rare orphan file | Orphan sweep command (Phase 2) |
+| Production runs `composer install` with dev dependencies | Larger attack surface and autoloader | Evaluate `--no-dev` on the server before enabling |
+| Single admin role; every user is an admin | Fine for one account only | Policies/Gates if more accounts are added |
+| CORS allows any origin | Low with bearer tokens | Restrict once frontend origins are known |
+
+---
+
+## 10. Decisions intentionally deferred to Phase 2
+
+1. Visual design direction, Blade layouts and components, the Tailwind/Vite install (needs dependency approval), and the admin dashboard UI.
+2. Whether `force-delete` should require the record to be archived first (API contract change).
+3. IP address handling for visits (HMAC vs retention).
+4. `GetPortfolioDataAction` extraction, and moving project/achievement archive/restore into Actions (needed by web controllers).
+5. Web session login, the `login` route-name swap and `redirectGuestsTo`.
+6. Cleanup of legacy assets: `public/assets/` (the old static theme, unused by any route), `GEMINI.md`/`.gemini/` (no longer managed by Boost), and stale remote branches (`admin-dashboard-rebuild`, `feature/*`, and one Arabic-named branch).
+7. An orphaned-upload sweep command and `composer install --no-dev` in production.
