@@ -14,12 +14,15 @@ use App\Http\Requests\Services\StoreServiceRequest;
 use App\Http\Requests\Services\UpdateServiceRequest;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
+use App\Traits\ManagesCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class ServiceController extends Controller
 {
+    use ManagesCache;
+
     public function index(Request $request): JsonResponse
     {
         $query = Service::query();
@@ -115,7 +118,7 @@ class ServiceController extends Controller
     public function reorder(ReorderRequest $request): JsonResponse
     {
         UpdateSortOrderAction::run(Service::class, $request->validated()['items']);
-        Cache::forget('services');
+        $this->forgetServicesCache();
 
         return $this->successResponse(
             [],

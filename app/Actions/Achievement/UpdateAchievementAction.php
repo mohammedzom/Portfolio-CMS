@@ -4,37 +4,33 @@ namespace App\Actions\Achievement;
 
 use App\Models\Achievement;
 use App\Traits\ManagesCache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use App\Traits\ManagesUploadedFiles;
+use Illuminate\Http\UploadedFile;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class UpdateAchievementAction
 {
-    use AsAction, ManagesCache;
+    use AsAction, ManagesCache, ManagesUploadedFiles;
 
-    public function handle(Achievement $achievement, array $data, $file): Achievement
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function handle(Achievement $achievement, array $data, ?UploadedFile $file = null): Achievement
     {
-        return DB::transaction(function () use ($achievement, $data, $file) {
-            if ($file) {
-                if (! empty($achievement->certificate_url)) {
-                    Storage::disk('public')->delete($achievement->certificate_url);
-                }
-                $fileName = $file->getClientOriginalName();
-                $path = $file->storeAs('achievements', $fileName, 'public');
-            }
+        $previousCertificate = $achievement->certificate_url;
+        $newCertificate = $file ? $this->storeUploadedFile($file, 'achievements') : null;
 
-            $achievement->update([
-                'title' => $data['title'] ?? $achievement->title,
-                'issuer' => $data['issuer'] ?? $achievement->issuer,
-                'date' => $data['date'] ?? $achievement->date,
-                'url' => $data['url'] ?? $achievement->url,
-                'description' => $data['description'] ?? $achievement->description,
-                'certificate_url' => $path ?? $achievement->certificate_url,
-            ]);
+        $this->commitFileChanges(fn (): bool => $achievement->update([
+            'title' => $data['title'] ?? $achievement->title,
+            'issuer' => $data['issuer'] ?? $achievement->issuer,
+            'date' => $data['date'] ?? $achievement->date,
+            'url' => $data['url'] ?? $achievement->url,
+            'description' => $data['description'] ?? $achievement->description,
+            'certificate_url' => $newCertificate ?? $previousCertificate,
+        ]), newPaths: array_filter([$newCertificate]), obsoletePaths: $newCertificate ? array_filter([$previousCertificate]) : []);
 
-            $this->forgetAchievementsCache();
+        $this->forgetAchievementsCache();
 
-            return $achievement;
-        });
+        return $achievement;
     }
 }

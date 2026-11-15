@@ -2,14 +2,23 @@
     "agents": [
         "junie",
         "claude_code",
-        "gemini"
+        "codex",
+        "cursor",
+        "copilot",
+        "antigravity"
     ],
+    "cloud": false,
     "guidelines": true,
     "mcp": true,
-    "nightwatch_mcp": false,
+    "nightwatch": false,
+    "packages": [
+        "lorisleiva/laravel-actions"
+    ],
     "sail": false,
     "skills": [
+        "infer-conventions",
         "laravel-best-practices",
-        "pest-testing"
+        "testing-best-practices",
+        "laravel-actions"
     ]
 }

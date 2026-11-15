@@ -5,6 +5,8 @@ namespace App\Exceptions;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class ApiException extends Exception
 {
@@ -21,6 +23,14 @@ class ApiException extends Exception
     public const INTERNAL_ERROR = 'INTERNAL_ERROR';
 
     public const TOO_MANY_REQUESTS = 'TOO_MANY_REQUESTS';
+
+    public const METHOD_NOT_ALLOWED = 'METHOD_NOT_ALLOWED';
+
+    public const PAYLOAD_TOO_LARGE = 'PAYLOAD_TOO_LARGE';
+
+    public const SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE';
+
+    public const HTTP_ERROR = 'HTTP_ERROR';
 
     public function __construct(
         string $message,
@@ -83,6 +93,26 @@ class ApiException extends Exception
             message: $message,
             httpCode: 429,
             internalCode: self::TOO_MANY_REQUESTS,
+        );
+    }
+
+    /**
+     * Convert a framework HTTP exception (405, 413, 503, ...) into an API error
+     * that keeps its status code instead of collapsing into a 500.
+     */
+    public static function fromHttpException(HttpExceptionInterface $exception): static
+    {
+        $status = $exception->getStatusCode();
+
+        return new static(
+            message: Response::$statusTexts[$status] ?? 'HTTP error.',
+            httpCode: $status,
+            internalCode: match ($status) {
+                405 => self::METHOD_NOT_ALLOWED,
+                413 => self::PAYLOAD_TOO_LARGE,
+                503 => self::SERVICE_UNAVAILABLE,
+                default => self::HTTP_ERROR,
+            },
         );
     }
 

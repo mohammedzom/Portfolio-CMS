@@ -4,39 +4,32 @@ namespace App\Actions\Achievement;
 
 use App\Models\Achievement;
 use App\Traits\ManagesCache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use App\Traits\ManagesUploadedFiles;
+use Illuminate\Http\UploadedFile;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class StoreAchievementAction
 {
-    use AsAction, ManagesCache;
+    use AsAction, ManagesCache, ManagesUploadedFiles;
 
-    public function handle(array $data, mixed $file = null): Achievement
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function handle(array $data, ?UploadedFile $file = null): Achievement
     {
-        return DB::transaction(function () use ($data, $file) {
-            if (isset($data['certificate_url'])) {
-                if ($data['certificate_url'] !== null) {
-                    Storage::disk('public')->delete($data['certificate_url']);
-                }
-            }
-            if ($file) {
-                $fileName = $file->getClientOriginalName();
-                $file = $file->storeAs('achievements', $fileName, 'public');
-            }
+        $certificatePath = $file ? $this->storeUploadedFile($file, 'achievements') : null;
 
-            $achievement = Achievement::create([
-                'title' => $data['title'],
-                'issuer' => $data['issuer'],
-                'date' => $data['date'],
-                'url' => $data['url'],
-                'description' => $data['description'],
-                'certificate_url' => $file ?? null,
-            ]);
+        $achievement = $this->commitFileChanges(fn (): Achievement => Achievement::create([
+            'title' => $data['title'],
+            'issuer' => $data['issuer'],
+            'date' => $data['date'],
+            'url' => $data['url'] ?? null,
+            'description' => $data['description'] ?? null,
+            'certificate_url' => $certificatePath,
+        ]), newPaths: array_filter([$certificatePath]));
 
-            $this->forgetAchievementsCache();
+        $this->forgetAchievementsCache();
 
-            return $achievement;
-        });
+        return $achievement;
     }
 }

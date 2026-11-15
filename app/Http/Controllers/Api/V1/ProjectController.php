@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Projects\ForceDeleteProjectAction;
 use App\Actions\Projects\StoreProjectAction;
 use App\Actions\Projects\UpdateProjectAction;
 use App\Actions\UpdateSortOrderAction;
 use App\Http\Controllers\Api\Controller;
-use App\Http\Requests\Projects\RestoreProjectRequest;
 use App\Http\Requests\Projects\StoreProjectRequest;
 use App\Http\Requests\Projects\UpdateProjectRequest;
 use App\Http\Requests\ReorderRequest;
@@ -17,7 +17,6 @@ use App\Traits\ManagesCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -85,8 +84,6 @@ class ProjectController extends Controller
             $request->hasFile('images') ? $request->file('images') : []
         );
 
-        $this->forgetProjectCache($project->slug);
-
         return $this->successResponse(
             new ProjectResource($project),
             'Project created successfully.',
@@ -96,16 +93,12 @@ class ProjectController extends Controller
 
     public function update(UpdateProjectRequest $request, Project $project): JsonResponse
     {
-        $oldSlug = $project->slug;
-
         $project = UpdateProjectAction::run(
             $project,
             $request->validated(),
             $request->deleted_images ?? [],
             $request->hasFile('images') ? $request->file('images') : []
         );
-        $this->forgetProjectCache($oldSlug);
-        $this->forgetProjectCache($project->slug);
 
         return $this->successResponse(
             new ProjectResource($project),
@@ -129,7 +122,7 @@ class ProjectController extends Controller
         $this->forgetProjectCache($project->slug);
     }
 
-    public function restore(RestoreProjectRequest $request, Project $project): JsonResponse
+    public function restore(Project $project): JsonResponse
     {
         $project->restore();
         $this->afterRestore($project);
@@ -140,19 +133,9 @@ class ProjectController extends Controller
         );
     }
 
-    protected function beforeForceDelete(Project $project): void
-    {
-        $images = $project->images;
-        if (! empty($images) && is_array($images)) {
-            Storage::disk('public')->delete($images);
-        }
-    }
-
     public function forceDelete(Project $project): JsonResponse
     {
-        $this->beforeForceDelete($project);
-        $project->forceDelete();
-        $this->afterForceDelete($project);
+        ForceDeleteProjectAction::run($project);
 
         return $this->successResponse(
             [],
@@ -160,15 +143,17 @@ class ProjectController extends Controller
         );
     }
 
-    protected function afterForceDelete(Project $project): void
-    {
-        $this->forgetProjectCache($project->slug);
-    }
-
     public function reorder(ReorderRequest $request): JsonResponse
     {
-        UpdateSortOrderAction::run(Project::class, $request->validated()['items']);
-        Cache::forget('projects');
+        $items = $request->validated()['items'];
+
+        UpdateSortOrderAction::run(Project::class, $items);
+
+        Project::withTrashed()
+            ->whereIn('id', array_column($items, 'id'))
+            ->pluck('slug')
+            ->each(fn (string $slug) => $this->forgetProjectCache($slug));
+        $this->forgetResourceCache('projects');
 
         return $this->successResponse(
             [],

@@ -4,37 +4,27 @@ namespace App\Actions\Projects;
 
 use App\Models\Project;
 use App\Traits\ManagesCache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use App\Traits\ManagesUploadedFiles;
+use Illuminate\Http\UploadedFile;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class UpdateProjectAction
 {
-    use AsAction, ManagesCache;
+    use AsAction, ManagesCache, ManagesUploadedFiles;
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<int, string>  $deletedImages  Stored paths or public URLs of images to remove.
+     * @param  array<int, UploadedFile>  $newFiles
+     */
     public function handle(Project $project, array $data, array $deletedImages = [], array $newFiles = []): Project
     {
-        return DB::transaction(function () use ($project, $data, $deletedImages, $newFiles) {
-            $currentImages = is_array($project->images) ? $project->images : [];
+        $previousSlug = $project->slug;
+        $currentImages = is_array($project->images) ? array_values($project->images) : [];
+        $removedImages = $this->resolveRemovedImages($currentImages, $deletedImages);
+        $newImagePaths = $this->storeUploadedFiles($newFiles, 'projects');
 
-            if (! empty($deletedImages)) {
-                foreach ($deletedImages as $pathToDelete) {
-                    $relativePath = 'projects/'.basename($pathToDelete);
-                    if (($key = array_search($relativePath, $currentImages)) !== false) {
-                        Storage::disk('public')->delete($relativePath);
-                        unset($currentImages[$key]);
-                    }
-                }
-                $currentImages = array_values($currentImages);
-            }
-
-            foreach ($newFiles as $file) {
-                $fileOriginalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $extension = $file->getClientOriginalExtension();
-                $fileName = 'project_'.$fileOriginalName.'_'.uniqid().'.'.$extension;
-                $currentImages[] = $file->storeAs('projects', $fileName, 'public');
-            }
-
+        $this->commitFileChanges(function () use ($project, $data, $currentImages, $removedImages, $newImagePaths): void {
             $slug = $project->slug;
             if (isset($data['slug']) && $data['slug'] != $project->slug) {
                 $slug = str()->slug($data['slug']);
@@ -53,12 +43,30 @@ class UpdateProjectAction
                 'repo_url' => array_key_exists('repo_url', $data) ? $data['repo_url'] : $project->repo_url,
                 'is_featured' => array_key_exists('is_featured', $data) ? $data['is_featured'] : $project->is_featured,
                 'sort_order' => array_key_exists('sort_order', $data) ? $data['sort_order'] : $project->sort_order,
-                'images' => $currentImages,
+                'images' => [...array_values(array_diff($currentImages, $removedImages)), ...$newImagePaths],
             ]);
+        }, newPaths: $newImagePaths, obsoletePaths: $removedImages);
 
-            $this->forgetProjectCache($slug);
+        $this->forgetProjectCache($previousSlug);
+        $this->forgetProjectCache($project->slug);
 
-            return $project;
-        });
+        return $project;
+    }
+
+    /**
+     * Map requested deletions onto images that actually belong to the project.
+     *
+     * @param  list<string>  $currentImages
+     * @param  array<int, string>  $deletedImages
+     * @return list<string>
+     */
+    private function resolveRemovedImages(array $currentImages, array $deletedImages): array
+    {
+        $requestedPaths = array_map(
+            fn (string $image): string => 'projects/'.basename($image),
+            $deletedImages,
+        );
+
+        return array_values(array_intersect($currentImages, $requestedPaths));
     }
 }

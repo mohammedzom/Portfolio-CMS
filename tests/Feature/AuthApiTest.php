@@ -45,3 +45,44 @@ it('rejects expired sanctum tokens', function () {
         ->getJson('/api/v1/admin/dashboard')
         ->assertUnauthorized();
 });
+
+it('does not reveal whether an email address is registered', function () {
+    User::factory()->create(['email' => 'admin@example.com']);
+
+    $unknownEmail = $this->postJson('/api/v1/admin/login', [
+        'email' => 'nobody@example.com',
+        'password' => 'not-the-password',
+    ]);
+
+    $wrongPassword = $this->postJson('/api/v1/admin/login', [
+        'email' => 'admin@example.com',
+        'password' => 'not-the-password',
+    ]);
+
+    $unknownEmail->assertUnauthorized();
+    expect($unknownEmail->json())->toBe($wrongPassword->json());
+});
+
+it('still validates the login payload', function () {
+    $this->postJson('/api/v1/admin/login', ['email' => 'not-an-email'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['email', 'password'], 'data');
+});
+
+it('expires login tokens after seven days by default', function () {
+    SiteSettings::create();
+    $user = User::factory()->create();
+
+    $token = $this->postJson('/api/v1/admin/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ])->json('data.token');
+
+    $this->travel(6)->days();
+    $this->withToken($token)->getJson('/api/v1/admin/dashboard')->assertOk();
+
+    $this->travel(1)->days();
+    $this->travel(1)->minutes();
+    app('auth')->forgetGuards();
+    $this->withToken($token)->getJson('/api/v1/admin/dashboard')->assertUnauthorized();
+});

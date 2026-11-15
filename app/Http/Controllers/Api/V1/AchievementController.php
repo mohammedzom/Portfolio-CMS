@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Achievement\ForceDeleteAchievementAction;
 use App\Actions\Achievement\StoreAchievementAction;
 use App\Actions\Achievement\UpdateAchievementAction;
 use App\Http\Controllers\Api\Controller;
@@ -13,7 +14,6 @@ use App\Traits\ManagesCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 
 class AchievementController extends Controller
 {
@@ -47,8 +47,6 @@ class AchievementController extends Controller
             $request->validated(),
             $request->hasFile('file') ? $request->file('file') : null
         );
-        Cache::forget('achievements');
-        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new AchievementResource($achievement),
@@ -72,9 +70,6 @@ class AchievementController extends Controller
             $request->validated(),
             $request->hasFile('file') ? $request->file('file') : null
         );
-
-        Cache::forget('achievements');
-        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new AchievementResource($achievement),
@@ -109,27 +104,13 @@ class AchievementController extends Controller
         );
     }
 
-    protected function beforeForceDelete(Achievement $achievement): void
-    {
-        if ($achievement->certificate_url) {
-            Storage::disk('public')->delete($achievement->certificate_url);
-        }
-    }
-
     public function forceDelete(Achievement $achievement): JsonResponse
     {
-        $this->beforeForceDelete($achievement);
-        $achievement->forceDelete();
-        $this->afterForceDelete();
+        ForceDeleteAchievementAction::run($achievement);
 
         return $this->successResponse(
             [],
             'Achievement deleted permanently.'
         );
-    }
-
-    protected function afterForceDelete(): void
-    {
-        $this->forgetAchievementsCache();
     }
 }
