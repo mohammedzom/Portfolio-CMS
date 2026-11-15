@@ -83,14 +83,4 @@ trait ManagesCache
         Cache::forget('achievements_archived');
         $this->forgetPortfolioCache();
     }
-
-    /**
-     * Forget messages cache keys.
-     */
-    protected function forgetMessagesCache(): void
-    {
-        Cache::forget('messages');
-        Cache::forget('messages_archived');
-        $this->forgetPortfolioCache();
-    }
 }

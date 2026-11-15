@@ -3,19 +3,17 @@
 namespace App\Actions\Education;
 
 use App\Models\Education;
-use Illuminate\Support\Facades\Cache;
+use App\Traits\ManagesCache;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 class ForceDeleteEducationAction
 {
-    use AsAction;
+    use AsAction, ManagesCache;
 
     public function handle(Education $education): void
     {
         $education->forceDelete();
 
-        Cache::forget('educations');
-        Cache::forget('educations_archived');
-        Cache::forget('portfolio_all');
+        $this->forgetEducationCache();
     }
 }
