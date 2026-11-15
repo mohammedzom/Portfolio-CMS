@@ -173,13 +173,18 @@ curl -H "x-api-key: your-api-key" \
 ```
 
 - Standard API exception codes:
-  - `403 FORBIDDEN`: missing/invalid `x-api-key`, message `You are not authorized to perform this action.`
-  - `401 UNAUTHENTICATED`: missing/invalid Sanctum token, message `Unauthenticated. Please log in first.`
-  - `404 MODEL_NOT_FOUND`: missing model, message `No results found for {Model}.`
-  - `404 ENDPOINT_NOT_FOUND`: unknown API endpoint.
+  - `401 UNAUTHENTICATED`: missing/invalid `x-api-key`, message `Invalid API key.`
+  - `401 UNAUTHENTICATED`: missing/invalid/expired Sanctum token, message `Unauthenticated. Please log in first.`
+  - `403 FORBIDDEN`: access denied.
+  - `404 NOT_FOUND`: missing model (message `{Model} not found.`) or unknown API endpoint.
+  - `405 METHOD_NOT_ALLOWED`: HTTP method not supported by the route (includes an `Allow` header).
+  - `409 CONFLICT`: unique constraint conflict or invalid state change.
+  - `413 PAYLOAD_TOO_LARGE`: request body exceeds the server limit.
   - `422 VALIDATION_ERROR`: `data` is `{ field: ["message"] }`.
-  - `409 CONFLICT`: unique constraint conflict.
-  - `500 SERVER_ERROR`: unhandled exception.
+  - `429 TOO_MANY_REQUESTS`: rate limit exceeded.
+  - `503 SERVICE_UNAVAILABLE`: maintenance mode (honour the `Retry-After` header).
+  - `500 INTERNAL_ERROR`: unhandled exception (details only when `APP_ENV=local`).
+  - Any other HTTP error keeps its status code with `HTTP_ERROR`.
 
 ## Resource Shapes
 
@@ -350,8 +355,9 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 - Auth: `x-api-key` only.
 - Body: JSON.
 - Validation:
-  - `email`: required, email, exists in `users.email`
+  - `email`: required, email
   - `password`: required, string
+- Tokens expire after `SANCTUM_EXPIRATION` minutes (default 10080 = 7 days); clients must log in again on `401`.
 - Success `200`:
 
 ```json
@@ -364,7 +370,7 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 }
 ```
 
-- Invalid password/user after validation: `401`
+- Unknown email or wrong password (identical response, no account enumeration): `401`
 
 ```json
 {
@@ -385,7 +391,7 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
   - `name`: required, string, max 255
   - `email`: required, email, max 255
   - `subject`: required, string, max 255
-  - `body`: required, string
+  - `body`: required, string, max 10000
 - Success `201`:
 
 ```json
@@ -565,11 +571,11 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 - Body: JSON.
 - Validation:
   - `items`: required, array
-  - `items.*.id`: required, integer, exists in `projects.id`
-  - `items.*.sort_order`: required, integer
+  - `items.*.id`: required, integer (unknown ids are ignored)
+  - `items.*.sort_order`: required, integer, min 0
 - Server behavior:
   - Uses `UpdateSortOrderAction` to bulk update sort orders within a database transaction.
-  - Clears `services` cache after reordering.
+  - Clears the `projects` caches, the public `portfolio_all` cache and each reordered project's `project_{slug}` cache.
 - Success `200`: `data: []`, message `Projects reordered successfully.`
 
 ## Services
@@ -640,11 +646,11 @@ Note: resource does not expose raw `start_date`, `end_date`, or `is_current`, on
 - Body: JSON.
 - Validation:
   - `items`: required, array
-  - `items.*.id`: required, integer, exists in `services.id`
-  - `items.*.sort_order`: required, integer
+  - `items.*.id`: required, integer (unknown ids are ignored)
+  - `items.*.sort_order`: required, integer, min 0
 - Server behavior:
   - Uses `UpdateSortOrderAction` to bulk update sort orders within a database transaction.
-  - Clears `services` cache after reordering.
+  - Clears the `services` caches and the public `portfolio_all` cache.
 - Success `200`: `data: []`, message `Services reordered successfully.`
 
 ## Skills
