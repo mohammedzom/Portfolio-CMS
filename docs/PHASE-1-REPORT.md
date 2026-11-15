@@ -4,8 +4,8 @@ Status: **in progress**. This file is updated as each Phase 1 task is merged int
 
 | Task | Branch | PR | Status |
 | --- | --- | --- | --- |
-| 01 Environment audit & bootstrap | `chore/phase1-task-01-bootstrap` | — | in progress |
-| 02 Soft deletes & resource recovery | `fix/phase1-task-02-soft-deletes` | — | pending |
+| 01 Environment audit & bootstrap | `chore/phase1-task-01-bootstrap` | [#7](https://github.com/mohammedzom/Portfolio-CMS/pull/7) | merged (`b8e16e8`) |
+| 02 Soft deletes & resource recovery | `fix/phase1-task-02-soft-deletes` | — | in progress |
 | 03 Safe file lifecycle | `fix/phase1-task-03-file-lifecycle` | — | pending |
 | 04 Security & authentication hardening | `fix/phase1-task-04-security` | — | pending |
 | 05 Cache & visitor tracking | `refactor/phase1-task-05-cache-visitors` | — | pending |
@@ -110,9 +110,59 @@ Severity: **High** = broken feature or data loss/security risk; **Medium** = inc
 | F20 | CI/CD | Deploy script: `php artisan down || true` then `git pull`/`composer install`/`migrate` with no `set -e` and no `trap`, so a failure after `down` can leave the site in maintenance mode or run later steps on a half-updated tree. There is no rollback point (previous commit not recorded). | High | 06 |
 | F21 | Docs | README states the app has "no frontend build tools, no Blade templates" — still true in the tracked tree (`public/build` is git-ignored and only exists locally from older branches). The CI badge implies CI/CD covers all branches; it covers `main` only. There are no build-provenance claims to verify beyond that. | Low | 06 |
 
+### Task 01 result
+
+- PR [#7](https://github.com/mohammedzom/Portfolio-CMS/pull/7) was squash-merged into `dev` as `b8e16e8`.
+- Branch commits: `372e64b` (baseline) and `db838fd` (CI trigger for `dev`).
+- CI on the PR: `test` passed and `deploy` was skipped, as intended. This was the first CI run for a PR targeting `dev`.
+- The `gh` OAuth token lacks the `workflow` scope, so GitHub rejects pushes that modify `.github/workflows/` over HTTPS.
+  The branch was pushed over the owner's configured SSH key instead. Run `gh auth refresh -s workflow` to restore HTTPS pushes.
+
 ---
 
-## 3. Remaining sections
+## 3. Task 02 — Soft deletes & resource recovery
+
+### Confirmed defects
+
+| # | Defect | Root cause | Fix |
+| --- | --- | --- | --- |
+| F1 | `PATCH /api/v1/admin/projects/{project}/restore` returned 500 (`Class "App\Http\Requests\Projects\RestoreProjectRequest" does not exist`). Archived projects could not be restored. | The controller type-hinted a Form Request that was never committed. The endpoint takes no input. | Removed the non-existent dependency. `restore(Project $project)` now matches every other resource. |
+| F2 | `App\Traits\ManageSoftDeletes` was unused. | Leftover from an earlier refactor to Actions. | Deleted. |
+| T2-a | `MessageFactory` wrote an `is_read` column that does not exist (`read_at` is the source of truth; `is_read` is only computed in `MessageResource`). Any test creating a message through the factory crashed. | Stale factory after a schema change. | Removed `is_read` from the factory and its `read()`/`unread()` states. |
+| T2-b | `Achievement` and `Experience` use `HasFactory` but had no factories. | Missing test fixtures. | Added `AchievementFactory` and `ExperienceFactory`. |
+
+### Verified behaviour (all resources)
+
+All restore and force-delete routes use `->withTrashed()` binding. Standard routes (`show`, `update`, `destroy`) do not,
+so an archived record is invisible to them (404 `NOT_FOUND`). These scenarios are now covered by `tests/Feature/ResourceLifecycleTest.php`
+for achievements, education, experiences, messages, projects, services, skills and skill categories:
+
+- archive → restore → archive → force delete
+- archived records are hidden from standard routes
+- restore and force delete of a missing id → 404 `NOT_FOUND`
+- unauthenticated restore and force delete → 401, record untouched
+- missing API key → 401
+- restoring an active record is an idempotent no-op (existing contract, kept)
+- a restored project's public page (`/api/v1/projects/{slug}`) becomes reachable again
+
+### Intentionally preserved (documented, not changed)
+
+- `force-delete` also works on records that were never archived. Requiring archive-before-delete would change the
+  API contract; it is listed for a Phase 2 decision.
+
+### Test evidence
+
+```
+php artisan test --compact tests/Feature/ResourceLifecycleTest.php
+Tests: 35 passed (155 assertions)        # 6 failed before the fix
+
+php artisan test --compact
+Tests: 65 passed (258 assertions)
+```
+
+---
+
+## 4. Remaining sections
 
 Filled in as each task is merged: implemented solutions, test evidence, CI verification, commit SHAs, PR URLs,
 known limitations, and Phase 2 readiness.
