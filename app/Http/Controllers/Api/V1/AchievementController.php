@@ -47,8 +47,6 @@ class AchievementController extends Controller
             $request->validated(),
             $request->hasFile('file') ? $request->file('file') : null
         );
-        Cache::forget('achievements');
-        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new AchievementResource($achievement),
@@ -72,9 +70,6 @@ class AchievementController extends Controller
             $request->validated(),
             $request->hasFile('file') ? $request->file('file') : null
         );
-
-        Cache::forget('achievements');
-        Cache::forget('portfolio_all');
 
         return $this->successResponse(
             new AchievementResource($achievement),

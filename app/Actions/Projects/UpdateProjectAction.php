@@ -19,6 +19,7 @@ class UpdateProjectAction
      */
     public function handle(Project $project, array $data, array $deletedImages = [], array $newFiles = []): Project
     {
+        $previousSlug = $project->slug;
         $currentImages = is_array($project->images) ? array_values($project->images) : [];
         $removedImages = $this->resolveRemovedImages($currentImages, $deletedImages);
         $newImagePaths = $this->storeUploadedFiles($newFiles, 'projects');
@@ -46,6 +47,7 @@ class UpdateProjectAction
             ]);
         }, newPaths: $newImagePaths, obsoletePaths: $removedImages);
 
+        $this->forgetProjectCache($previousSlug);
         $this->forgetProjectCache($project->slug);
 
         return $project;

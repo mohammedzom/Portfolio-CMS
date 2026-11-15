@@ -7,8 +7,8 @@ Status: **in progress**. This file is updated as each Phase 1 task is merged int
 | 01 Environment audit & bootstrap | `chore/phase1-task-01-bootstrap` | [#7](https://github.com/mohammedzom/Portfolio-CMS/pull/7) | merged (`b8e16e8`) |
 | 02 Soft deletes & resource recovery | `fix/phase1-task-02-soft-deletes` | [#8](https://github.com/mohammedzom/Portfolio-CMS/pull/8) | merged (`ba68b6f`) |
 | 03 Safe file lifecycle | `fix/phase1-task-03-file-lifecycle` | [#9](https://github.com/mohammedzom/Portfolio-CMS/pull/9) | merged (`5ee16a6`) |
-| 04 Security & authentication hardening | `fix/phase1-task-04-security` | — | in progress |
-| 05 Cache & visitor tracking | `refactor/phase1-task-05-cache-visitors` | — | pending |
+| 04 Security & authentication hardening | `fix/phase1-task-04-security` | [#10](https://github.com/mohammedzom/Portfolio-CMS/pull/10) | merged (`ec8b058`) |
+| 05 Cache & visitor tracking | `refactor/phase1-task-05-cache-visitors` | — | in progress |
 | 06 CI/CD, quality & web readiness | `chore/phase1-task-06-ci-documentation` | — | pending |
 
 ---
@@ -287,9 +287,73 @@ php artisan test --compact
 Tests: 91 passed (350 assertions)
 ```
 
+### Task 04 result
+
+PR [#10](https://github.com/mohammedzom/Portfolio-CMS/pull/10) was squash-merged into `dev` as `ec8b058` (branch commit `47c75e9`).
+CI `test` passed and `deploy` was skipped.
+
 ---
 
-## 6. Remaining sections
+## 6. Task 05 — Cache & visitor tracking
+
+### Cache keys and invalidation (verified)
+
+| Key | Written by | Forgotten on |
+| --- | --- | --- |
+| `portfolio_all` | `GET /api/v1/portfolio` | every create/update/archive/restore/force-delete/reorder of any public resource, and site settings updates |
+| `portfolio_settings` | `GET /admin/site-info` | site settings update (via `forgetPortfolioCache()`) |
+| `project_{slug}` | `GET /api/v1/projects/{slug}` | project create/update (old **and** new slug)/archive/restore/force-delete/**reorder** |
+| `projects`, `projects_archived` | admin project list | all project writes |
+| `services`, `experiences`, `educations`, `achievements` (+ `_archived`) | admin lists | all writes of that resource, including **service reorder** |
+
+All invalidation now goes through `App\Traits\ManagesCache`. The duplicated inline `Cache::forget(...)` lists in the Education
+and Experience actions, and the repeated calls in the Achievement and Project controllers, were removed. The actions own
+invalidation. TTL stays `CACHE_TTL` hours (default 24).
+
+### Defects fixed
+
+| # | Defect | Fix |
+| --- | --- | --- |
+| F14 | Project and service **reorder** only forgot the admin list key. The public `portfolio_all` payload (and every cached `project_{slug}` page, which includes `sort_order`) stayed stale for up to 24 h. | Reorder forgets the resource keys, `portfolio_all`, and the `project_{slug}` key of every reordered project. |
+| F16 | Invalidation was duplicated across controllers, actions and the trait (some keys forgotten two or three times per request). | Single path via `ManagesCache`. The unused `forgetMessagesCache()` was removed (messages are never cached). |
+| F17 | `LogVisitJob` caught every exception and logged a warning, so `$tries = 3` never applied and nothing reached `failed_jobs`. | Exceptions propagate. Retries use a `[10, 60]`s backoff, which is safe because the upsert is idempotent. A `failed()` hook logs an error **without the IP address** once retries are exhausted. |
+
+### Duplicate visitors
+
+Unchanged by design and now tested: the unique index `(ip_address, visited_at)` plus `upsert` keeps exactly one row per IP
+per day (the latest user agent wins). Bots, `curl`, Postman, headless browsers and non-200 responses are not logged.
+
+### Privacy (decision deferred to the owner)
+
+Raw IP addresses are stored indefinitely in `visits.ip_address`. They are never returned by any API response (the dashboard
+only shows counts per day), but they count as personal data under GDPR-style rules. Options for Phase 2:
+
+1. Store an HMAC of the IP (keyed with `APP_KEY`). This keeps per-day de-duplication but needs a non-destructive migration
+   widening `ip_address` to 64 characters.
+2. Add `Prunable` to `Visit` with a retention window (e.g. 13 months) and schedule `model:prune`. This reduces historical totals.
+
+No change was made, because both options alter stored data or analytics semantics.
+
+### Operational notes
+
+- `LogVisitJob` runs on the `database` queue by default. **A queue worker must run in production** (`php artisan queue:work`),
+  otherwise visits accumulate in `jobs` and are never recorded.
+
+### Test evidence
+
+```
+php artisan test --compact tests/Feature/CacheInvalidationTest.php tests/Feature/LogVisitJobTest.php
+Tests: 16 passed (71 assertions)
+# Same tests with the previous app/ code: 6 failed (project reorder, project page after reorder,
+# service reorder, job failure propagation, backoff, failure reporting)
+
+php artisan test --compact
+Tests: 107 passed (421 assertions)
+```
+
+---
+
+## 7. Remaining sections
 
 Filled in as each task is merged: implemented solutions, test evidence, CI verification, commit SHAs, PR URLs,
 known limitations, and Phase 2 readiness.

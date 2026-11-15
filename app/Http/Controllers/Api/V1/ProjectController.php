@@ -84,8 +84,6 @@ class ProjectController extends Controller
             $request->hasFile('images') ? $request->file('images') : []
         );
 
-        $this->forgetProjectCache($project->slug);
-
         return $this->successResponse(
             new ProjectResource($project),
             'Project created successfully.',
@@ -95,16 +93,12 @@ class ProjectController extends Controller
 
     public function update(UpdateProjectRequest $request, Project $project): JsonResponse
     {
-        $oldSlug = $project->slug;
-
         $project = UpdateProjectAction::run(
             $project,
             $request->validated(),
             $request->deleted_images ?? [],
             $request->hasFile('images') ? $request->file('images') : []
         );
-        $this->forgetProjectCache($oldSlug);
-        $this->forgetProjectCache($project->slug);
 
         return $this->successResponse(
             new ProjectResource($project),
@@ -151,8 +145,15 @@ class ProjectController extends Controller
 
     public function reorder(ReorderRequest $request): JsonResponse
     {
-        UpdateSortOrderAction::run(Project::class, $request->validated()['items']);
-        Cache::forget('projects');
+        $items = $request->validated()['items'];
+
+        UpdateSortOrderAction::run(Project::class, $items);
+
+        Project::withTrashed()
+            ->whereIn('id', array_column($items, 'id'))
+            ->pluck('slug')
+            ->each(fn (string $slug) => $this->forgetProjectCache($slug));
+        $this->forgetResourceCache('projects');
 
         return $this->successResponse(
             [],
