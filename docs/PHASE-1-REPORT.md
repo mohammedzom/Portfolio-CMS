@@ -421,6 +421,10 @@ On the PR, CI `test` passed every step (composer validate, cached install, Pint,
 - Final local verification on `dev`: `php artisan test --compact` → **107 passed (421 assertions)**. `vendor/bin/pint --test` → passed.
 - Test growth over Phase 1: 30 tests / 103 assertions → 107 tests / 421 assertions.
 - Phase 2 has not started.
+- Correction: the final secret scan found `.claude/settings.local.json.bak` (a local backup of Claude Code permission rules,
+  **no credentials**), which `git add -A` had swept into the Task 01 squash commit `b8e16e8`. It was untracked and
+  `/.claude/settings.local.json*` is now git-ignored. It remains in history; no rewrite was done because it holds no secret
+  and force-pushing shared branches is not allowed.
 
 ---
 
