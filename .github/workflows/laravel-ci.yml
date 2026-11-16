@@ -83,7 +83,9 @@ jobs:
           bash -s <<'DEPLOY'
           set -Eeuo pipefail
 
-          cd "${{ secrets.PROJECT_PATH }}"
+          # Deliberately unquoted, as in the original working deploy: the shell must
+          # apply tilde expansion and trim surrounding whitespace in PROJECT_PATH.
+          cd ${{ secrets.PROJECT_PATH }}
 
           TARGET_COMMIT="${{ github.sha }}"
           PREVIOUS_COMMIT="$(git rev-parse HEAD)"
