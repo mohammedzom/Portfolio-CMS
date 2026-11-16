@@ -14,6 +14,8 @@
 @import "./site/hero.css";
 @import "./site/architecture.css";
 @import "./site/sections.css";
+@import "./site/projects.css";
+@import "./site/project-dialog.css";
 @import "./site/motion.css";
 
 @source "../views";
