@@ -16,6 +16,11 @@
 @import "./site/sections.css";
 @import "./site/projects.css";
 @import "./site/project-dialog.css";
+@import "./site/expertise.css";
+@import "./site/stack.css";
+@import "./site/timeline.css";
+@import "./site/about.css";
+@import "./site/contact.css";
 @import "./site/motion.css";
 
 @source "../views";

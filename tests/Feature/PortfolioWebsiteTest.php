@@ -1,6 +1,10 @@
 <?php
 
+use App\Models\Achievement;
+use App\Models\Education;
+use App\Models\Experience;
 use App\Models\Project;
+use App\Models\Service;
 use App\Models\SiteSettings;
 use App\Models\Skill;
 use App\Models\SkillCategory;
@@ -118,4 +122,54 @@ it('shows project changes made through the admin API immediately', function () {
     $this->get('/')
         ->assertSeeText('New Title')
         ->assertDontSeeText('Old Title');
+});
+
+it('renders expertise, stack, log, about and contact from the CMS', function () {
+    SiteSettings::create([
+        'first_name' => 'Mohammed',
+        'last_name' => 'Zomlot',
+        'about_me' => 'I own the whole path of a request.',
+        'location' => 'Gaza Strip, Palestine',
+        'email' => 'hello@example.com',
+        'cv_file' => 'cv/resume.pdf',
+        'social_links' => [['name' => 'Telegram', 'url' => 'https://t.me/example']],
+    ]);
+    Project::factory()->create(['title' => 'Moodle Bot', 'tech_stack' => ['Linux', 'Nginx']]);
+    Service::factory()->create(['title' => 'DevOps & Server Management', 'tags' => ['Docker', 'Linux']]);
+    Skill::factory()->for(SkillCategory::factory()->create(['name' => 'Programming & Tools']), 'category')->create(['name' => 'Python']);
+    Experience::factory()->create(['job_title' => 'Network Engineering Intern', 'company' => 'Shuhada Al-Aqsa Hospital']);
+    Education::factory()->create(['degree' => 'Bachelor', 'field_of_study' => 'Software Engineering', 'institution' => 'Al-Azhar University']);
+    Achievement::factory()->create(['title' => '1st Place - Hebron Code Jam', 'certificate_url' => null]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSeeInOrder(['href="#work"', 'href="#expertise"', 'href="#stack"', 'href="#log"', 'href="#about"', 'href="#contact"'], false)
+        ->assertSeeText('DevOps & Server Management')
+        ->assertSeeText('Seen in')
+        ->assertSeeText('Programming & Tools')
+        ->assertSeeText('Python')
+        ->assertSeeText('Network Engineering Intern')
+        ->assertSeeText('Bachelor, Software Engineering')
+        ->assertSeeInOrder(['1st Place - Hebron Code Jam', 'award'])
+        ->assertSeeText('I own the whole path of a request.')
+        ->assertSeeText('Gaza Strip, Palestine')
+        ->assertSee('mailto:hello@example.com', false)
+        ->assertSeeText('For a quick question, Telegram is fine too.')
+        ->assertSee('href="https://t.me/example"', false)
+        ->assertSeeText('@example')
+        ->assertSee('href="'.asset('storage/cv/resume.pdf').'"', false);
+});
+
+it('leaves sections without content out of the page and the navigation', function () {
+    SiteSettings::create();
+    Achievement::factory()->create(['title' => 'Archived Award'])->delete();
+
+    $this->get('/')
+        ->assertOk()
+        ->assertDontSee('id="expertise"', false)
+        ->assertDontSee('href="#expertise"', false)
+        ->assertDontSee('id="stack"', false)
+        ->assertDontSee('id="log"', false)
+        ->assertDontSeeText('Archived Award')
+        ->assertSee('id="contact"', false);
 });
