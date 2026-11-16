@@ -3,7 +3,7 @@
     $title = collect([$person['name'], $person['role']])->filter()->implode(' — ') ?: config('app.name');
 
     // Sections without CMS content are left out of the page and the navigation.
-    $sections = [];
+    $sections = ['work'];
 @endphp
 
 <x-layouts.site :title="$title" :description="$person['bio']" :image="$person['avatar']" :person="$person">
@@ -11,5 +11,8 @@
 
     <main id="main">
         @include('portfolio.sections.hero')
+        @include('portfolio.sections.projects')
     </main>
+
+    @include('portfolio.sections.project-dialog')
 </x-layouts.site>

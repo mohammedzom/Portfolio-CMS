@@ -1,0 +1,164 @@
+@layer components {
+    .modal {
+        width: min(100% - 32px, 1040px);
+        max-width: none;
+        max-height: min(92vh, 860px);
+        margin: auto;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--color-ink);
+        overflow: visible;
+    }
+
+    .modal::backdrop {
+        background: rgb(5 5 7 / 0.72);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+
+    .modal[open] { animation: modal-in 0.45s var(--ease-out); }
+    .modal[open]::backdrop { animation: fade-in 0.35s ease; }
+    .modal.is-closing { animation: modal-out 0.25s var(--ease-in-out) forwards; }
+    .modal.is-closing::backdrop { animation: fade-out 0.25s ease forwards; }
+
+    @keyframes modal-in { from { opacity: 0; transform: translateY(18px) scale(0.98); } }
+    @keyframes modal-out { to { opacity: 0; transform: translateY(10px) scale(0.985); } }
+    @keyframes fade-in { from { opacity: 0; } }
+    @keyframes fade-out { to { opacity: 0; } }
+
+    .modal__card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        background: var(--color-surface);
+        border: 1px solid var(--color-line-strong);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        max-height: min(92vh, 860px);
+        box-shadow: 0 50px 120px -40px rgb(0 0 0 / 0.9);
+    }
+
+    .modal__media {
+        position: relative;
+        background: var(--color-surface-2);
+        min-height: 280px;
+        border-right: 1px solid var(--color-line);
+    }
+
+    .modal__media > svg,
+    .modal__shot,
+    .modal__shot img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .modal__media > svg { object-fit: cover; }
+    .modal__shot { overflow: hidden; }
+
+    /* Real screenshots are shown whole in the detail view (cards keep the cropped teaser);
+       a blurred, darkened copy fills the rest of the panel. */
+    .modal__shot-backdrop {
+        object-fit: cover;
+        filter: blur(28px) brightness(0.35) saturate(1.2);
+        transform: scale(1.15);
+    }
+
+    .modal__shot-image {
+        object-fit: contain;
+        padding: 16px;
+        filter: drop-shadow(0 24px 40px rgb(0 0 0 / 0.6));
+    }
+
+    /* Screenshot stepper: only rendered for projects with more than one image. */
+    .gallery {
+        position: absolute;
+        left: 14px;
+        bottom: 14px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        padding: 3px;
+        border: 1px solid var(--color-line-strong);
+        border-radius: 999px;
+        background: rgb(11 11 13 / 0.78);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .gallery__btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: var(--color-muted);
+        transition: color 0.2s, background-color 0.2s;
+    }
+
+    .gallery__btn:hover { color: var(--color-ink); background: var(--color-surface-3); }
+    .gallery__count { min-width: 5ch; text-align: center; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-muted); }
+
+    /* The body scrolls on its own so long descriptions never push the links out of reach. */
+    .modal__body { padding: 26px 28px 20px; max-height: min(92vh, 860px); overflow: auto; overscroll-behavior: contain; display: flex; flex-direction: column; }
+    .modal__top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .modal__cat { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-accent); }
+
+    .modal__close {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: var(--color-muted);
+        border: 1px solid var(--color-line-strong);
+        transition: color 0.2s, border-color 0.2s, transform 0.35s var(--ease-out);
+        flex: none;
+    }
+
+    .modal__close:hover { color: var(--color-ink); border-color: var(--color-accent-line); transform: rotate(90deg); }
+
+    .modal__title {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: var(--text-xl);
+        letter-spacing: -0.025em;
+        line-height: 1.1;
+        margin-bottom: 12px;
+    }
+
+    .modal__desc { display: grid; gap: 12px; color: var(--color-ink-soft); margin-bottom: 20px; }
+    .modal__h { font-size: var(--text-sm); font-weight: 600; margin: 4px 0 10px; }
+    .modal__points { display: grid; gap: 8px; margin-bottom: 20px; }
+    .modal__points li { position: relative; padding-left: 20px; color: var(--color-muted); font-size: var(--text-sm); }
+    .modal__points li::before { content: ""; position: absolute; left: 2px; top: 0.62em; width: 8px; height: 1px; background: var(--color-accent); }
+    .modal__points strong { color: var(--color-ink); font-weight: 600; }
+
+    .modal__links { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 18px; align-items: center; }
+    .modal__note { font-size: var(--text-sm); color: var(--color-faint); }
+
+    .modal__nav {
+        margin-top: auto;
+        padding-top: 12px;
+        border-top: 1px solid var(--color-line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal__count { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-faint); }
+
+    @media (max-width: 860px) {
+        .modal__card { grid-template-columns: 1fr; overflow: auto; }
+        .modal__media { min-height: 220px; aspect-ratio: 16 / 9; border-right: 0; border-bottom: 1px solid var(--color-line); }
+        .modal__body { max-height: none; overflow: visible; }
+    }
+
+    @media (max-width: 640px) {
+        .modal { width: 100%; max-width: 100%; max-height: 100%; height: 100%; margin: 0; }
+        .modal__card { border-radius: 0; max-height: 100%; height: 100%; border: 0; }
+    }
+}
