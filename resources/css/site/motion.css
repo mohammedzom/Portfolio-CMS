@@ -1,0 +1,52 @@
+@layer components {
+    /* Scroll reveal. Hidden states only apply when JS is running (html.js). */
+    .js [data-reveal] {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+
+    .js [data-reveal].is-in {
+        opacity: 1;
+        transform: none;
+        transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+        transition-delay: var(--d, 0s);
+    }
+}
+
+/* Reduced motion: ambient motion off, entrances instant, traces jump to the end. */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        transition-delay: 0s !important;
+    }
+
+    .hero__grid,
+    .wire--flow,
+    .flow__dot,
+    .pulse::after {
+        animation: none !important;
+    }
+
+    [data-reveal],
+    .hero [data-intro],
+    .hero__title .line > span {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .hero__title .line:nth-child(2) > span {
+        background-position: 0 0 !important;
+    }
+
+    .card__media::after {
+        display: none;
+    }
+}

@@ -1,0 +1,68 @@
+/*
+ * MZ.DEV — Crimson × Obsidian
+ *
+ * Design tokens live in @theme, so they are available both as Tailwind
+ * utilities (bg-surface, text-muted, font-display, rounded-lg …) and as CSS
+ * variables inside the component layer. Component styles that depend on
+ * complex selectors, keyframes or pseudo-elements stay in plain CSS files,
+ * one file per section of the page.
+ */
+@import "tailwindcss";
+@import "./site/base.css";
+@import "./site/buttons.css";
+@import "./site/sections.css";
+@import "./site/motion.css";
+
+@source "../views";
+@source "../js";
+
+@theme {
+    --color-obsidian: #0b0b0d;
+    --color-surface: #151518;
+    --color-surface-2: #1c1c20;
+    --color-surface-3: #24242a;
+    --color-ink: #f4f1f0;
+    --color-ink-soft: #cfcbca;
+    --color-muted: #99999f;
+    --color-faint: #6c6c73;
+    --color-line: rgb(244 241 240 / 0.08);
+    --color-line-strong: rgb(244 241 240 / 0.14);
+
+    --color-accent: #e84d5b;
+    --color-accent-ink: #0b0b0d;
+    --color-accent-soft: rgb(232 77 91 / 0.12);
+    --color-accent-line: rgb(232 77 91 / 0.45);
+
+    --text-md: 1.125rem;
+    --text-lg: 1.375rem;
+    --text-xl: clamp(1.6rem, 1.2rem + 1.4vw, 2.25rem);
+    --text-2xl: clamp(2.1rem, 1.4rem + 2.6vw, 3.5rem);
+    --text-hero: clamp(2.6rem, 0.8rem + 5.6vw, 5.6rem);
+
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Font stacks come from the self-hosted fonts emitted by @fonts (vite.config.js). */
+@theme inline {
+    --font-display: var(--font-face-display, "Space Grotesk", "Inter", system-ui, sans-serif);
+    --font-sans: var(--font-face-body, "Inter", system-ui, -apple-system, "Segoe UI", sans-serif);
+    --font-mono: var(--font-face-mono, "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace);
+}
+
+:root {
+    --accent-rgb: 232, 77, 91;
+    --wrap: 1240px;
+    --nav-h: 68px;
+}
+
+@media (max-width: 640px) {
+    :root {
+        --nav-h: 60px;
+    }
+}
