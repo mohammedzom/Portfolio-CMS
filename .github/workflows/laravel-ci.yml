@@ -83,7 +83,13 @@ jobs:
           bash -s <<'DEPLOY'
           set -Eeuo pipefail
 
-          cd "${{ secrets.PROJECT_PATH }}"
+          PROJECT_PATH="${{ secrets.PROJECT_PATH }}"
+          if [[ "${PROJECT_PATH}" == "~" ]]; then
+            PROJECT_PATH="${HOME}"
+          elif [[ "${PROJECT_PATH}" == "~/"* ]]; then
+            PROJECT_PATH="${HOME}/${PROJECT_PATH#\~/}"
+          fi
+          cd -- "${PROJECT_PATH}"
 
           TARGET_COMMIT="${{ github.sha }}"
           PREVIOUS_COMMIT="$(git rev-parse HEAD)"
