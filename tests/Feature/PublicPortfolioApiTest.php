@@ -36,3 +36,12 @@ it('excludes lifecycle metadata from public project detail resources', function 
     expect($data)->not->toHaveKey('deleted_at');
     expect($data)->not->toHaveKey('deleted_at_human');
 });
+
+it('returns not found while the site settings do not exist', function () {
+    Queue::fake();
+
+    $this->getJson('/api/v1/portfolio')
+        ->assertNotFound()
+        ->assertJsonPath('success', false)
+        ->assertJsonPath('error_code', 'NOT_FOUND');
+});
