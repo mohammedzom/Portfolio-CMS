@@ -22,6 +22,7 @@ export function architectureTrace() {
     // such as getTotalLength() throw when called through a Proxy.
     const paths = {};
     let selected = null;
+    let drawQueued = false;
 
     return {
         state: 'idle',
@@ -33,15 +34,25 @@ export function architectureTrace() {
         canDeploy: false,
 
         init() {
-            this.drawWires();
+            // Measuring the nodes forces layout, so redraws are batched into one frame.
+            const queueDraw = () => {
+                if (! drawQueued) {
+                    drawQueued = true;
+                    requestAnimationFrame(() => {
+                        drawQueued = false;
+                        this.drawWires();
+                    });
+                }
+            };
 
             if ('ResizeObserver' in window) {
-                new ResizeObserver(() => this.drawWires()).observe(this.$refs.stage);
+                new ResizeObserver(queueDraw).observe(this.$refs.stage);
             } else {
-                window.addEventListener('resize', () => this.drawWires());
+                queueDraw();
+                window.addEventListener('resize', queueDraw);
             }
 
-            document.fonts?.ready.then(() => this.drawWires());
+            document.fonts?.ready.then(queueDraw);
 
             this.$refs.stage.querySelectorAll('[data-node]').forEach((element) => {
                 const show = () => this.showNote(element);

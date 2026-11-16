@@ -61,6 +61,7 @@
         grid-template-columns: repeat(var(--steps, 5), minmax(0, 1fr));
         gap: 10px;
         margin-bottom: --spacing(8);
+        container-type: inline-size;
     }
 
     .flow::before {
@@ -85,11 +86,12 @@
         animation: travel 4.5s var(--ease-in-out) infinite;
     }
 
+    /* Travels from 6% to 93% of the pipeline with a transform (87cqw), so it never triggers layout. */
     @keyframes travel {
-        0% { left: 6%; opacity: 0; }
+        0% { transform: translateX(0); opacity: 0; }
         8% { opacity: 1; }
         92% { opacity: 1; }
-        100% { left: 93%; opacity: 0; }
+        100% { transform: translateX(87cqw); opacity: 0; }
     }
 
     .flow__step { position: relative; display: flex; flex-direction: column; gap: 8px; }

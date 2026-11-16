@@ -8,18 +8,27 @@
         overflow: hidden;
     }
 
+    /* The mask stays still; only the grid layer inside it moves, on the compositor. */
     .hero__grid {
         position: absolute;
         inset: -2px;
+        overflow: hidden;
         pointer-events: none;
+        mask-image: radial-gradient(ellipse 80% 70% at 70% 40%, #000 20%, transparent 75%);
+        -webkit-mask-image: radial-gradient(ellipse 80% 70% at 70% 40%, #000 20%, transparent 75%);
+        opacity: 0.8;
+    }
+
+    .hero__grid::before {
+        content: "";
+        position: absolute;
+        inset: -56px 0 0 -56px;
         background-image:
             linear-gradient(to right, var(--color-line) 1px, transparent 1px),
             linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
         background-size: 56px 56px;
-        mask-image: radial-gradient(ellipse 80% 70% at 70% 40%, #000 20%, transparent 75%);
-        -webkit-mask-image: radial-gradient(ellipse 80% 70% at 70% 40%, #000 20%, transparent 75%);
         animation: grid-drift 40s linear infinite;
-        opacity: 0.8;
+        will-change: transform;
     }
 
     .hero::after {
@@ -34,7 +43,7 @@
     }
 
     @keyframes grid-drift {
-        to { background-position: 56px 56px, 56px 56px; }
+        to { transform: translate(56px, 56px); }
     }
 
     .hero__inner {

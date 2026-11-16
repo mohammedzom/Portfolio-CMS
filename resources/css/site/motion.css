@@ -28,7 +28,7 @@
         transition-delay: 0s !important;
     }
 
-    .hero__grid,
+    .hero__grid::before,
     .wire--flow,
     .flow__dot,
     .pulse::after {

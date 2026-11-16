@@ -7,15 +7,10 @@
 @php
     $width = 600;
     $height = 400;
-    $grid = '';
-
-    for ($x = 0; $x <= $width; $x += 40) {
-        $grid .= '<line class="p-line" x1="'.$x.'" y1="0" x2="'.$x.'" y2="'.$height.'" stroke-width="1"/>';
-    }
-
-    for ($y = 0; $y <= $height; $y += 40) {
-        $grid .= '<line class="p-line" x1="0" y1="'.$y.'" x2="'.$width.'" y2="'.$y.'" stroke-width="1"/>';
-    }
+    // One tiled <pattern> draws the 40px grid instead of 26 separate lines.
+    $gridId = 'pattern-grid-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(8));
+    $grid = '<defs><pattern id="'.$gridId.'" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" class="p-line" stroke-width="1"/></pattern></defs>'
+        .'<rect width="'.$width.'" height="'.$height.'" fill="url(#'.$gridId.')"/>';
 
     $shapes = '';
 
