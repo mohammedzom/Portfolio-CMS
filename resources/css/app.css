@@ -9,7 +9,10 @@
  */
 @import "tailwindcss";
 @import "./site/base.css";
+@import "./site/navigation.css";
 @import "./site/buttons.css";
+@import "./site/hero.css";
+@import "./site/architecture.css";
 @import "./site/sections.css";
 @import "./site/motion.css";
 
