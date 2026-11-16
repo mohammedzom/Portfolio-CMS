@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   # CI
+  # The required check. It runs on the PHP version production uses (8.4).
   test:
     name: test
     runs-on: ubuntu-latest
@@ -28,7 +29,7 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.5'
+        php-version: '8.4'
         extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, libxml, openssl, pcre, phar, session, tokenizer, xmlwriter
         coverage: none
 
@@ -49,6 +50,19 @@ jobs:
     - name: Install Composer dependencies
       run: composer install --prefer-dist --no-progress --no-interaction
 
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: npm
+
+    - name: Build frontend assets (Vite, Tailwind CSS, self-hosted fonts)
+      run: |
+        npm ci
+        npm run build
+        test -f public/build/manifest.json
+        test -f public/build/fonts-manifest.json
+
     - name: Prepare environment
       run: |
         cp .env.example .env
@@ -60,10 +74,37 @@ jobs:
     - name: Run tests (in-memory SQLite, see phpunit.xml)
       run: php artisan test
 
+  # Keeps the suite green on the PHP version used for local development.
+  test-php-8-5:
+    name: test (PHP 8.5)
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.5'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, libxml, openssl, pcre, phar, session, tokenizer, xmlwriter
+        coverage: none
+
+    - name: Install Composer dependencies
+      run: composer install --prefer-dist --no-progress --no-interaction
+
+    - name: Prepare environment
+      run: |
+        cp .env.example .env
+        php artisan key:generate
+
+    - name: Run tests (in-memory SQLite, see phpunit.xml)
+      run: php artisan test
+
   # CD
   deploy:
     name: deploy
-    needs: test
+    needs: [test, test-php-8-5]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
@@ -72,6 +113,35 @@ jobs:
       cancel-in-progress: false
 
     steps:
+    # public/build is not in Git, so the tested commit's assets are built here
+    # and shipped to the server next to the code.
+    - name: Checkout the tested commit
+      uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: npm
+
+    - name: Build and package frontend assets
+      run: |
+        npm ci
+        npm run build
+        test -f public/build/manifest.json
+        test -f public/build/fonts-manifest.json
+        tar -czf "frontend-${{ github.sha }}.tar.gz" -C public build
+
+    - name: Upload the assets to the server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_SSH_PORT }}
+        source: frontend-${{ github.sha }}.tar.gz
+        target: .portfolio-deploy
+
     - name: Deploy the tested commit to the server via SSH
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -105,10 +175,50 @@ jobs:
             exit 1
           fi
 
+          # Frontend assets uploaded by the previous step, unpacked and checked before maintenance mode.
+          DEPLOY_DIR="${HOME}/.portfolio-deploy"
+          ASSET_ARCHIVE="${DEPLOY_DIR}/frontend-${TARGET_COMMIT}.tar.gz"
+          ASSET_STAGING="${DEPLOY_DIR}/staging-${TARGET_COMMIT}"
+          PREVIOUS_ASSETS="${DEPLOY_DIR}/previous-build"
+          ASSETS_SWAPPED=0
+
+          if [ ! -f "${ASSET_ARCHIVE}" ]; then
+            echo "Refusing to deploy: ${ASSET_ARCHIVE} was not uploaded." >&2
+            exit 1
+          fi
+
+          # The archive may only contain build/…: nothing absolute, no "..", nothing outside build/.
+          ARCHIVE_ENTRIES="$(tar -tzf "${ASSET_ARCHIVE}")"
+          UNEXPECTED_ENTRIES="$(printf '%s\n' "${ARCHIVE_ENTRIES}" | grep -Ev '^build(/[^/]+)*/?$' || true)"
+          if [ -n "${UNEXPECTED_ENTRIES}" ] || [[ "${ARCHIVE_ENTRIES}" == *..* ]]; then
+            echo "Refusing to deploy: the asset archive contains entries outside build/." >&2
+            exit 1
+          fi
+
+          # Only regular files and directories: no symlinks, hardlinks, devices or FIFOs.
+          ARCHIVE_TYPES="$(tar -tvzf "${ASSET_ARCHIVE}" | cut -c1 | sort -u | tr -d '\n')"
+          if [[ ! "${ARCHIVE_TYPES}" =~ ^[-d]+$ ]]; then
+            echo "Refusing to deploy: the asset archive contains links or special files." >&2
+            exit 1
+          fi
+
+          rm -rf "${ASSET_STAGING}" "${PREVIOUS_ASSETS}"
+          mkdir -p "${ASSET_STAGING}"
+          tar -xzf "${ASSET_ARCHIVE}" -C "${ASSET_STAGING}" --no-same-owner --no-overwrite-dir
+
+          if [ ! -f "${ASSET_STAGING}/build/manifest.json" ] || [ ! -f "${ASSET_STAGING}/build/fonts-manifest.json" ]; then
+            echo "Refusing to deploy: the asset archive has no Vite manifest." >&2
+            exit 1
+          fi
+
           rollback() {
             local status=$?
             trap - ERR
             echo "Deployment failed (exit ${status}). Restoring ${PREVIOUS_COMMIT}." >&2
+            if [ "${ASSETS_SWAPPED}" = 1 ]; then
+              rm -rf public/build || true
+              if [ -d "${PREVIOUS_ASSETS}" ]; then mv "${PREVIOUS_ASSETS}" public/build || true; fi
+            fi
             git reset --hard "${PREVIOUS_COMMIT}" || true
             composer install --no-interaction --prefer-dist --optimize-autoloader || true
             php artisan optimize:clear || true
@@ -124,6 +234,12 @@ jobs:
 
           git merge --ff-only "${TARGET_COMMIT}"
           composer install --no-interaction --prefer-dist --optimize-autoloader
+
+          # Swap in the new assets; the previous build is kept until the release is live.
+          if [ -d public/build ]; then mv public/build "${PREVIOUS_ASSETS}"; fi
+          ASSETS_SWAPPED=1
+          mv "${ASSET_STAGING}/build" public/build
+
           php artisan migrate --force
           php artisan optimize:clear
           php artisan config:cache
@@ -132,5 +248,6 @@ jobs:
 
           trap - ERR
           php artisan up
+          rm -rf "${PREVIOUS_ASSETS}" "${ASSET_STAGING}" "${ASSET_ARCHIVE}"
           echo "Deployed ${TARGET_COMMIT}."
           DEPLOY
