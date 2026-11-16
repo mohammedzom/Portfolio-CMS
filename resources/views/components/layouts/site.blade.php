@@ -5,6 +5,22 @@
     'person' => [],
 ])
 
+@php
+    $canonical = url('/');
+    $sameAs = collect($person['social'] ?? [])->pluck('url')->values()->all();
+    $structuredData = array_filter([
+        '@context' => 'https://schema.org',
+        '@type' => 'Person',
+        'name' => $person['name'] ?? null,
+        'jobTitle' => $person['role'] ?? null,
+        'description' => $description,
+        'url' => $canonical,
+        'image' => $image,
+        'sameAs' => $sameAs ?: null,
+        'address' => filled($person['location'] ?? null) ? ['@type' => 'PostalAddress', 'addressLocality' => $person['location']] : null,
+    ]);
+@endphp
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -16,7 +32,26 @@
     @endif
     <meta name="theme-color" content="#0b0b0d">
     <meta name="color-scheme" content="dark">
-    <link rel="canonical" href="{{ url('/') }}">
+    <link rel="canonical" href="{{ $canonical }}">
+
+    <meta property="og:type" content="profile">
+    <meta property="og:site_name" content="{{ $person['name'] ?? config('app.name') }}">
+    <meta property="og:title" content="{{ $title }}">
+    @if ($description)
+        <meta property="og:description" content="{{ $description }}">
+    @endif
+    <meta property="og:url" content="{{ $canonical }}">
+    @if ($image)
+        <meta property="og:image" content="{{ $image }}">
+        <meta property="og:image:alt" content="Portrait of {{ $person['name'] ?? '' }}">
+    @endif
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ $title }}">
+    @if ($description)
+        <meta name="twitter:description" content="{{ $description }}">
+    @endif
+
+    <script type="application/ld+json">{!! json_encode($structuredData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
 
     {{-- Animation start states only apply once we know JavaScript is running. --}}
     <script>document.documentElement.classList.add('js');</script>

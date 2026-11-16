@@ -34,7 +34,7 @@
     --color-ink: #f4f1f0;
     --color-ink-soft: #cfcbca;
     --color-muted: #99999f;
-    --color-faint: #6c6c73;
+    --color-faint: #83838a; /* prototype #6c6c73 lifted to meet WCAG AA (4.5:1) on every surface */
     --color-line: rgb(244 241 240 / 0.08);
     --color-line-strong: rgb(244 241 240 / 0.14);
 

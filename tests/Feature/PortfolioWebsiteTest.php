@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\LogVisitJob;
 use App\Models\Achievement;
 use App\Models\Education;
 use App\Models\Experience;
@@ -172,4 +173,33 @@ it('leaves sections without content out of the page and the navigation', functio
         ->assertDontSee('id="log"', false)
         ->assertDontSeeText('Archived Award')
         ->assertSee('id="contact"', false);
+});
+
+it('records a visit for each page view', function () {
+    SiteSettings::create();
+
+    $this->get('/')->assertOk();
+
+    Queue::assertPushed(LogVisitJob::class);
+});
+
+it('describes the page for search engines and link previews', function () {
+    SiteSettings::create([
+        'first_name' => 'Mohammed',
+        'last_name' => 'Zomlot',
+        'tagline' => 'Software Engineer',
+        'bio' => 'Builds backend systems with Laravel.',
+        'avatar' => 'avatars/avatar.jpg',
+        'social_links' => [['name' => 'github', 'url' => 'https://github.com/example']],
+    ]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('<title>Mohammed Zomlot — Software Engineer</title>', false)
+        ->assertSee('<meta name="description" content="Builds backend systems with Laravel.">', false)
+        ->assertSee('<link rel="canonical" href="'.url('/').'">', false)
+        ->assertSee('<meta property="og:title" content="Mohammed Zomlot — Software Engineer">', false)
+        ->assertSee('<meta property="og:image" content="'.asset('storage/avatars/avatar.jpg').'">', false)
+        ->assertSee('"@type":"Person"', false)
+        ->assertSee('"sameAs":["https://github.com/example"]', false);
 });
