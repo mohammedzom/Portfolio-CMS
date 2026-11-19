@@ -1,10 +1,16 @@
 name: Laravel CI/CD
 
 # Validation runs for every push and pull request on main and dev.
-# Deployment is temporarily paused while the new SSH account is configured.
-# A read-only SSH check is available manually and for the initial [ssh-check] release.
+# Production deploy uses restricted SSH user + versioned releases (not the Hestia private checkout).
+# Manual deploys are supported; automatic deploy requires PORTFOLIO_AUTODEPLOY=true.
 on:
   workflow_dispatch:
+    inputs:
+      deploy_to_production:
+        description: 'Deploy main to the bootstrapped Hestia release directory'
+        required: true
+        type: boolean
+        default: false
   push:
     branches: [ "main", "dev" ]
   pull_request:
@@ -62,17 +68,106 @@ jobs:
     - name: Run tests (in-memory SQLite, see phpunit.xml)
       run: php artisan test
 
-  # Read-only production SSH authentication check. Never runs on pull requests.
-  # Manually: Actions > Laravel CI/CD > Run workflow (main).
-  # Also runs once on a main push whose commit message includes [ssh-check].
-  ssh-auth-check:
-    name: SSH auth check (read-only)
+  # Package the exact tested Git commit. Node is only required after the Web UI lands on main.
+  release:
+    name: Build immutable release artifact
+    needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[ssh-check]')))
-    environment: production
-    timeout-minutes: 5
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      ((github.event_name == 'workflow_dispatch' && inputs.deploy_to_production == true) ||
+       (github.event_name == 'push' && vars.PORTFOLIO_AUTODEPLOY == 'true'))
+    permissions:
+      contents: read
     steps:
-      - name: Authenticate without changing server files
+      - name: Checkout tested commit
+        uses: actions/checkout@v4
+
+      - name: Detect Web frontend
+        id: frontend
+        shell: bash
+        run: |
+          if [ -f package.json ]; then
+            test -f package-lock.json
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'present=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node for Web assets
+        if: steps.frontend.outputs.present == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Build production Web assets
+        if: steps.frontend.outputs.present == 'true'
+        run: |
+          npm ci
+          npm run build
+          test -f public/build/manifest.json
+
+      - name: Package tracked source and tested Web assets
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p release-source
+          git archive HEAD | tar -xf - -C release-source
+          rm -rf release-source/public/build
+          if [ -f package.json ]; then
+            cp -a public/build release-source/public/build
+          fi
+          bash -n release-source/.github/scripts/deploy-release.sh
+          tar -czf "release-${{ github.sha }}.tar.gz" -C release-source .
+          sha256sum "release-${{ github.sha }}.tar.gz" > "release-${{ github.sha }}.sha256"
+
+      - name: Store release for deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: portfolio-release-${{ github.sha }}
+          path: |
+            release-${{ github.sha }}.tar.gz
+            release-${{ github.sha }}.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  # No direct Git writes to /home/moh/.../private. No sudo or PTY.
+  deploy:
+    name: Deploy release through restricted SSH
+    needs: [test, release]
+    runs-on: ubuntu-latest
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      needs.release.result == 'success' &&
+      ((github.event_name == 'workflow_dispatch' && inputs.deploy_to_production == true) ||
+       (github.event_name == 'push' && vars.PORTFOLIO_AUTODEPLOY == 'true'))
+    environment: production
+    timeout-minutes: 15
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Download tested artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: portfolio-release-${{ github.sha }}
+
+      - name: Verify artifact checksum
+        shell: bash
+        run: sha256sum --check "release-${{ github.sha }}.sha256"
+
+      - name: Transfer artifact to portfolio-deploy home
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          source: release-${{ github.sha }}.tar.gz
+          target: /home/portfolio-deploy/.portfolio-artifacts
+
+      - name: Activate release (no PTY, no sudo, preflight before cutover)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -80,85 +175,12 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT }}
           request_pty: false
+          command_timeout: 10m
           script: |
-            set -eu
-            test "$(id -un)" = "portfolio-deploy" || { echo "Unexpected SSH identity"; exit 1; }
-            id
-            echo "SSH authentication successful (no deployment performed)"
-
-  # CD
-  deploy:
-    name: deploy
-    needs: test
-    runs-on: ubuntu-latest
-    # SAFETY HOLD: Do not deploy until deploy-user permissions and release process are reviewed.
-    # Restore a protected deployment condition only after the SSH probe succeeds.
-    if: ${{ false }}
-    environment: production
-    concurrency:
-      group: production-deploy
-      cancel-in-progress: false
-
-    steps:
-    - name: Deploy the tested commit to the server via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        port: ${{ secrets.SERVER_SSH_PORT }}
-        script: |
-          bash -s <<'DEPLOY'
-          set -Eeuo pipefail
-
-          # Deliberately unquoted, as in the original working deploy: the shell must
-          # apply tilde expansion and trim surrounding whitespace in PROJECT_PATH.
-          cd ${{ secrets.PROJECT_PATH }}
-
-          TARGET_COMMIT="${{ github.sha }}"
-          PREVIOUS_COMMIT="$(git rev-parse HEAD)"
-          echo "Previous release: ${PREVIOUS_COMMIT}"
-          echo "Target release:   ${TARGET_COMMIT}"
-
-          # Pre-flight checks run before maintenance mode, so a refusal never takes the site down.
-          if ! git diff --quiet || ! git diff --cached --quiet; then
-            echo "Refusing to deploy: the server working tree has uncommitted changes." >&2
-            exit 1
-          fi
-
-          git fetch --quiet origin main
-
-          if ! git merge-base --is-ancestor "${PREVIOUS_COMMIT}" "${TARGET_COMMIT}"; then
-            echo "Refusing to deploy: ${TARGET_COMMIT} is not a fast-forward of ${PREVIOUS_COMMIT}." >&2
-            exit 1
-          fi
-
-          rollback() {
-            local status=$?
-            trap - ERR
-            echo "Deployment failed (exit ${status}). Restoring ${PREVIOUS_COMMIT}." >&2
-            git reset --hard "${PREVIOUS_COMMIT}" || true
-            composer install --no-interaction --prefer-dist --optimize-autoloader || true
-            php artisan optimize:clear || true
-            php artisan config:cache || true
-            php artisan route:cache || true
-            php artisan up || true
-            echo "Rolled back to ${PREVIOUS_COMMIT}. Review any partially applied migrations manually." >&2
-            exit "${status}"
-          }
-
-          trap rollback ERR
-          php artisan down --retry=60
-
-          git merge --ff-only "${TARGET_COMMIT}"
-          composer install --no-interaction --prefer-dist --optimize-autoloader
-          php artisan migrate --force
-          php artisan optimize:clear
-          php artisan config:cache
-          php artisan route:cache
-          php artisan queue:restart
-
-          trap - ERR
-          php artisan up
-          echo "Deployed ${TARGET_COMMIT}."
-          DEPLOY
+            bash -s <<'RUN'
+            set -Eeuo pipefail
+            ARCHIVE="$HOME/.portfolio-artifacts/release-${{ github.sha }}.tar.gz"
+            test -f "$ARCHIVE"
+            tar -xOzf "$ARCHIVE" ./.github/scripts/deploy-release.sh |
+              bash -s -- "${{ github.sha }}"
+            RUN
