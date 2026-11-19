@@ -1,0 +1,4 @@
+# Host key of the production Hestia VPS (public data, not a secret).
+# The workflow connects with HostKeyAlias=portfolio-production, so this entry
+# matches whatever SERVER_HOST / SERVER_SSH_PORT contain.
+portfolio-production ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP5iecZra3q6VuM0bDS7b2vA5ya+xPy5JCbECcQfBHKc

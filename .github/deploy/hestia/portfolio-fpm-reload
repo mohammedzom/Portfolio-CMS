@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Root helper started by the portfolio-release-<domain>.path unit whenever
+# releases/current changes. It gracefully reloads PHP-FPM, so that no worker
+# keeps a stale realpath/OPcache view of the previous release, and then records
+# the release it reloaded for. The deploy script waits for that record.
+# It takes no input from the deploy user other than reading the symlink.
+set -Eeuo pipefail
+HUSER="$1"; DOMAIN="$2"; PHP_VERSION="$3"
+[[ "$HUSER" =~ ^[a-z][a-z0-9_-]*$ && "$DOMAIN" =~ ^[a-z0-9.-]+$ && "$PHP_VERSION" =~ ^[0-9]\.[0-9]$ ]]
+
+STAMP="/var/lib/portfolio-release/$DOMAIN.active"
+CURRENT="/home/$HUSER/web/$DOMAIN/releases/current"
+
+# Loop until the target is stable, so a switch that happens while this
+# oneshot is running is never missed.
+for _ in 1 2 3 4 5; do
+  TARGET="$(readlink -f "$CURRENT")"
+  [[ -d "$TARGET/public" ]] || { echo "current release has no public/: $TARGET" >&2; exit 1; }
+  if [[ -f "$STAMP" && "$(cat "$STAMP")" == "$TARGET" ]]; then
+    exit 0
+  fi
+  if [[ -f "$STAMP" ]]; then
+    systemctl reload "php$PHP_VERSION-fpm"
+    # USR2 re-executes the master; wait until it is serving again.
+    for _ in $(seq 1 20); do
+      systemctl is-active --quiet "php$PHP_VERSION-fpm" && [[ -S "/run/php/php$PHP_VERSION-fpm-$DOMAIN.sock" ]] && break
+      sleep 0.5
+    done
+    sleep 1
+  fi
+  printf '%s\n' "$TARGET" > "$STAMP.tmp"
+  mv -f "$STAMP.tmp" "$STAMP"
+  echo "PHP-FPM $PHP_VERSION reloaded for $TARGET"
+done
