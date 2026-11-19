@@ -1,16 +1,26 @@
 name: Laravel CI/CD
 
 # Validation runs for every push and pull request on main and dev.
-# Production deploy uses restricted SSH user + versioned releases (not the Hestia private checkout).
-# Manual deploys are supported; automatic deploy requires PORTFOLIO_AUTODEPLOY=true.
+# Production deploys are artifact-based: the exact tested commit is packaged
+# (source + --no-dev vendor + Vite build), uploaded with scp to the restricted
+# `portfolio-deploy` account and activated by .github/scripts/deploy-release.sh
+# with an atomic symlink switch, health checks and automatic rollback.
+# Deploys are manual (workflow_dispatch) unless the repository variable
+# PORTFOLIO_AUTODEPLOY is set to 'true'.
 on:
   workflow_dispatch:
     inputs:
       deploy_to_production:
-        description: 'Deploy main to the bootstrapped Hestia release directory'
+        description: 'Run the production deployment job for this main commit'
         required: true
         type: boolean
         default: false
+      mode:
+        description: 'dry-run prepares and verifies the release on the server without switching the site'
+        required: true
+        type: choice
+        options: [dry-run, deploy]
+        default: dry-run
   push:
     branches: [ "main", "dev" ]
   pull_request:
@@ -33,8 +43,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Validate release script syntax
-      run: bash -n .github/scripts/deploy-release.sh
+    - name: Lint deployment scripts
+      run: |
+        bash -n .github/scripts/deploy-release.sh
+        bash -n .github/scripts/build-release.sh
+        bash -n .github/deploy/hestia/hestia-bootstrap-releases.sh
+        bash -n .github/deploy/hestia/portfolio-fpm-reload
+        shellcheck --severity=warning .github/scripts/*.sh .github/deploy/hestia/hestia-bootstrap-releases.sh .github/deploy/hestia/portfolio-fpm-reload
 
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
@@ -60,6 +75,21 @@ jobs:
     - name: Install Composer dependencies
       run: composer install --prefer-dist --no-progress --no-interaction
 
+    # Becomes active automatically once the Blade/Vite frontend (dev) reaches main.
+    - name: Setup Node
+      if: hashFiles('package-lock.json') != ''
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: npm
+
+    - name: Build frontend assets
+      if: hashFiles('package-lock.json') != ''
+      run: |
+        npm ci
+        npm run build
+        test -f public/build/manifest.json
+
     - name: Prepare environment
       run: |
         cp .env.example .env
@@ -71,71 +101,49 @@ jobs:
     - name: Run tests (in-memory SQLite, see phpunit.xml)
       run: php artisan test
 
-  # Package the exact tested Git commit. Node is only required after the Web UI lands on main.
+  # Packages the exact tested commit.
   release:
     name: Build immutable release artifact
     needs: test
     runs-on: ubuntu-latest
     if: >-
       github.ref == 'refs/heads/main' &&
-      ((github.event_name == 'workflow_dispatch' && inputs.deploy_to_production == true) ||
+      ((github.event_name == 'workflow_dispatch' && inputs.deploy_to_production) ||
        (github.event_name == 'push' && vars.PORTFOLIO_AUTODEPLOY == 'true'))
-    permissions:
-      contents: read
     steps:
       - name: Checkout tested commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
 
-      - name: Detect Web frontend
-        id: frontend
-        shell: bash
-        run: |
-          if [ -f package.json ]; then
-            test -f package-lock.json
-            echo 'present=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'present=false' >> "$GITHUB_OUTPUT"
-          fi
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, xml, ctype, iconv, intl, dom, filter, gd, json, libxml, openssl, pcre, phar, session, tokenizer, xmlwriter, pdo_mysql
+          coverage: none
 
-      - name: Setup Node for Web assets
-        if: steps.frontend.outputs.present == 'true'
+      - name: Setup Node
+        if: hashFiles('package-lock.json') != ''
         uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
 
-      - name: Build production Web assets
-        if: steps.frontend.outputs.present == 'true'
-        run: |
-          npm ci
-          npm run build
-          test -f public/build/manifest.json
-
-      - name: Package tracked source and tested Web assets
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          mkdir -p release-source
-          git archive HEAD | tar -xf - -C release-source
-          rm -rf release-source/public/build
-          if [ -f package.json ]; then
-            cp -a public/build release-source/public/build
-          fi
-          bash -n release-source/.github/scripts/deploy-release.sh
-          tar -czf "release-${{ github.sha }}.tar.gz" -C release-source .
-          sha256sum "release-${{ github.sha }}.tar.gz" > "release-${{ github.sha }}.sha256"
+      - name: Build release archive
+        run: bash .github/scripts/build-release.sh "${{ github.sha }}" dist
 
       - name: Store release for deployment
         uses: actions/upload-artifact@v4
         with:
           name: portfolio-release-${{ github.sha }}
           path: |
-            release-${{ github.sha }}.tar.gz
-            release-${{ github.sha }}.sha256
+            dist/release-${{ github.sha }}.tar.gz
+            dist/release-${{ github.sha }}.sha256
           if-no-files-found: error
           retention-days: 7
 
-  # No direct Git writes to /home/moh/.../private. No sudo or PTY.
+  # Restricted SSH user, pinned host key, no sudo, no PTY.
   deploy:
     name: Deploy release through restricted SSH
     needs: [test, release]
@@ -143,47 +151,74 @@ jobs:
     if: >-
       github.ref == 'refs/heads/main' &&
       needs.release.result == 'success' &&
-      ((github.event_name == 'workflow_dispatch' && inputs.deploy_to_production == true) ||
+      ((github.event_name == 'workflow_dispatch' && inputs.deploy_to_production) ||
        (github.event_name == 'push' && vars.PORTFOLIO_AUTODEPLOY == 'true'))
     environment: production
     timeout-minutes: 15
     concurrency:
       group: production-deploy
       cancel-in-progress: false
+    env:
+      SHA: ${{ github.sha }}
+      MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'deploy' }}
+      SSH_HOST: ${{ secrets.SERVER_HOST }}
+      SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
+      SSH_USER: ${{ secrets.SERVER_USERNAME }}
     steps:
+      - name: Checkout pinned host key
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          sparse-checkout: .github/deploy
+
       - name: Download tested artifact
         uses: actions/download-artifact@v4
         with:
           name: portfolio-release-${{ github.sha }}
+          path: dist
 
       - name: Verify artifact checksum
-        shell: bash
-        run: sha256sum --check "release-${{ github.sha }}.sha256"
+        working-directory: dist
+        run: sha256sum --check "release-$SHA.sha256"
 
-      - name: Transfer artifact to portfolio-deploy home
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_SSH_PORT }}
-          source: release-${{ github.sha }}.tar.gz
-          target: /home/portfolio-deploy/.portfolio-artifacts
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+        run: |
+          test -n "$SSH_HOST" && test -n "$SSH_USER" && test -n "$SSH_KEY"
+          test "$SSH_USER" = portfolio-deploy
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/portfolio_deploy
+          chmod 600 ~/.ssh/portfolio_deploy
+          cat > ~/.ssh/config <<EOF
+          Host portfolio-production
+            HostName $SSH_HOST
+            Port ${SSH_PORT:-22}
+            User $SSH_USER
+            IdentityFile ~/.ssh/portfolio_deploy
+            IdentitiesOnly yes
+            BatchMode yes
+            StrictHostKeyChecking yes
+            UserKnownHostsFile $GITHUB_WORKSPACE/.github/deploy/known_hosts
+            HostKeyAlias portfolio-production
+            ConnectTimeout 20
+            ServerAliveInterval 30
+          EOF
 
-      - name: Activate release (no PTY, no sudo, preflight before cutover)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_SSH_PORT }}
-          request_pty: false
-          command_timeout: 10m
-          script: |
-            bash -s <<'RUN'
-            set -Eeuo pipefail
-            ARCHIVE="$HOME/.portfolio-artifacts/release-${{ github.sha }}.tar.gz"
-            test -f "$ARCHIVE"
-            tar -xOzf "$ARCHIVE" ./.github/scripts/deploy-release.sh |
-              bash -s -- "${{ github.sha }}"
-            RUN
+      - name: Upload artifact with scp
+        run: |
+          ssh portfolio-production 'install -d -m 700 "$HOME/.portfolio-artifacts"'
+          scp "dist/release-$SHA.tar.gz" "dist/release-$SHA.sha256" portfolio-production:.portfolio-artifacts/
+
+      - name: Activate release (${{ env.MODE }})
+        run: |
+          ssh portfolio-production "set -euo pipefail
+            cd \"\$HOME/.portfolio-artifacts\"
+            sha256sum --quiet --check release-$SHA.sha256
+            tar -xOzf release-$SHA.tar.gz ./.github/scripts/deploy-release.sh > deploy-release-$SHA.sh
+            trap 'rm -f deploy-release-$SHA.sh' EXIT
+            bash deploy-release-$SHA.sh $MODE $SHA"
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/portfolio_deploy

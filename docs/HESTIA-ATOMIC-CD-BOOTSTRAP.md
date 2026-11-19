@@ -1,106 +1,170 @@
-# Portfolio CMS — Hestia release deployment bootstrap
+# Portfolio CMS — Hestia atomic release deployment (runbook)
 
-This is a **one-time server administrator task**, not a GitHub Actions command. The new SSH key is assigned to the unprivileged `portfolio-deploy` account with `restrict` in `authorized_keys`. GitHub Actions does not need a PTY or sudo.
+Production: `mohammedzomlot.dev` on a Hestia VPS (Nginx → Apache → PHP-FPM 8.5, MariaDB 11.4).
+Deploys run as the unprivileged `portfolio-deploy` account (SSH key with `restrict`: no PTY, no
+forwarding, no sudo). Everything below was rehearsed end-to-end on an isolated Hestia test domain.
 
-## Safety / assumptions
+## Layout
 
-- Existing live Laravel checkout: `/home/moh/web/mohammedzomlot.dev/private`
-- Existing Hestia user and PHP-FPM pool owner: **verify it is `moh`** before changing ACLs.
-- Hestia currently serves `public_html -> private/public`.
-- Old `private` checkout, `.env`, database and uploaded media must be preserved.
-- Take a **tested off-server DB backup / VPS snapshot**, and inspect Hestia Nginx/PHP-FPM symlink and `open_basedir` behavior before the cutover.
-- Production deploys are **manual by default**; no push will deploy unless you explicitly set the repository variable `PORTFOLIO_AUTODEPLOY=true`.
-
-## 1. Verify Hestia and ownership first
-
-Run from an administrative SSH session **on the VPS**:
-
-```bash
-BASE=/home/moh/web/mohammedzomlot.dev
-namei -l "$BASE/public_html"
-readlink -f "$BASE/public_html"
-ps -eo user,group,args | grep '[p]hp-fpm: pool'
-sudo getfacl -p "$BASE/private/.env"
+```
+/home/moh/web/mohammedzomlot.dev/
+├── private/                 legacy checkout — kept untouched as a fallback
+├── releases/                portfolio-deploy:portfolio-deploy 0750 (+ACL moh r-x, www-data --x)
+│   ├── <sha>/               one immutable release per commit (code read-only for moh)
+│   ├── current -> <sha>     the live release (initially ../private)
+│   ├── .previous            rollback target of the last deploy
+│   └── .history             deploy / rollback / failure log
+├── shared/                  root:root 0750 (+ACL moh, portfolio-deploy r-x; www-data --x)
+│   ├── .env                 moh 0600 + ACL portfolio-deploy:r (single source of truth)
+│   └── storage/             moh-owned; ACL+default ACL rwX for moh and portfolio-deploy;
+│                            www-data may read only storage/app/public
+└── public_html -> /home/moh/web/mohammedzomlot.dev/releases/current/public
 ```
 
-Do not proceed until PHP-FPM for this domain can access release directories and write `shared/storage`. Hestia may overwrite manual web-template paths during a rebuild, so a persistent web template may be required.
+Inside a release: `storage -> shared/storage`, `.env -> shared/.env`,
+`public/storage -> ../storage/app/public`.
 
-## 2. Create only the release area and shared writable storage
+### Why Hestia needs a custom PHP-FPM template
 
-Run as an administrator, after backups, once:
+Hestia's default pool sets `open_basedir` to `public_html:private:…`. PHP checks the *resolved*
+path, so code under `releases/` and `shared/` would be refused. The backend template
+`portfolio-releases-PHP-8_5` (`.github/deploy/hestia/portfolio-releases-PHP-8_5.tpl`) is the stock
+template plus those two paths. Because it is a Hestia template (not an edit of the generated pool
+file) it survives `v-rebuild-web-domain` and Hestia upgrades. The `-PHP-8_5` suffix pins the PHP version.
 
-```bash
-BASE=/home/moh/web/mohammedzomlot.dev
-sudo install -d -o portfolio-deploy -g portfolio-deploy -m 0755 "$BASE/releases"
-sudo install -d -o portfolio-deploy -g portfolio-deploy -m 0755 "$BASE/shared"
+Hestia's rebuild uses `chown --no-dereference` and `mkdir -p` on `public_html`, so the
+`public_html` symlink and the `releases/`/`shared/` directories are preserved (verified in
+`/usr/local/hestia/func/rebuild.sh`). No custom Nginx/Apache template is needed.
 
-# Copy media, logs and Laravel storage to a shared location.
-# Only run this when shared/storage does not already exist.
-sudo test ! -e "$BASE/shared/storage"
-sudo cp -a "$BASE/private/storage" "$BASE/shared/storage"
-sudo chown -R portfolio-deploy:portfolio-deploy "$BASE/shared/storage"
+### Why PHP-FPM is reloaded on every switch
 
-# Allow the Hestia PHP-FPM user to read and write shared storage.
-sudo setfacl -R -m u:moh:rwX "$BASE/shared/storage"
-sudo find "$BASE/shared/storage" -type d -exec   setfacl -m d:u:moh:rwx,d:u:portfolio-deploy:rwx {} +
+FPM workers cache resolved paths (`realpath_cache_ttl=120`) and OPcache entries, so after a
+symlink switch a worker could keep executing the previous release for up to two minutes. A root
+systemd unit pair `portfolio-release-<domain>.path/.service` watches `releases/` and, when the
+resolved `current` target changes, runs `/usr/local/sbin/portfolio-fpm-reload` (graceful
+`systemctl reload php8.5-fpm`) and writes the target to
+`/var/lib/portfolio-release/<domain>.active`. The deploy script waits for that stamp before it
+runs any HTTP check; if it does not appear within 30 s the release is rolled back. No sudo is
+granted to `portfolio-deploy`.
 
-# Laravel CLI runs as portfolio-deploy; it needs only read access to the existing .env.
-# No GitHub secret or database credential is copied into the repository.
-sudo chmod 600 "$BASE/private/.env"
-sudo setfacl -m u:portfolio-deploy:r-- "$BASE/private/.env"
-
-# Create a pointer to the EXISTING live code; do not delete or copy it.
-sudo -u portfolio-deploy ln -s ../private "$BASE/releases/current"
-```
-
-Check that the only writable application areas for `portfolio-deploy` are `releases` and `shared/storage`. Its read access to `.env` necessarily provides the application DB credentials; treat this SSH key as a privileged **application deployment** credential despite its limited Linux permissions.
-
-## 3. Point Hestia to the release pointer (one-time)
-
-**First** verify that `$BASE/releases/current/public` resolves to the existing `private/public`. Only after verifying the web server config, atomically replace the current `public_html` symlink without deleting the old checkout:
+## One-time server bootstrap (root)
 
 ```bash
-BASE=/home/moh/web/mohammedzomlot.dev
-readlink -f "$BASE/releases/current/public"
-readlink -f "$BASE/private/public"
-
-sudo ln -s "$BASE/releases/current/public" "$BASE/public_html.next"
-sudo mv -Tf "$BASE/public_html.next" "$BASE/public_html"
-
-# Should still point to the exact same old public directory before first deployment:
-readlink -f "$BASE/public_html"
-curl -fsSI https://mohammedzomlot.dev/up
+# 1. Verified DB backup first (see "Backups").
+cd /path/to/Portfolio-CMS/.github/deploy/hestia
+./hestia-bootstrap-releases.sh prepare moh mohammedzomlot.dev \
+    --seed-media /path/to/storage/app/public      # optional, never overwrites
+# 2. Only after checking that releases/current/public resolves to what public_html serves now:
+./hestia-bootstrap-releases.sh switch-public-html moh mohammedzomlot.dev
 ```
 
-If Hestia regenerates `public_html` or PHP-FPM rules, use a **custom Hestia web template** that preserves the same target. Never run `chmod -R 777` or give this user sudo.
+`prepare` is idempotent. It does not touch `private/`, the database or `public_html`. It
+switches the domain's backend template (Hestia reloads PHP-FPM) and sets `private/.env` to 0600.
+`switch-public-html` refuses to run unless the new path resolves to the directory already being
+served, so the switch itself changes nothing visible.
 
-## 4. GitHub Secrets and first deployment
+Emergency exit from the whole layout: `./hestia-bootstrap-releases.sh revert-public-html moh mohammedzomlot.dev`
+(points `public_html` back to `private/public`).
 
-Keep these **production Environment secrets**:
+## GitHub configuration
 
-| Secret | Value |
+Environment `production` secrets: `SERVER_HOST`, `SERVER_SSH_PORT`, `SERVER_USERNAME`
+(must be `portfolio-deploy`), `SERVER_SSH_KEY`. `PROJECT_PATH` is no longer used.
+The server's host key is pinned in `.github/deploy/known_hosts` (alias `portfolio-production`);
+update that file if the VPS host key ever changes.
+
+## Deploying
+
+Actions → **Laravel CI/CD** → Run workflow on `main`:
+
+| Input | Effect |
 | --- | --- |
-| `SERVER_HOST` | VPS public address |
-| `SERVER_SSH_PORT` | SSH port |
-| `SERVER_USERNAME` | `portfolio-deploy` |
-| `SERVER_SSH_KEY` | full private Ed25519 key for that restricted account |
+| `deploy_to_production` | must be checked, otherwise only CI runs |
+| `mode = dry-run` (default) | builds, uploads, extracts, caches, checks DB/migrations and smoke-tests the release in-process, then discards it. The site is not touched. |
+| `mode = deploy` | the same, then switches `current`, waits for the FPM reload and checks the real web stack; rolls back automatically on any failure |
 
-`PROJECT_PATH` is not used by this CD. The paths are deliberately fixed in the release script.
+Pipeline: `test` (Pint, Pest, script lint, Vite build when present) → `release`
+(`.github/scripts/build-release.sh`: `git archive` of the tested SHA + `composer install --no-dev`
++ `npm run build` + `.release-manifest` + SHA-256) → `deploy` (scp to
+`~/.portfolio-artifacts`, then `deploy-release.sh <mode> <sha>` taken from the same artifact).
+The server never runs `composer install` or `npm`.
 
-Go to **Actions → Laravel CI/CD → Run workflow**, select `main`, enable **deploy_to_production**. It runs CI, packages the exact tested commit, and uploads it to `/home/portfolio-deploy/.portfolio-artifacts`. The deploy user creates a new release, links `.env` and shared storage, installs production Composer dependencies, checks for **pending** migrations, swaps `releases/current`, performs a local HTTPS `/up` probe, and restarts queue workers via Laravel.
+`deploy-release.sh` refuses to start (before touching anything) if: the identity is not
+`portfolio-deploy`; the layout, `shared/.env` (must be read-only) or `shared/storage` are missing;
+the FPM watcher is not active; another deploy holds the lock; the checksum does not match; or the
+archive contains absolute paths, `..`, links or special files.
 
-The script **refuses deployment before cutover** if ACLs, shared storage, `public_html`, or the legacy release pointer are missing. If a health probe fails after cutover, it restores the previous symlink. It **never** runs `migrate:fresh`, automatically reverses DB migrations, or uses `git reset --hard` against the old checkout.
+Before the switch it checks: release manifest = SHA, PHP platform requirements, Laravel caches
+(`package:discover`, `config:cache`, `route:cache`, `event:cache`, `view:cache`), at least one
+route, DB reachable, **no pending migrations**, and an in-process smoke test of `/up`, `/` (no 5xx and
+**no redirect to its own domain**) and `/api/v1/portfolio` (`success: true`, with the configured API key).
 
-**Pending migrations:** the deployment refuses to activate. Take and verify a database backup, review backward compatibility, and apply schema updates through an approved separate maintenance operation.
+After the switch it checks, through Nginx/Apache/PHP-FPM on the local IP (bypassing Cloudflare):
+`/up`, `/` (≤5 redirects, final 200, so loops fail), `/api/v1/portfolio`, one Vite asset (or
+`/robots.txt`) and one media file from `storage/app/public`. On failure it switches back, waits
+for the reload, re-checks the previous release and deletes the failed release.
+It keeps the 5 newest releases plus current and previous.
 
-**Workers and scheduler:** configure the production queue worker and scheduler to use `releases/current`, rather than a hardcoded `private` path. Their processes must run under the correct Hestia/PHP user and have write access to shared storage.
+Automatic deploys on push to `main` happen only if the repository variable
+`PORTFOLIO_AUTODEPLOY=true` is set. Leave it unset until a manual deploy has succeeded.
 
-**PHP-FPM:** verify that OPcache and the Hestia pool observe a new release after switching the symlink. If the pool needs an explicit reload, implement it via a narrowly scoped administrator-managed mechanism, not general sudo for `portfolio-deploy`.
+## Rollback
 
-## 5. Optional automatic deployment
+```bash
+# as portfolio-deploy (via the deploy SSH key, or sudo -u portfolio-deploy from an admin shell)
+bash /home/moh/web/mohammedzomlot.dev/releases/current/.github/scripts/deploy-release.sh status
+bash /home/moh/web/mohammedzomlot.dev/releases/current/.github/scripts/deploy-release.sh rollback          # to .previous
+bash /home/moh/web/mohammedzomlot.dev/releases/current/.github/scripts/deploy-release.sh rollback <sha>    # or ../private
+```
 
-Only after the manual release, web routing, worker, and rollback tests succeed, set the GitHub repository variable `PORTFOLIO_AUTODEPLOY` to `true`. A successful CI push to `main` can then deploy automatically. Do **not** enable it before bootstrap.
+Database migrations are never reversed automatically.
 
-## Future Phase 2 merge
+## Migrations
 
-The `dev` branch has a separate, newer workflow for Web assets. When promoting Phase 2, resolve the workflow merge conflict by retaining **both** its PHP 8.4/8.5 tests and frontend build checks **and** this restricted-user, artifact-based CD. Do not reintroduce the original `git merge` / `git reset --hard` deploy inside `private`.
+A release with pending migrations is refused. To apply them:
+
+1. Take a database backup and test its restore (see below).
+2. Review the migration for backward compatibility with the live release.
+3. Run a `dry-run` deploy, then with approval apply from a temporary copy of the new release, e.g.
+   `sudo -u portfolio-deploy php <release>/artisan migrate --force`. Then run the normal `deploy`.
+
+Never run `migrate:fresh`, `db:wipe`, `key:generate` or seeders in production.
+
+## Queue worker and scheduler
+
+`QUEUE_CONNECTION=database`. Both run from `releases/current` as `moh` via Hestia cron, so each
+run uses the live release and needs no restart:
+
+```bash
+v-add-cron-job moh '*' '*' '*' '*' '*' 'cd /home/moh/web/mohammedzomlot.dev/releases/current && /usr/bin/php8.5 artisan schedule:run >/dev/null 2>&1'
+v-add-cron-job moh '*' '*' '*' '*' '*' 'cd /home/moh/web/mohammedzomlot.dev/releases/current && /usr/bin/php8.5 artisan queue:work --stop-when-empty --max-time=50 --tries=3 >/dev/null 2>&1'
+```
+
+## Backups
+
+```bash
+B=/root/portfolio-cd-backups/$(date +%Y%m%dT%H%M%S); install -d -m 700 "$B"
+mariadb-dump --single-transaction --routines --triggers --events --hex-blob moh_portfolio_db | gzip -9 > "$B/db.sql.gz"
+# restore test into a throw-away database, compare row counts / CHECKSUM TABLE, then drop it
+```
+
+Hestia's nightly user backup (`/backup/moh.*.tar`) also contains the database and `releases/`/`shared/`.
+
+## Permission notes
+
+- `portfolio-deploy` can write only `releases/`, `shared/storage` and its home. It can read
+  `shared/.env` (so it effectively holds the application's DB credentials). Treat its key as a
+  privileged deployment credential.
+- Directories that PHP-FPM (`moh`) creates at runtime with mode 0755 are read-only for
+  `portfolio-deploy`. That is intended: deploys never modify uploaded media.
+- Release code is read-only for `moh`, so a compromised web request cannot modify code.
+- `www-data` (Nginx/Apache) can read only `public/` and `storage/app/public`. It cannot read `.env` or the config cache.
+
+## Merging Phase 2 (`dev`)
+
+`dev`'s workflow still uses the old in-place `git reset` deploy. When merging, keep **this**
+workflow (it already builds Vite assets in CI when `package-lock.json` exists) and re-add
+`dev`'s extra checks if wanted (`test (PHP 8.4)` job, `public/build/fonts-manifest.json` assertion).
+Before the first production deploy of `main`, make sure `/` is not
+`redirect('https://mohammedzomlot.dev')`. On this domain that is a redirect loop, and the deploy
+script will refuse it.
