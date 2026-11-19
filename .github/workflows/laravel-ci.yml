@@ -1,8 +1,10 @@
 name: Laravel CI/CD
 
 # Validation runs for every push and pull request on main and dev.
-# Deployment runs only for pushes to main, after validation passes.
+# Deployment is temporarily paused while the new SSH account is configured.
+# A read-only SSH check is available manually and for the initial [ssh-check] release.
 on:
+  workflow_dispatch:
   push:
     branches: [ "main", "dev" ]
   pull_request:
@@ -60,12 +62,38 @@ jobs:
     - name: Run tests (in-memory SQLite, see phpunit.xml)
       run: php artisan test
 
+  # Read-only production SSH authentication check. Never runs on pull requests.
+  # Manually: Actions > Laravel CI/CD > Run workflow (main).
+  # Also runs once on a main push whose commit message includes [ssh-check].
+  ssh-auth-check:
+    name: SSH auth check (read-only)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[ssh-check]')))
+    environment: production
+    timeout-minutes: 5
+    steps:
+      - name: Authenticate without changing server files
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          request_pty: false
+          script: |
+            set -eu
+            test "$(id -un)" = "portfolio-deploy" || { echo "Unexpected SSH identity"; exit 1; }
+            id
+            echo "SSH authentication successful (no deployment performed)"
+
   # CD
   deploy:
     name: deploy
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # SAFETY HOLD: Do not deploy until deploy-user permissions and release process are reviewed.
+    # Restore a protected deployment condition only after the SSH probe succeeds.
+    if: ${{ false }}
     environment: production
     concurrency:
       group: production-deploy
