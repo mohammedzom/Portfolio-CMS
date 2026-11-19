@@ -62,6 +62,8 @@ tar -xzf "$ARCHIVE" -C "$STAGE" --no-same-owner --no-same-permissions
 test -f "$STAGE/artisan"
 test -f "$STAGE/composer.lock"
 test -f "$STAGE/.github/scripts/deploy-release.sh"
+# mktemp defaults to 0700; PHP-FPM (moh) must traverse the active release.
+chmod 0755 "$STAGE"
 rm -rf -- "$STAGE/storage"
 ln -s "$SHARED/storage" "$STAGE/storage"
 ln -s "$BASE/private/.env" "$STAGE/.env"
