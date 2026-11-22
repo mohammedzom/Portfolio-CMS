@@ -2,7 +2,9 @@
 
 Production: `mohammedzomlot.dev` on a Hestia VPS (Nginx → Apache → PHP-FPM 8.5, MariaDB 11.4).
 Deploys run as the unprivileged `portfolio-deploy` account (SSH key with `restrict`: no PTY, no
-forwarding, no sudo). Everything below was rehearsed end-to-end on an isolated Hestia test domain.
+forwarding, no sudo). The commit that introduced this layout (#28) reports an end-to-end rehearsal
+on an isolated Hestia test domain; that rehearsal cannot be reproduced from this repository. See
+[What has and has not been verified](#what-has-and-has-not-been-verified) before relying on any step.
 
 ## Layout
 
@@ -73,6 +75,21 @@ Environment `production` secrets: `SERVER_HOST`, `SERVER_SSH_PORT`, `SERVER_USER
 The server's host key is pinned in `.github/deploy/known_hosts` (alias `portfolio-production`);
 update that file if the VPS host key ever changes.
 
+Recommended repository settings (observed on 2026-11-22; none of them changed by this repository):
+
+- **Deploy secrets are also defined at repository level.** The same `SERVER_*` secrets exist at
+  repository level as well as in the `production` environment. Repository secrets are readable by
+  any job in any workflow, including one changed in a pull request from a branch of this
+  repository. Delete the repository-level copies; `PROJECT_PATH` is unused everywhere.
+- **The `production` environment has no protection rules.** Add **required reviewers** (an
+  explicit approval before every production job) and a **deployment branch policy** that allows
+  only `main`. Without that policy, a workflow on another branch can reference
+  `environment: production` and read its secrets.
+- **Force pushes are allowed on `main`.** Disallow them; `dev` already does. A rewritten `main`
+  breaks the link between a deployed `.release-manifest` SHA and the history.
+- Leave the repository variable `PORTFOLIO_AUTODEPLOY` unset (it is unset today), so deploys stay
+  manual.
+
 ## Deploying
 
 Actions → **Laravel CI/CD** → Run workflow on `main`:
@@ -80,44 +97,129 @@ Actions → **Laravel CI/CD** → Run workflow on `main`:
 | Input | Effect |
 | --- | --- |
 | `deploy_to_production` | must be checked, otherwise only CI runs |
-| `mode = dry-run` (default) | builds, uploads, extracts, caches, checks DB/migrations and smoke-tests the release in-process, then discards it. The site is not touched. |
+| `mode = dry-run` (default) | builds, uploads, extracts, caches, checks DB/migrations and smoke-tests the release in-process, then discards it and its uploaded archive. The site is not switched (see "What a dry-run writes"). |
 | `mode = deploy` | the same, then switches `current`, waits for the FPM reload and checks the real web stack; rolls back automatically on any failure |
+| `api_health = auto` (default) | checks the legacy `GET /api/v1/portfolio` only when the release registers that route **and** `API_KEY` is configured: exactly today's behaviour for the current code |
+| `api_health = require` | the release fails if the legacy API cannot be checked (route or `API_KEY` missing) |
+| `api_health = skip` | never checks the legacy API (for a Blade-only site; see "Health checks") |
 
-Pipeline: `test` (Pint, Pest, script lint, Vite build when present) → `release`
+Pipeline: `test` (Pint, Pest, ShellCheck, hermetic deploy-script tests, Vite build when present) → `release`
 (`.github/scripts/build-release.sh`: `git archive` of the tested SHA + `composer install --no-dev`
-+ `npm run build` + `.release-manifest` + SHA-256) → `deploy` (scp to
++ `npm run build` + `.release-manifest` + SHA-256; it refuses secret-like files) → `deploy` (scp to
 `~/.portfolio-artifacts`, then `deploy-release.sh <mode> <sha>` taken from the same artifact).
 The server never runs `composer install` or `npm`.
+
+The job summary records the commit, the mode and the API check mode of every run.
+
+### Expected GitHub Actions results
+
+| Run | `test` | `Build immutable release artifact` | `Deploy release through restricted SSH` |
+| --- | --- | --- | --- |
+| push / pull request | ✅ | skipped | skipped |
+| manual, `deploy_to_production` unchecked | ✅ | skipped | skipped |
+| manual dry-run | ✅ | ✅ | ✅ means **only** that the release was prepared and passed every pre-switch check; nothing went live |
+| manual deploy | ✅ | ✅ | ✅ means the release is live and passed the post-switch checks; ❌ means it was refused before the switch or rolled back (read the log) |
+
+A green CI run is never a production activation. Only a `mode = deploy` run whose deploy job ends
+with `Deployment successful: <sha>` activated a release.
+
+### Detached execution and server-side logs
+
+`deploy`, `dry-run` and `rollback` re-run themselves with `setsid`, writing to
+`~/.portfolio-artifacts/logs/<UTC time>-<mode>-<sha>-<pid>.log`, and stream that log to the SSH
+session. If the connection drops, or GitHub cancels or times out the job, the run still finishes,
+including any automatic rollback. The GitHub job then shows a failure or cancellation, but the
+server-side log and `status` show the real outcome. The lock (`releases/.deploy.lock`) makes a new
+run wait for the old one to end; it refuses to start meanwhile. Archives and scripts are removed
+after a successful deploy or dry-run. Leftovers expire after 14 days and logs after 90 days.
 
 `deploy-release.sh` refuses to start (before touching anything) if: the identity is not
 `portfolio-deploy`; the layout, `shared/.env` (must be read-only) or `shared/storage` are missing;
 the FPM watcher is not active; another deploy holds the lock; the checksum does not match; or the
 archive contains absolute paths, `..`, links or special files.
 
-Before the switch it checks: release manifest = SHA, PHP platform requirements, Laravel caches
-(`package:discover`, `config:cache`, `route:cache`, `event:cache`, `view:cache`), at least one
-route, DB reachable, **no pending migrations**, and an in-process smoke test of `/up`, `/` (no 5xx and
-**no redirect to its own domain**) and `/api/v1/portfolio` (`success: true`, with the configured API key).
+If the same SHA already exists but is not live (for example it is `.previous`), that copy is set
+aside, not deleted, and put back unless the new build goes live. A dry-run therefore never
+removes a rollback target. A run that was killed outright leaves `.stage-*`, `.current.*` or
+`.replaced-*` entries; the next run removes them, or restores them, under the lock.
 
-After the switch it checks, through Nginx/Apache/PHP-FPM on the local IP (bypassing Cloudflare):
-`/up`, `/` (≤5 redirects, final 200, so loops fail), `/api/v1/portfolio`, one Vite asset (or
-`/robots.txt`) and one media file from `storage/app/public`. On failure it switches back, waits
-for the reload, re-checks the previous release and deletes the failed release.
-It keeps the 5 newest releases plus current and previous.
+### Health checks
+
+| Phase | Check | Passes when |
+| --- | --- | --- |
+| before the switch | release manifest | `sha=` equals the deployed SHA |
+| | platform | `composer check-platform-reqs --no-dev` passes (if Composer is not installed on the server, only the PHP version is enforced, by the autoloader, and a warning is logged) |
+| | Laravel caches | `package:discover`, `config:cache`, `route:cache`, `event:cache`, `view:cache` succeed; at least one route |
+| | database | `migrate:status` works and lists **no pending migration** |
+| | in-process (`.github/scripts/smoke-release.php`) | cache store accepts a throwaway key · `GET /up` = 200 · `select 1` on the default connection · `GET /` ends in 200 on the domain (same-host redirects followed, ≤ 5; a loop or a redirect to another host fails) · legacy API per `api_health` |
+| after the switch | PHP-FPM | the root watcher confirms the reload for the new target within 30 s |
+| | real web stack (Nginx → Apache → PHP-FPM on the local IP, bypassing Cloudflare; 5 attempts, 10 s each) | `/up` = 200 · `/` = 200 after ≤ 5 redirects that stay on the domain · legacy API per `api_health` · one Vite asset from the manifest (or `/robots.txt`) · one media file from `storage/app/public` |
+
+On a post-switch failure it switches back, waits for the reload, re-checks the previous release
+and deletes the failed release. It keeps the 5 newest other releases plus current and previous.
+
+**Transition away from the legacy API.** `auto` keeps the API check for as long as a release
+registers `GET api/v1/portfolio` and `API_KEY` is set. That is the case for the current code, so
+production behaviour is unchanged. A Blade-only release that no longer registers the route is
+checked through `/up`, `/`, the database, the assets and the media, without the API. `skip` is
+only needed while the route still exists but should no longer gate deploys. Use `require` when you
+want a deploy to fail if the API check silently stops running.
+
+**What a dry-run writes.** A dry-run never switches the site and deletes its prepared release.
+Its requests run with an in-memory cache and sessions, so it never stores application data such
+as `portfolio_all` in the live cache. It still writes to shared state:
+- compiled Blade views under `shared/storage/framework/views` (keyed by the release path, so never
+  read by the live release; they accumulate);
+- short-lived rate-limiter counters in the live cache store;
+- Laravel log entries, if something fails.
 
 Automatic deploys on push to `main` happen only if the repository variable
 `PORTFOLIO_AUTODEPLOY=true` is set. Leave it unset until a manual deploy has succeeded.
 
+## Release identification
+
+- `deploy-release.sh status` shows the current target, `.previous`, the FPM reload stamp, the
+  release directories and the last 10 history entries.
+- Every release contains `.release-manifest` (`sha`, `built_at`, `frontend`, `github_run`). The
+  run ID links back to the GitHub Actions run that built it.
+- `releases/.history` lists every `deployed`, `failed` and `rollback`, with UTC time.
+- `~/.portfolio-artifacts/logs/` holds the full log of every detached run.
+
 ## Rollback
 
+There is no rollback mode in the workflow; rollback is an SSH operation by an operator.
+
 ```bash
-# as portfolio-deploy (via the deploy SSH key, or sudo -u portfolio-deploy from an admin shell)
-bash /home/moh/web/mohammedzomlot.dev/releases/current/.github/scripts/deploy-release.sh status
-bash /home/moh/web/mohammedzomlot.dev/releases/current/.github/scripts/deploy-release.sh rollback          # to .previous
-bash /home/moh/web/mohammedzomlot.dev/releases/current/.github/scripts/deploy-release.sh rollback <sha>    # or ../private
+# as portfolio-deploy (via the deploy SSH key, or sudo -u portfolio-deploy from an admin shell).
+# Use the script of a release directory, not of current: after a rollback to ../private, current
+# is the legacy checkout, which may not contain deploy-release.sh.
+R=/home/moh/web/mohammedzomlot.dev/releases/<any-release-sha>
+bash $R/.github/scripts/deploy-release.sh status
+bash $R/.github/scripts/deploy-release.sh rollback          # to .previous
+bash $R/.github/scripts/deploy-release.sh rollback <sha>    # or ../private
 ```
 
+Rollback runs detached and logs like a deploy. It waits for the PHP-FPM reload (only a warning if
+it is not confirmed) and runs the post-switch health checks. If those fail it reports an error, but
+**does not switch again**: decide by hand.
+
 Database migrations are never reversed automatically.
+
+## Recovering from a failed deployment
+
+1. Read the deploy job log and `~/.portfolio-artifacts/logs/<…>-deploy-<sha>-*.log`; run `status`.
+2. **Refused before the switch** (checksum, archive safety, manifest, platform, caches, pending
+   migrations, smoke test): nothing went live. Fix the cause and run a new dry-run.
+3. **Rolled back after the switch** (`failed <sha> (restored: <previous>)` in the history): the
+   previous release is live again. Check the warning line "the previous release also fails health
+   checks": if it is present, the web stack itself is unhealthy, not the release.
+4. **The job was cancelled or timed out:** the detached run kept going. Wait for the log to end
+   (`Deployment successful`, or `ERROR: release … was rolled back`), then run `status`.
+5. **The run was killed outright** (reboot, `kill -9`): run `status`. If `current` points at a
+   release that never passed its checks, roll back explicitly. The next run cleans up any
+   temporary entries.
+6. **Emergency exit from the release layout:** `hestia-bootstrap-releases.sh revert-public-html`
+   (root).
 
 ## Migrations
 
@@ -162,9 +264,34 @@ Hestia's nightly user backup (`/backup/moh.*.tar`) also contains the database an
 
 ## Merging Phase 2 (`dev`)
 
-`dev`'s workflow still uses the old in-place `git reset` deploy. When merging, keep **this**
-workflow (it already builds Vite assets in CI when `package-lock.json` exists) and re-add
-`dev`'s extra checks if wanted (`test (PHP 8.4)` job, `public/build/fonts-manifest.json` assertion).
-Before the first production deploy of `main`, make sure `/` is not
-`redirect('https://mohammedzomlot.dev')`. On this domain that is a redirect loop, and the deploy
-script will refuse it.
+`dev`'s workflow still uses the old in-place deploy (`git merge --ff-only` on the server plus an
+uploaded asset archive). When merging, keep **this** workflow and these scripts.
+
+Requirements for the Blade/Vite frontend:
+- `package.json` and `package-lock.json` must both be committed. `build-release.sh` runs
+  `npm ci && npm run build` and fails without `public/build/manifest.json`. `dev`'s self-hosted
+  fonts also need `public/build/fonts-manifest.json`; a missing one shows up as a `/` failure in
+  the in-process smoke test, not as a separate check.
+- `main` still tracks a stale `public/build/` (`manifest.json` plus one JS file) that `dev` already
+  removed. `build-release.sh` deletes `public/build` before packaging, so it never ships, but the
+  merge should drop those files.
+- `/` must answer 200 on `mohammedzomlot.dev`. A redirect to itself, or to any other host, is
+  refused before the switch. `dev`'s Blade homepage does answer 200; the old
+  `redirect('https://mohammedzomlot.dev')` does not.
+- After the post-switch checks pass, one Vite asset from the manifest is fetched through the real
+  web stack.
+- `dev` keeps `GET api/v1/portfolio`, so `api_health = auto` still checks it. Only switch to `skip`
+  once the API is no longer meant to gate deploys.
+
+## What has and has not been verified
+
+| Area | Evidence | Status |
+| --- | --- | --- |
+| Pre-switch path on the production server (preflight, artifact checks, caches, DB/migrations, in-process smoke) | Dry-run runs #75 (correctly refused a `/` redirect loop) and #79 (passed), on 2026-11-19 and 2026-11-22, using the **previous** script | verified for those commits |
+| Switch, post-switch checks, automatic rollback, set-aside, recovery, locking, pruning, archive safety, SSH-drop survival | `.github/tests/deploy-release.test.sh` in CI (fake Hestia layout, real script) and a local rehearsal with a real artifact, real PHP 8.5 and real Laravel caches | verified locally / in CI only |
+| A `mode = deploy` run in production | none | **not tested** |
+| `rollback` in production | none | **not tested** |
+| The root PHP-FPM watcher, the Hestia template, ACLs and the `restrict` SSH key | preflight in run #79 confirmed the watcher unit is active and the stamp is readable; the rest is documented, not observed | partially verified |
+| `composer` present on the server (extension check) | not observable from the logs | unknown |
+| Queue worker and scheduler cron | documented above, not observed | unverified |
+| Backups and restore test | documented above, not observed | unverified |

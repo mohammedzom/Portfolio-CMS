@@ -8,6 +8,16 @@
 #   deploy-release.sh rollback [release]  switch back (default: the previous release)
 #   deploy-release.sh status
 #
+# deploy, dry-run and rollback run detached from the SSH session and log to
+# $ARTIFACTS/logs/ (see run_detached), so a dropped connection or a cancelled
+# GitHub job cannot interrupt a switch or an automatic rollback halfway.
+#
+# Environment (all optional; production uses the defaults):
+#   PORTFOLIO_HEALTH_API   auto (default): check GET /api/v1/portfolio only when the
+#                          release registers that route and API_KEY is configured;
+#                          require: fail the release if it cannot be checked;
+#                          skip: never check it (for a Blade-only site).
+#
 # Expected layout (provisioned once by hestia-bootstrap-releases.sh as root):
 #   $BASE/releases/<sha>/          immutable releases, owned by portfolio-deploy
 #   $BASE/releases/current -> <sha> (or ../private before the first release)
@@ -36,12 +46,23 @@ KEEP_RELEASES="${PORTFOLIO_KEEP_RELEASES:-5}"
 PHP_BIN="${PORTFOLIO_PHP:-/usr/bin/php8.5}"
 ARTIFACTS="${PORTFOLIO_ARTIFACTS:-$HOME/.portfolio-artifacts}"
 
-BASE="/home/$HESTIA_USER/web/$DOMAIN"
+FPM_RELOAD_TIMEOUT="${PORTFOLIO_FPM_RELOAD_TIMEOUT:-30}"
+HEALTH_ATTEMPTS="${PORTFOLIO_HEALTH_ATTEMPTS:-5}"
+HEALTH_RETRY_DELAY="${PORTFOLIO_HEALTH_RETRY_DELAY:-2}"
+HEALTH_MAX_TIME="${PORTFOLIO_HEALTH_MAX_TIME:-10}"
+# Legacy REST API health check: auto (only when the release registers
+# GET api/v1/portfolio and API_KEY is configured), require, or skip.
+HEALTH_API="${PORTFOLIO_HEALTH_API:-auto}"
+ARTIFACT_RETENTION_DAYS="${PORTFOLIO_ARTIFACT_RETENTION_DAYS:-14}"
+SELF="$(readlink -f -- "${BASH_SOURCE[0]}")"
+
+# The two path overrides exist for the hermetic tests in .github/tests; production uses the defaults.
+BASE="${PORTFOLIO_BASE:-/home/$HESTIA_USER/web/$DOMAIN}"
 RELEASES="$BASE/releases"
 SHARED="$BASE/shared"
 CURRENT="$RELEASES/current"
 PUBLIC_LINK="$BASE/public_html"
-RELOAD_STAMP="/var/lib/portfolio-release/$DOMAIN.active"
+RELOAD_STAMP="${PORTFOLIO_RELOAD_STAMP:-/var/lib/portfolio-release/$DOMAIN.active}"
 HISTORY="$RELEASES/.history"
 
 STAGE=""
@@ -49,6 +70,8 @@ TARGET=""
 TARGET_CREATED=0
 ACTIVATED=0
 TMPDIR_PRIVATE=""
+SET_ASIDE=""
+API_ROUTE=0
 
 log()  { printf '[%s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 fail() { printf '[%s] ERROR: %s\n' "$(date -u +%H:%M:%S)" "$*" >&2; exit 1; }
@@ -60,6 +83,15 @@ cleanup() {
   if [[ "$TARGET_CREATED" == 1 && "$ACTIVATED" == 0 && -n "$TARGET" && -d "$TARGET" ]]; then
     if [[ "$(readlink -f "$CURRENT")" != "$(readlink -f "$TARGET")" ]]; then
       rm -rf -- "$TARGET"
+    fi
+  fi
+  # An inactive copy of this SHA that existed before the run (possibly the
+  # rollback target) is put back unless the new build went live.
+  if [[ -n "$SET_ASIDE" && -d "$SET_ASIDE" ]]; then
+    if [[ "$ACTIVATED" == 0 && ! -e "$TARGET" ]]; then
+      mv -T -- "$SET_ASIDE" "$TARGET"
+    else
+      rm -rf -- "$SET_ASIDE"
     fi
   fi
   if [[ -n "$TMPDIR_PRIVATE" ]]; then rm -rf -- "$TMPDIR_PRIVATE"; fi
@@ -95,6 +127,7 @@ preflight() {
   [[ ! -w "$SHARED/.env" ]] || fail "$SHARED/.env must be read-only for $DEPLOY_USER"
   [[ -d "$SHARED/storage" && -w "$SHARED/storage" && -w "$SHARED/storage/logs" ]] ||
     fail "$SHARED/storage is missing or not writable"
+  [[ "$HEALTH_API" =~ ^(auto|require|skip)$ ]] || fail "PORTFOLIO_HEALTH_API must be auto, require or skip (got: $HEALTH_API)"
   [[ -r "$RELOAD_STAMP" ]] || fail "PHP-FPM reload watcher is not installed ($RELOAD_STAMP)"
   systemctl is-active --quiet "portfolio-release-${DOMAIN//./-}.path" ||
     fail "PHP-FPM reload watcher portfolio-release-${DOMAIN//./-}.path is not active"
@@ -105,6 +138,40 @@ preflight() {
   TMPDIR_PRIVATE="$(mktemp -d)"
   exec 9>"$RELEASES/.deploy.lock"
   flock -n 9 || fail "another deployment is running"
+  recover_interrupted
+  prune_artifacts
+}
+
+# A run that was killed (OOM, reboot, kill -9) cannot clean up after itself.
+# Under the lock nothing else is running, so its temporary entries can go, and
+# a release it had set aside is put back if nothing replaced it.
+recover_interrupted() {
+  local entry name sha
+  for entry in "$RELEASES"/.stage-* "$RELEASES"/.current.*; do
+    [[ -e "$entry" || -L "$entry" ]] || continue
+    log "Removing $(basename "$entry") left by an interrupted run"
+    rm -rf -- "$entry"
+  done
+  for entry in "$RELEASES"/.replaced-*; do
+    [[ -d "$entry" ]] || continue
+    name="$(basename "$entry")"; sha="${name#.replaced-}"; sha="${sha%%-*}"
+    if [[ "$sha" =~ ^[0-9a-f]{40}$ && ! -e "$RELEASES/$sha" ]]; then
+      log "Restoring release $sha set aside by an interrupted run"
+      mv -T -- "$entry" "$RELEASES/$sha"
+    else
+      rm -rf -- "$entry"
+    fi
+  done
+}
+
+# Uploaded archives and run logs are kept for diagnosis, but not forever.
+prune_artifacts() {
+  [[ -d "$ARTIFACTS" ]] || return 0
+  find "$ARTIFACTS" -maxdepth 1 -type f \( -name 'release-*.tar.gz' -o -name 'release-*.sha256' -o -name 'deploy-release-*.sh' \) \
+    ! -name "release-${SHA:-none}.*" -mtime +"$ARTIFACT_RETENTION_DAYS" -delete
+  if [[ -d "$ARTIFACTS/logs" ]]; then
+    find "$ARTIFACTS/logs" -maxdepth 1 -type f -name '*.log' -mtime +90 -delete
+  fi
 }
 
 # ----------------------------------------------------------- archive checks
@@ -132,80 +199,40 @@ read_api_key() {
     "$1/bootstrap/cache/config.php"
 }
 
-# In-process requests through the release's HTTP kernel, before the switch.
+# In-process requests through the release's HTTP kernel, before the switch
+# (see .github/scripts/smoke-release.php for what is checked).
 smoke_in_process() {
-  log "Smoke-testing the release in-process (/up, /, /api/v1/portfolio)"
-  "$PHP_BIN" -d display_errors=stderr -- "$TARGET" "$DOMAIN" "$HEALTH_SCHEME" <<'PHP'
-<?php
-[, $base, $domain, $scheme] = $argv;
-require $base.'/vendor/autoload.php';
-$app = require $base.'/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-$origin = $scheme.'://'.$domain;
-$request = function (string $path, array $headers = []) use ($kernel, $origin, $domain, $scheme) {
-    $server = [
-        'HTTP_HOST' => $domain,
-        'HTTPS' => $scheme === 'https' ? 'on' : 'off',
-        'SERVER_PORT' => $scheme === 'https' ? 443 : 80,
-        'REMOTE_ADDR' => '127.0.0.1',
-        'HTTP_USER_AGENT' => 'portfolio-deploy-healthcheck curl',
-        'HTTP_ACCEPT' => 'text/html,application/json',
-    ];
-    foreach ($headers as $name => $value) {
-        $server['HTTP_'.strtoupper(str_replace('-', '_', $name))] = $value;
-    }
-    $req = Illuminate\Http\Request::create($origin.$path, 'GET', [], [], [], $server);
-    $res = $kernel->handle($req);
-    $kernel->terminate($req, $res);
-
-    return $res;
-};
-$failed = false;
-$up = $request('/up');
-printf("  /up -> %d\n", $up->getStatusCode());
-$failed = $failed || $up->getStatusCode() !== 200;
-
-$home = $request('/');
-$status = $home->getStatusCode();
-$location = (string) $home->headers->get('Location', '');
-printf("  / -> %d%s\n", $status, $location !== '' ? ' Location: '.$location : '');
-if ($status >= 500 || ($status >= 400 && $status !== 404)) {
-    $failed = true;
-}
-if ($status >= 300 && $status < 400) {
-    $normalised = rtrim(preg_replace('#^https?://#', '', $location), '/');
-    if ($normalised === $domain || $normalised === '' || $location === '/') {
-        fwrite(STDERR, "  / redirects to itself: redirect loop on $domain\n");
-        $failed = true;
-    }
+  log "Smoke-testing the release in-process (/up, database, /, legacy API: $HEALTH_API)"
+  "$PHP_BIN" -d display_errors=stderr "$TARGET/.github/scripts/smoke-release.php" \
+    "$TARGET" "$DOMAIN" "$HEALTH_SCHEME" "$HEALTH_API"
 }
 
-$key = (string) config('app.api_key', '');
-if ($key !== '') {
-    $api = $request('/api/v1/portfolio', ['X-Api-Key' => $key, 'Accept' => 'application/json']);
-    $json = json_decode((string) $api->getContent(), true);
-    printf("  /api/v1/portfolio -> %d success=%s\n", $api->getStatusCode(), var_export($json['success'] ?? null, true));
-    $failed = $failed || $api->getStatusCode() !== 200 || ($json['success'] ?? false) !== true;
-} else {
-    echo "  /api/v1/portfolio skipped: API_KEY is not configured\n";
-}
-exit($failed ? 1 : 0);
-PHP
+# Prints 1 when the release registers GET api/v1/portfolio, else 0.
+release_api_route() { # <release-dir>
+  local routes
+  routes="$("$PHP_BIN" "$1/artisan" --no-interaction --no-ansi route:list --json 2>/dev/null)" || { echo 0; return 0; }
+  "$PHP_BIN" -r '$r = json_decode(stream_get_contents(STDIN), true) ?: [];
+    foreach ($r as $x) { if (($x["uri"] ?? "") === "api/v1/portfolio" && str_contains($x["method"] ?? "", "GET")) { echo 1; exit; } }
+    echo 0;' <<<"$routes"
 }
 
-# Real requests through Nginx -> Apache -> PHP-FPM on this server.
-http_check() { # <label> <path> <expect: 200|html|json> [header-file]
-  local label="$1" path="$2" expect="$3" headers="${4:-}" port out code redirects
+# Real requests through Nginx -> Apache -> PHP-FPM on this server. Redirects
+# are followed (at most 5, so loops fail) but must stay on $DOMAIN.
+http_check() { # <label> <path> <expect: html|json> [header-file]
+  local label="$1" path="$2" expect="$3" headers="${4:-}" port out code redirects effective host
   port=$([[ "$HEALTH_SCHEME" == https ]] && echo 443 || echo 80)
-  local args=(--silent --show-error --max-time 20 --location --max-redirs 5
+  local args=(--silent --show-error --max-time "$HEALTH_MAX_TIME" --location --max-redirs 5
     --resolve "$DOMAIN:$port:$HEALTH_IP" -A 'portfolio-deploy-healthcheck curl'
-    -o "$TMPDIR_PRIVATE/body" -w '%{http_code} %{num_redirects}')
+    -o "$TMPDIR_PRIVATE/body" -w '%{http_code} %{num_redirects} %{url_effective}')
   [[ -n "$headers" ]] && args+=(-H "@$headers")
   local _
-  for _ in 1 2 3 4 5; do
+  for _ in $(seq 1 "$HEALTH_ATTEMPTS"); do
     if out="$(curl "${args[@]}" "$HEALTH_SCHEME://$DOMAIN$path" 2>"$TMPDIR_PRIVATE/err")"; then
-      read -r code redirects <<<"$out"
-      if [[ "$code" == 200 ]]; then
+      read -r code redirects effective <<<"$out"
+      host=""; [[ "$effective" =~ ^https?://([^/:?#]+) ]] && host="${BASH_REMATCH[1]}"
+      if [[ "$host" != "$DOMAIN" ]]; then
+        code="$code, redirected away from $DOMAIN to ${host:-an unknown host}"
+      elif [[ "$code" == 200 ]]; then
         if [[ "$expect" != json ]] || grep -q '"success":true' "$TMPDIR_PRIVATE/body"; then
           log "  $label $path -> 200 (redirects: $redirects)"
           return 0
@@ -214,23 +241,31 @@ http_check() { # <label> <path> <expect: 200|html|json> [header-file]
     else
       code="curl: $(head -c 200 "$TMPDIR_PRIVATE/err")"
     fi
-    sleep 2
+    sleep "$HEALTH_RETRY_DELAY"
   done
   log "  $label $path FAILED -> $code"
   return 1
 }
 
 http_checks() { # <release-dir>
-  local release="$1" ok=0 key asset image
+  local release="$1" ok=0 key="" route asset image
   log "HTTP checks via the real web stack ($HEALTH_SCHEME://$DOMAIN @ $HEALTH_IP)"
   http_check health /up html || ok=1
   http_check web / html || ok=1
-  if [[ -f "$release/bootstrap/cache/config.php" ]]; then
-    key="$(read_api_key "$release")"
-    if [[ -n "$key" ]]; then
+  if [[ "$HEALTH_API" == skip ]]; then
+    log "  api /api/v1/portfolio skipped (PORTFOLIO_HEALTH_API=skip)"
+  else
+    route="$(release_api_route "$release")"
+    [[ -f "$release/bootstrap/cache/config.php" ]] && key="$(read_api_key "$release")"
+    if [[ "$route" == 1 && -n "$key" ]]; then
       printf 'X-Api-Key: %s\nAccept: application/json\n' "$key" > "$TMPDIR_PRIVATE/api-headers"
       http_check api /api/v1/portfolio json "$TMPDIR_PRIVATE/api-headers" || ok=1
       rm -f -- "$TMPDIR_PRIVATE/api-headers"
+    elif [[ "$HEALTH_API" == require ]]; then
+      log "  api /api/v1/portfolio FAILED -> required, but the release has $([[ "$route" == 1 ]] && echo 'no API_KEY' || echo 'no such route')"
+      ok=1
+    else
+      log "  api /api/v1/portfolio skipped ($([[ "$route" == 1 ]] && echo 'API_KEY is not configured' || echo 'route not registered by this release'))"
     fi
   fi
   if [[ -f "$release/public/build/manifest.json" ]]; then
@@ -249,13 +284,13 @@ http_checks() { # <release-dir>
 # worker keeps serving a stale realpath/OPcache view of `current`.
 wait_for_fpm_reload() {
   local want="$1" i
-  for i in $(seq 1 30); do
+  for i in $(seq 1 "$FPM_RELOAD_TIMEOUT"); do
     [[ "$(cat "$RELOAD_STAMP" 2>/dev/null)" == "$want" ]] && { log "PHP-FPM reloaded for $want"; return 0; }
     # Re-notify the root watcher in case an event was coalesced.
     (( i % 5 == 0 )) && touch "$RELEASES/.reload-request"
     sleep 1
   done
-  log "PHP-FPM reload was not confirmed within 30s"
+  log "PHP-FPM reload was not confirmed within ${FPM_RELOAD_TIMEOUT}s"
   return 1
 }
 
@@ -279,8 +314,11 @@ build_release() {
       rm -f -- "$ARCHIVE" "$ARTIFACTS/release-$SHA.sha256"
       exit 0
     fi
-    log "Removing a stale inactive copy of $SHA"
-    rm -rf -- "$TARGET"
+    # It may be the rollback target (.previous): keep it until this run is
+    # live; cleanup() puts it back if the run fails or is a dry-run.
+    SET_ASIDE="$RELEASES/.replaced-$SHA-$$"
+    log "Setting aside the existing inactive copy of $SHA until this run finishes"
+    mv -T -- "$TARGET" "$SET_ASIDE"
   fi
 
   STAGE="$(mktemp -d "$RELEASES/.stage-$SHA-XXXXXX")"
@@ -288,7 +326,7 @@ build_release() {
   tar -xzf "$ARCHIVE" -C "$STAGE" --no-same-owner --no-same-permissions --no-overwrite-dir
   grep -qx "sha=$SHA" "$STAGE/.release-manifest" || fail "release manifest does not match $SHA"
   local f
-  for f in artisan composer.lock vendor/autoload.php public/index.php bootstrap/app.php; do
+  for f in artisan composer.lock vendor/autoload.php public/index.php bootstrap/app.php .github/scripts/smoke-release.php; do
     [[ -f "$STAGE/$f" ]] || fail "release is missing $f"
   done
   if [[ -f "$STAGE/package.json" && ! -f "$STAGE/public/build/manifest.json" ]]; then
@@ -315,6 +353,8 @@ build_release() {
   if command -v composer >/dev/null; then
     composer check-platform-reqs --no-dev --no-interaction --working-dir="$TARGET" >"$TMPDIR_PRIVATE/platform" 2>&1 ||
       { cat "$TMPDIR_PRIVATE/platform" >&2; fail "PHP extensions/version do not satisfy composer.lock"; }
+  else
+    log "WARNING: composer is not installed, so PHP extensions are not checked here (the PHP version is still enforced by vendor/composer/platform_check.php)"
   fi
 
   log "Building Laravel caches"
@@ -325,6 +365,10 @@ build_release() {
   if [[ -d "$TARGET/resources/views" ]]; then artisan_step view:cache; fi
   [[ "$(artisan route:list --json | "$PHP_BIN" -r 'echo count(json_decode(stream_get_contents(STDIN), true));')" -gt 0 ]] ||
     fail "no routes registered"
+  API_ROUTE="$(release_api_route "$TARGET")"
+  if [[ "$HEALTH_API" == require && "$API_ROUTE" != 1 ]]; then
+    fail "PORTFOLIO_HEALTH_API=require, but this release does not register GET api/v1/portfolio"
+  fi
 
   log "Checking database connection and migrations"
   local status
@@ -342,6 +386,7 @@ do_deploy() {
   preflight
   build_release
   if [[ "$MODE" == dry-run ]]; then
+    rm -f -- "$ARCHIVE" "$ARTIFACTS/release-$SHA.sha256"
     log "Dry run passed for $SHA; discarding the prepared release (site untouched)"
     return 0
   fi
@@ -401,7 +446,7 @@ prune_releases() { # keeps the newest $KEEP_RELEASES plus current and previous
     [[ "$name" =~ ^[0-9a-f]{40}$ ]] || continue
     if [[ "$name" == "$(readlink "$CURRENT")" || "$name" == "$previous" ]]; then continue; fi
     kept=$((kept + 1))
-    if (( kept >= KEEP_RELEASES )); then
+    if (( kept > KEEP_RELEASES )); then
       log "Pruning old release $name"
       rm -rf -- "$dir"
     fi
@@ -416,11 +461,30 @@ do_status() {
   echo "history (last 10):"; tail -n 10 "$HISTORY" 2>/dev/null | sed 's/^/  /' || true
 }
 
+# Runs this script again in its own session with output going to a log file,
+# and streams that log to the caller. If the SSH connection drops, or GitHub
+# cancels or times out the job, the caller's side dies with SIGPIPE, but the
+# detached run still finishes its health checks and any automatic rollback.
+run_detached() {
+  command -v setsid >/dev/null || fail "required command missing: setsid"
+  local logdir="$ARTIFACTS/logs" log pid status=0
+  install -d -m 700 "$logdir"
+  log="$logdir/$(date -u +%Y%m%dT%H%M%SZ)-$MODE-${SHA:-previous}-$$.log"
+  PORTFOLIO_FOREGROUND=1 setsid bash "$SELF" "$@" > "$log" 2>&1 < /dev/null &
+  pid=$!
+  log "Running detached as pid $pid; full log on the server: $log"
+  tail -n +1 --pid="$pid" -f "$log" 2>/dev/null || true
+  wait "$pid" || status=$?
+  exit "$status"
+}
+
 case "$MODE" in
-  deploy|dry-run)
-    [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || fail "usage: $0 $MODE <40-char-sha>"
-    do_deploy ;;
-  rollback) do_rollback ;;
+  deploy|dry-run|rollback)
+    if [[ "$MODE" != rollback ]]; then
+      [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || fail "usage: $0 $MODE <40-char-sha>"
+    fi
+    [[ "${PORTFOLIO_FOREGROUND:-0}" == 1 ]] || run_detached "$@"
+    if [[ "$MODE" == rollback ]]; then do_rollback; else do_deploy; fi ;;
   status) do_status ;;
   *) echo "usage: $0 {deploy|dry-run} <sha> | rollback [release] | status" >&2; exit 2 ;;
 esac

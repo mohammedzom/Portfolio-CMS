@@ -35,9 +35,22 @@ mkdir -p "$SRC"
 # 1. Exact tracked source of the commit.
 git -C "$REPO_ROOT" archive --format=tar "$SHA" | tar -xf - -C "$SRC"
 # .gitattributes marks /.github as export-ignore, but the server needs this
-# commit's activation script (it is also what `rollback` runs later).
+# commit's activation script (it is also what `rollback` runs later) and the
+# in-process smoke test it runs before the switch.
 mkdir -p "$SRC/.github/scripts"
-git -C "$REPO_ROOT" show "$SHA:.github/scripts/deploy-release.sh" > "$SRC/.github/scripts/deploy-release.sh"
+for f in deploy-release.sh smoke-release.php; do
+  git -C "$REPO_ROOT" show "$SHA:.github/scripts/$f" > "$SRC/.github/scripts/$f"
+done
+
+# Secrets must never be packaged, even if one was committed by mistake. The
+# server links .env and storage/ from shared/ into every release.
+SECRETS="$(cd "$SRC" && find . \( -name '.env' -o -name '.env.*' ! -name '.env.example' -o -name 'auth.json' \
+  -o -path './storage/*.key' -o -name '*.pem' -o -name 'id_rsa*' -o -name 'id_ed25519*' \) -print)"
+if [[ -n "$SECRETS" ]]; then
+  echo "Refusing to package files that look like secrets:" >&2
+  printf '%s\n' "$SECRETS" >&2
+  exit 1
+fi
 
 # Releases may contain only regular files and directories. A tracked symlink
 # would be rejected by the server, so fail here with a clear message instead.
@@ -85,8 +98,12 @@ fi
 } > "$SRC/.release-manifest"
 
 ARCHIVE="release-$SHA.tar.gz"
+# Written under a temporary name and renamed only when complete, so a failed
+# or interrupted build never leaves an archive/checksum pair that looks valid.
+rm -f -- "$OUT_DIR/$ARCHIVE" "$OUT_DIR/release-$SHA.sha256"
 tar --sort=name --owner=0 --group=0 --numeric-owner \
-  -czf "$OUT_DIR/$ARCHIVE" -C "$SRC" .
+  -czf "$OUT_DIR/.$ARCHIVE.partial" -C "$SRC" .
+mv -f -- "$OUT_DIR/.$ARCHIVE.partial" "$OUT_DIR/$ARCHIVE"
 (cd "$OUT_DIR" && sha256sum "$ARCHIVE" > "release-$SHA.sha256")
 
 echo "Built $OUT_DIR/$ARCHIVE ($(du -h "$OUT_DIR/$ARCHIVE" | cut -f1))"
