@@ -78,6 +78,21 @@ it('passes and checks the legacy API when the route and API_KEY exist', function
         ->not->toContain('smoke-test-key');
 });
 
+it('checks the live cache store without leaving application entries in it', function () {
+    $database = migratedDatabase();
+
+    $result = runSmoke($database, 'auto', ['CACHE_STORE' => 'database']);
+
+    // Only rate-limiter counters (expiring within a minute) may remain; data built
+    // by the new code, such as portfolio_all, must never reach the live store.
+    $keys = (new PDO('sqlite:'.$database))->query('select key from cache')->fetchAll(PDO::FETCH_COLUMN);
+
+    expect($result->exitCode())->toBe(0, $result->errorOutput())
+        ->and($result->output())->toContain('cache (database) -> ok')
+        ->and(array_filter($keys, fn (string $key): bool => str_contains($key, 'portfolio')))->toBe([])
+        ->and(array_filter($keys, fn (string $key): bool => str_contains($key, 'portfolio-deploy-smoke')))->toBe([]);
+});
+
 it('fails the release when the legacy API check fails in auto mode', function () {
     $result = runSmoke(migratedDatabase(withSiteSettings: false));
 

@@ -277,6 +277,15 @@ t_failed_rebuild_keeps_inactive_release() {
   expect_dir "$BASE/releases/$A"; expect_previous "$A"; expect_no_leftovers
 }
 
+t_health_failure_restores_set_aside_release() {
+  make_release "$A"; run deploy "$A"; make_release "$B"; run deploy "$B"
+  run rollback                                   # current A, previous B (healthy copy)
+  make_release "$B" "http=500"; run deploy "$B"; local s=$?
+  expect_nonzero "$s"; expect_current "$A"; expect_previous "$B"; expect_no_leftovers
+  expect_dir "$BASE/releases/$B"
+  grep -qx 'http=500' "$BASE/releases/$B/.sim" 2>/dev/null && fail_check "the failed build replaced the original copy of $B"
+}
+
 t_redeploy_active_sha() {
   make_release "$A"; run deploy "$A"
   make_release "$A"; : > "$CALLS"; run deploy "$A"; local s=$?
@@ -529,6 +538,7 @@ TESTS=(
   "dry-run removes the uploaded artifact:t_dry_run_removes_artifact"
   "dry-run keeps an existing inactive release (rollback target):t_dry_run_keeps_inactive_release"
   "failed rebuild keeps an existing inactive release:t_failed_rebuild_keeps_inactive_release"
+  "failed redeploy restores the original inactive copy:t_health_failure_restores_set_aside_release"
   "redeploying the active SHA only re-checks health:t_redeploy_active_sha"
   "failure before activation leaves no release:t_fail_before_activation"
   "in-process smoke failure blocks activation:t_smoke_failure_blocks_activation"

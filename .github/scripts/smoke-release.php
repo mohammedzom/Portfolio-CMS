@@ -8,6 +8,11 @@
  * Usage: php smoke-release.php <release-dir> <domain> <https|http> [auto|require|skip]
  *
  * Checks:
+ *   cache         the configured store must accept and return a throwaway key;
+ *                 the requests below then use an in-memory cache and sessions,
+ *                 so the live release never reads entries built by this code
+ *                 (only short-lived rate-limiter counters reach the live store:
+ *                 the limiter is created while the app boots)
  *   GET /up       must return 200
  *   database      the default connection must answer `select 1`
  *   GET /         must end in 200 on <domain>; same-host redirects are followed
@@ -82,6 +87,28 @@ if (! is_string($base) || ! is_dir($base) || ! is_string($domain) || $domain ===
 require $base.'/vendor/autoload.php';
 $app = require $base.'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+$kernel->bootstrap();
+
+$failed = false;
+
+// The live release shares the cache store and sessions. Check that the store
+// works with a throwaway key, then keep this run's requests out of it, so a
+// dry-run never puts entries built by the new code (e.g. portfolio_all) in
+// front of the live release.
+try {
+    $store = $app['cache']->store();
+    $probe = 'portfolio-deploy-smoke:'.bin2hex(random_bytes(6));
+    $store->put($probe, 'ok', 60);
+    $cacheOk = $store->get($probe) === 'ok';
+    $store->forget($probe);
+    fwrite($cacheOk ? STDOUT : STDERR, '  cache ('.$app['config']->get('cache.default').') -> '.($cacheOk ? 'ok' : 'FAILED')."\n");
+    $failed = $failed || ! $cacheOk;
+} catch (Throwable $e) {
+    fwrite(STDERR, '  cache FAILED -> '.get_class($e)."\n");
+    $failed = true;
+}
+$app['config']->set('cache.default', 'array');
+$app['config']->set('session.driver', 'array');
 
 $request = function (string $path, array $headers = []) use ($kernel, $domain, $scheme): Symfony\Component\HttpFoundation\Response {
     $server = [
@@ -102,8 +129,6 @@ $request = function (string $path, array $headers = []) use ($kernel, $domain, $
 
     return $res;
 };
-
-$failed = false;
 
 $up = $request('/up');
 printf("  /up -> %d\n", $up->getStatusCode());
