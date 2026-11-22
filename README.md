@@ -40,8 +40,17 @@ vendor/bin/pint --test     # code style check (CI runs both)
 ## 🔀 Branches & CI/CD
 
 - `main` is the production branch; `dev` is the integration branch. Work happens on task branches that are merged into `dev` through pull requests.
-- GitHub Actions (`.github/workflows/laravel-ci.yml`) runs `composer validate`, Pint and the full test suite for every push and pull request on `main` and `dev`.
-- Deployment runs **only** for pushes to `main`, and only after the `test` job succeeds. It deploys the exact commit that was tested (fast-forward only), refuses to start on a dirty server working tree, and restores the previous commit and leaves maintenance mode if any step fails. Partially applied migrations must be reviewed manually.
+- GitHub Actions (`.github/workflows/laravel-ci.yml`) runs these on every push and pull request on `main` and `dev`:
+  - `composer validate`, Pint and the Pest suite;
+  - ShellCheck on the deployment scripts;
+  - hermetic tests of the deployment script (`.github/tests/deploy-release.test.sh`);
+  - the Vite build, when `package-lock.json` exists.
+- Production deployment is **manual**: Actions → *Laravel CI/CD* → *Run workflow* on `main`, with `deploy_to_production` checked. The mode defaults to `dry-run`, which never switches the site.
+  - The tested commit is packaged as an immutable release (`--no-dev` vendor and the Vite build).
+  - It is uploaded to the restricted `portfolio-deploy` account and activated with an atomic symlink switch, health checks and automatic rollback.
+  - Pending migrations block a release; they are never applied automatically.
+
+  See [docs/HESTIA-ATOMIC-CD-BOOTSTRAP.md](docs/HESTIA-ATOMIC-CD-BOOTSTRAP.md).
 
 ## 🛠️ Tech Stack
 
