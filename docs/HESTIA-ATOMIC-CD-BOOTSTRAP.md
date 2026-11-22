@@ -262,36 +262,39 @@ Hestia's nightly user backup (`/backup/moh.*.tar`) also contains the database an
 - Release code is read-only for `moh`, so a compromised web request cannot modify code.
 - `www-data` (Nginx/Apache) can read only `public/` and `storage/app/public`. It cannot read `.env` or the config cache.
 
-## Merging Phase 2 (`dev`)
+## Phase 2 frontend (Blade + Vite)
 
-`dev`'s workflow still uses the old in-place deploy (`git merge --ff-only` on the server plus an
-uploaded asset archive). When merging, keep **this** workflow and these scripts.
+Phase 2 was merged into `main` with **this** workflow and these scripts kept. `dev`'s old in-place
+deploy (`git merge --ff-only` on the server plus an uploaded asset archive) was not brought over;
+never restore it when syncing `dev`.
 
 Requirements for the Blade/Vite frontend:
 - `package.json` and `package-lock.json` must both be committed. `build-release.sh` runs
-  `npm ci && npm run build` and fails without `public/build/manifest.json`. `dev`'s self-hosted
-  fonts also need `public/build/fonts-manifest.json`; a missing one shows up as a `/` failure in
-  the in-process smoke test, not as a separate check.
-- `main` still tracks a stale `public/build/` (`manifest.json` plus one JS file) that `dev` already
-  removed. `build-release.sh` deletes `public/build` before packaging, so it never ships, but the
-  merge should drop those files.
+  `npm ci && npm run build` and fails without `public/build/manifest.json`.
+- The self-hosted fonts need `public/build/fonts-manifest.json`. Without it `@fonts` renders
+  nothing, `/` still answers 200 and the site silently falls back to system fonts, so **no health
+  check can catch it**. `build-release.sh` (the `release` job) therefore fails when
+  `vite.config.js` uses `laravel-vite-plugin/fonts` and the fonts manifest is missing, before
+  anything reaches the server.
+- `public/build` is git-ignored. `build-release.sh` also deletes it before building, so only the
+  fresh build ships.
 - `/` must answer 200 on `mohammedzomlot.dev`. A redirect to itself, or to any other host, is
-  refused before the switch. `dev`'s Blade homepage does answer 200; the old
-  `redirect('https://mohammedzomlot.dev')` does not.
+  refused before the switch.
 - After the post-switch checks pass, one Vite asset from the manifest is fetched through the real
   web stack.
-- `dev` keeps `GET api/v1/portfolio`, so `api_health = auto` still checks it. Only switch to `skip`
-  once the API is no longer meant to gate deploys.
+- `GET api/v1/portfolio` is still registered, so `api_health = auto` still checks it. Only switch
+  to `skip` once the API is no longer meant to gate deploys.
 
 ## What has and has not been verified
 
 | Area | Evidence | Status |
 | --- | --- | --- |
-| Pre-switch path on the production server (preflight, artifact checks, caches, DB/migrations, in-process smoke) | Dry-run runs #75 (correctly refused a `/` redirect loop) and #79 (passed), on 2026-11-19 and 2026-11-22, using the **previous** script | verified for those commits |
+| Pre-switch path on the production server (preflight, artifact checks, caches, DB/migrations, in-process smoke) | Dry-runs #75 (correctly refused a `/` redirect loop) and #79 (passed) used the previous script; dry-run #83 (`0d4ea1c`, 2026-11-22) passed with the current one | verified for those commits |
 | Switch, post-switch checks, automatic rollback, set-aside, recovery, locking, pruning, archive safety, SSH-drop survival | `.github/tests/deploy-release.test.sh` in CI (fake Hestia layout, real script) and a local rehearsal with a real artifact, real PHP 8.5 and real Laravel caches | verified locally / in CI only |
-| A `mode = deploy` run in production | none | **not tested** |
-| `rollback` in production | none | **not tested** |
-| The root PHP-FPM watcher, the Hestia template, ACLs and the `restrict` SSH key | preflight in run #79 confirmed the watcher unit is active and the stamp is readable; the rest is documented, not observed | partially verified |
+| A `mode = deploy` run in production | Run #84 (`0d4ea1c`, 2026-11-22): switched `../private` → `0d4ea1c`, PHP-FPM reload confirmed, all real-web-stack checks 200 | verified once |
+| Automatic rollback in production | not triggered (no deploy has failed after the switch) | **not tested** |
+| Manual `rollback` in production | none | **not tested** |
+| The root PHP-FPM watcher, the Hestia template, ACLs and the `restrict` SSH key | run #84 confirmed the watcher reloads PHP-FPM after a switch and that Nginx serves the switched release; the rest is documented, not observed | partially verified |
 | `composer` present on the server (extension check) | not observable from the logs | unknown |
 | Queue worker and scheduler cron | documented above, not observed | unverified |
 | Backups and restore test | documented above, not observed | unverified |

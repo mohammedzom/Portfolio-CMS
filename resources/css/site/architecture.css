@@ -1,0 +1,223 @@
+@layer components {
+    .arch {
+        position: relative;
+        margin: 0;
+        background: linear-gradient(180deg, rgb(28 28 32 / 0.9), rgb(21 21 24 / 0.92));
+        border: 1px solid var(--color-line-strong);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.04);
+        overflow: hidden;
+    }
+
+    .arch__bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--color-line);
+        font-family: var(--font-mono);
+        font-size: var(--text-xs);
+        color: var(--color-muted);
+    }
+
+    .arch__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .arch__state { display: inline-flex; align-items: center; gap: 7px; flex: none; }
+
+    .arch__led {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--color-faint);
+        transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .arch__state[data-state="running"] .arch__led {
+        background: var(--color-accent);
+        box-shadow: 0 0 0 3px rgb(var(--accent-rgb), 0.18);
+        animation: blink 1s steps(2) infinite;
+    }
+
+    .arch__state[data-state="ok"] .arch__led { background: var(--color-accent); }
+
+    @keyframes blink {
+        50% { opacity: 0.35; }
+    }
+
+    .arch__stage {
+        position: relative;
+        padding: 22px 18px 20px;
+        display: grid;
+        gap: 18px 22px;
+        grid-template-columns: minmax(84px, 0.7fr) minmax(0, 3fr);
+        grid-template-areas: ". ci" "client host";
+        align-items: center;
+    }
+
+    .arch__wires {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: visible;
+    }
+
+    .wire { fill: none; stroke: var(--color-line-strong); stroke-width: 1.5; transition: stroke 0.3s; }
+    .wire--dashed { stroke-dasharray: 4 5; }
+    .wire--flow { stroke: rgb(var(--accent-rgb), 0.35); stroke-dasharray: 2 10; animation: flow 1.4s linear infinite; }
+    .wire.is-live { stroke: var(--color-accent); }
+    .arch:not(.is-visible) .wire--flow { animation-play-state: paused; }
+
+    @keyframes flow {
+        to { stroke-dashoffset: -12; }
+    }
+
+    .packet { fill: var(--color-accent); }
+    .packet-halo { fill: rgb(var(--accent-rgb), 0.25); }
+
+    .node {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        padding: 10px 12px;
+        min-height: 58px;
+        justify-content: center;
+        background: var(--color-surface);
+        border: 1px solid var(--color-line-strong);
+        border-radius: var(--radius-md);
+        text-align: left;
+        transition: border-color 0.25s, background-color 0.25s, transform 0.3s var(--ease-out), box-shadow 0.3s;
+    }
+
+    .node:hover,
+    .node:focus-visible,
+    .node.is-selected { border-color: var(--color-accent-line); background: var(--color-surface-2); }
+
+    .node.is-hot {
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 4px rgb(var(--accent-rgb), 0.12);
+        transform: translateY(-1px);
+    }
+
+    .node__kind { font-family: var(--font-mono); font-size: 10.5px; color: var(--color-muted); letter-spacing: 0.02em; }
+    .node__name { font-family: var(--font-display); font-weight: 600; font-size: var(--text-sm); line-height: 1.25; }
+    .node--core { background: linear-gradient(180deg, rgb(var(--accent-rgb), 0.1), var(--color-surface) 70%); }
+    .node--ci { justify-self: center; }
+    .node--client { align-self: center; }
+
+    .host {
+        position: relative;
+        z-index: 0;
+        border: 1px dashed var(--color-line-strong);
+        border-radius: var(--radius-lg);
+        padding: 30px 12px 12px;
+        background: rgb(255 255 255 / 0.012);
+        transition: border-color 0.3s;
+    }
+
+    .host:has(.host__label:hover),
+    .host:has(.host__label:focus-visible),
+    .host.is-selected { border-color: var(--color-accent-line); }
+
+    .host__label {
+        position: absolute;
+        top: 7px;
+        left: 12px;
+        z-index: 2;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--color-ink);
+        padding: 2px 4px;
+        border-radius: var(--radius-xs);
+    }
+
+    .host__label .node__kind { margin-right: 4px; }
+
+    .host__inner {
+        display: grid;
+        gap: 14px 18px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-areas: "nginx laravel redis" "nginx laravel mysql";
+        align-items: center;
+    }
+
+    .arch__panel {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+        border-top: 1px solid var(--color-line);
+    }
+
+    .arch__info { padding: 14px 16px; border-right: 1px solid var(--color-line); min-height: 132px; }
+    .arch__info-title { font-family: var(--font-display); font-weight: 600; font-size: var(--text-sm); margin-bottom: 6px; }
+    .arch__info-body { color: var(--color-muted); font-size: 13px; line-height: 1.55; }
+    .arch__info.is-swap { animation: swap 0.35s var(--ease-out); }
+
+    @keyframes swap {
+        from { opacity: 0; transform: translateY(4px); }
+    }
+
+    .arch__log {
+        padding: 12px 14px;
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        line-height: 1.7;
+        color: var(--color-muted);
+        max-height: 152px;
+        min-height: 132px;
+        overflow: auto;
+        background: rgb(0 0 0 / 0.18);
+    }
+
+    .arch__log-empty { color: var(--color-faint); }
+
+    .log-line {
+        display: grid;
+        grid-template-columns: 8.5ch 1fr;
+        column-gap: 1ch;
+        white-space: pre-wrap;
+        word-break: break-word;
+        animation: swap 0.3s var(--ease-out);
+    }
+
+    .log-line > b:first-child { grid-column: 1; }
+    .log-line.is-plain { display: block; }
+    .log-line b { color: var(--color-ink); font-weight: 500; }
+    .log-line .ok { color: var(--color-accent); }
+
+    .arch__actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 12px 16px;
+        border-top: 1px solid var(--color-line);
+    }
+
+    .arch__hint { font-size: var(--text-xs); color: var(--color-faint); font-family: var(--font-mono); }
+
+    @media (max-width: 640px) {
+        .arch__stage {
+            grid-template-columns: 1fr 1fr;
+            padding: 18px 14px;
+            grid-template-areas: "client ci" "host host";
+        }
+
+        .node--ci { justify-self: stretch; }
+
+        .host__inner {
+            grid-template-columns: 1fr 1fr;
+            grid-template-areas: "nginx nginx" "laravel laravel" "redis mysql";
+            gap: 26px 12px;
+        }
+
+        .host { padding-top: 34px; }
+        .arch__panel { grid-template-columns: 1fr; }
+        .arch__info { border-right: 0; border-bottom: 1px solid var(--color-line); min-height: 0; }
+        .arch__log { min-height: 110px; }
+        .arch__title { white-space: normal; }
+    }
+}

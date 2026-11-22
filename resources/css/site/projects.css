@@ -1,0 +1,223 @@
+@layer components {
+    .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: --spacing(6);
+    }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 0 14px;
+        border: 1px solid var(--color-line-strong);
+        border-radius: 999px;
+        font-size: var(--text-sm);
+        color: var(--color-muted);
+        transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+    }
+
+    .chip:hover { color: var(--color-ink); border-color: rgb(244 241 240 / 0.28); }
+    .chip.is-active { color: var(--color-accent-ink); background: var(--color-accent); border-color: var(--color-accent); }
+    .chip__n { font-family: var(--font-mono); font-size: 11px; opacity: 0.75; }
+
+    /* Asymmetric bento. Card sizes are assigned server-side (BuildPortfolioPageAction). */
+    .bento {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        grid-auto-rows: minmax(250px, auto);
+        grid-auto-flow: dense;
+    }
+
+    .card {
+        --mx: 50%;
+        --my: 50%;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        background: var(--color-surface);
+        border: 1px solid var(--color-line);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        text-align: left;
+        isolation: isolate;
+        transition: transform 0.5s var(--ease-out), border-color 0.3s, box-shadow 0.5s var(--ease-out), opacity 0.4s;
+    }
+
+    /* Pointer-following light */
+    .card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        border-radius: inherit;
+        background: radial-gradient(420px circle at var(--mx) var(--my), rgb(var(--accent-rgb), 0.1), transparent 45%);
+        opacity: 0;
+        transition: opacity 0.4s;
+    }
+
+    .card:hover::before,
+    .card:has(.card__trigger:focus-visible)::before { opacity: 1; }
+
+    .card:hover,
+    .card:has(.card__trigger:focus-visible) {
+        transform: translateY(-4px);
+        border-color: var(--color-accent-line);
+        box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.9);
+    }
+
+    /* The keyboard focus lands on the title button; the whole card shows the ring. */
+    .card { cursor: pointer; }
+    .card:has(.card__trigger:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+    .card__trigger { text-align: left; font: inherit; letter-spacing: inherit; line-height: inherit; }
+    .card__trigger:focus-visible { outline: none; }
+
+    .card--feature,
+    .card--feature-b { grid-column: span 7; grid-row: span 2; }
+    .card--tall { grid-column: span 5; grid-row: span 2; }
+    .card--wide,
+    .card--std { grid-column: span 5; }
+    .card--half { grid-column: span 6; }
+    .card--strip { grid-column: span 12; flex-direction: row; min-height: 220px; }
+
+    .card__media {
+        position: relative;
+        flex: 1 1 auto;
+        min-height: 220px;
+        overflow: hidden;
+        background: var(--color-surface-2);
+        border-bottom: 1px solid var(--color-line);
+    }
+
+    .card__media > img,
+    .card__media > svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
+    }
+
+    .card__media > img { transform: scale(1.04); transition: transform 1.2s var(--ease-out), opacity 0.6s; }
+    .card:hover .card__media > img { transform: scale(1.08); }
+
+    /* Image reveal curtain, lifted when the card scrolls into view. */
+    .js .card__media::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--color-surface-2);
+        transform-origin: 50% 0;
+        transition: transform 1.1s var(--ease-in-out) 0.15s;
+    }
+
+    .js .card.is-in .card__media::after { transform: scaleY(0); }
+    .card__media .pattern { opacity: 0.95; transition: transform 1.2s var(--ease-out); }
+    .card:hover .card__media .pattern { transform: scale(1.03); }
+
+    .card--std .card__media,
+    .card--wide .card__media,
+    .card--half .card__media { position: absolute; inset: 0; min-height: 0; border: 0; opacity: 0.32; }
+
+    .card--std .card__media::after,
+    .card--wide .card__media::after,
+    .card--half .card__media::after { display: none; }
+
+    .card--std .card__media::before,
+    .card--wide .card__media::before,
+    .card--half .card__media::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background: linear-gradient(90deg, var(--color-surface) 30%, rgb(21 21 24 / 0.55));
+    }
+
+    .card--strip .card__media { flex: 0 0 42%; min-height: 0; border-bottom: 0; border-left: 1px solid var(--color-line); order: 2; }
+
+    .card__body { position: relative; z-index: 1; padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 10px; }
+    .card--std .card__body,
+    .card--wide .card__body,
+    .card--half .card__body { margin-top: auto; padding-top: 28px; }
+    .card--strip .card__body { flex: 1; justify-content: flex-end; }
+
+    .card__cat { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-accent); }
+    .card__title { font-family: var(--font-display); font-weight: 600; font-size: var(--text-lg); line-height: 1.15; letter-spacing: -0.015em; }
+    .card--feature .card__title,
+    .card--feature-b .card__title { font-size: var(--text-xl); letter-spacing: -0.025em; }
+    .card__sum { color: var(--color-muted); font-size: var(--text-sm); max-width: 46ch; }
+    .card__foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 6px; }
+
+    .card__open {
+        flex: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--color-line-strong);
+        color: var(--color-muted);
+        transition: background-color 0.3s, color 0.3s, border-color 0.3s, transform 0.4s var(--ease-out);
+    }
+
+    .card:hover .card__open,
+    .card:has(.card__trigger:focus-visible) .card__open {
+        background: var(--color-accent);
+        color: var(--color-accent-ink);
+        border-color: var(--color-accent);
+        transform: rotate(45deg);
+    }
+
+    .card.is-hidden { display: none; }
+    .card.is-entering { animation: card-in 0.55s var(--ease-out) both; animation-delay: var(--d, 0s); }
+
+    @keyframes card-in {
+        from { opacity: 0; transform: translateY(14px) scale(0.985); }
+    }
+
+    /* Filtered view switches to a uniform two-column grid. */
+    .bento.is-filtered .card { grid-column: span 6; grid-row: span 1; }
+    .bento.is-filtered .card--strip { flex-direction: column; }
+    .bento.is-filtered .card--strip .card__media { order: 0; flex: 1 1 auto; min-height: 180px; border-left: 0; border-bottom: 1px solid var(--color-line); }
+    .bento.is-filtered .card.is-last-odd { grid-column: span 12; }
+
+    @media (max-width: 1100px) {
+        .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(230px, auto); }
+        .card--feature,
+        .card--feature-b { grid-column: span 2; grid-row: span 2; }
+        .card--tall,
+        .card--wide,
+        .card--std,
+        .card--half { grid-column: span 1; grid-row: span 1; }
+        .card--tall .card__media { min-height: 180px; }
+        .card--strip { grid-column: span 2; }
+        .bento.is-filtered .card { grid-column: span 1; }
+        .bento.is-filtered .card.is-last-odd { grid-column: span 2; }
+    }
+
+    @media (max-width: 640px) {
+        .bento { grid-template-columns: 1fr; }
+
+        .card--feature,
+        .card--feature-b,
+        .card--tall,
+        .card--wide,
+        .card--std,
+        .card--half,
+        .card--strip,
+        .bento.is-filtered .card,
+        .bento.is-filtered .card.is-last-odd { grid-column: span 1; grid-row: span 1; }
+
+        .card--feature .card__media,
+        .card--feature-b .card__media { min-height: 210px; }
+        .card--strip { flex-direction: column; }
+        .card--strip .card__media { order: 0; flex: 0 0 auto; min-height: 170px; border-left: 0; border-bottom: 1px solid var(--color-line); }
+        .card__body { padding: 20px; }
+    }
+}

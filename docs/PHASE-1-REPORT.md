@@ -510,3 +510,15 @@ Adding npm dependencies requires owner approval, so nothing was installed. The m
 5. Web session login, the `login` route-name swap and `redirectGuestsTo`.
 6. Cleanup of legacy assets: `public/assets/` (the old static theme, unused by any route), `GEMINI.md`/`.gemini/` (no longer managed by Boost), and stale remote branches (`admin-dashboard-rebuild`, `feature/*`, and one Arabic-named branch).
 7. An orphaned-upload sweep command and `composer install --no-dev` in production.
+
+---
+
+## 11. Post-release cleanup (after v1.1.0)
+
+- Deferred item 6 is done:
+  - `public/assets/` (legacy static theme), `GEMINI.md` and `.gemini/` were removed.
+  - The stale remote branches no longer exist.
+- Correction:
+  - Sections 2, 7 and 9 said `public/build/` was only present locally. In fact, an old Vite build (`manifest.json` plus one JS bundle) was still tracked even though `/public/build` is git-ignored.
+  - It has been removed from the repository, so the Phase 2 Vite build starts from a clean output directory.
+- `error_dump.json`, a stray JSON error response committed in April 2026 and not referenced anywhere, was removed.
