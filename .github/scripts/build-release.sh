@@ -80,6 +80,12 @@ if [[ -f "$SRC/package.json" ]]; then
     rm -rf node_modules
   )
   [[ -f "$SRC/public/build/manifest.json" ]] || { echo "Vite build produced no manifest" >&2; exit 1; }
+  # Self-hosted fonts (laravel-vite-plugin/fonts): without this manifest @fonts
+  # renders nothing and the site silently falls back to system fonts, which no
+  # HTTP health check would notice.
+  if grep -qs 'laravel-vite-plugin/fonts' "$SRC"/vite.config.*; then
+    [[ -f "$SRC/public/build/fonts-manifest.json" ]] || { echo "Vite build produced no fonts-manifest.json" >&2; exit 1; }
+  fi
 fi
 
 # vendor/ or node tooling must not have introduced links either.
