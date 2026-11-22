@@ -21,6 +21,12 @@ on:
         type: choice
         options: [dry-run, deploy]
         default: dry-run
+      api_health:
+        description: 'Legacy /api/v1/portfolio health check: auto = only when the release has the route and API_KEY; require; skip'
+        required: true
+        type: choice
+        options: [auto, require, skip]
+        default: auto
   push:
     branches: [ "main", "dev" ]
   pull_request:
@@ -29,8 +35,10 @@ on:
 permissions:
   contents: read
 
+# Manual runs get their own group, so a push to main can never replace a
+# queued manual deployment run (only one run per group may wait).
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && 'manual' || 'auto' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -49,7 +57,8 @@ jobs:
         bash -n .github/scripts/build-release.sh
         bash -n .github/deploy/hestia/hestia-bootstrap-releases.sh
         bash -n .github/deploy/hestia/portfolio-fpm-reload
-        shellcheck --severity=warning .github/scripts/*.sh .github/deploy/hestia/hestia-bootstrap-releases.sh .github/deploy/hestia/portfolio-fpm-reload
+        bash -n .github/tests/deploy-release.test.sh
+        shellcheck --severity=warning .github/scripts/*.sh .github/tests/*.sh .github/deploy/hestia/hestia-bootstrap-releases.sh .github/deploy/hestia/portfolio-fpm-reload
 
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
@@ -100,6 +109,11 @@ jobs:
 
     - name: Run tests (in-memory SQLite, see phpunit.xml)
       run: php artisan test
+
+    # Runs the real deploy-release.sh against a fake Hestia layout: atomic
+    # switch, health checks, automatic rollback, archive safety, locking.
+    - name: Test the deployment script (hermetic)
+      run: bash .github/tests/deploy-release.test.sh
 
   # Packages the exact tested commit.
   release:
@@ -154,17 +168,33 @@ jobs:
       ((github.event_name == 'workflow_dispatch' && inputs.deploy_to_production) ||
        (github.event_name == 'push' && vars.PORTFOLIO_AUTODEPLOY == 'true'))
     environment: production
-    timeout-minutes: 15
+    # Worst case of the server-side script: preparation, 30 s FPM wait and
+    # 5 checks x 5 attempts x (10 s + 2 s) after the switch, the same again for
+    # an automatic rollback. The script runs detached on the server, so even a
+    # timeout here cannot interrupt a switch or a rollback halfway.
+    timeout-minutes: 25
     concurrency:
       group: production-deploy
       cancel-in-progress: false
     env:
       SHA: ${{ github.sha }}
       MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'deploy' }}
+      API_HEALTH: ${{ github.event_name == 'workflow_dispatch' && inputs.api_health || 'auto' }}
       SSH_HOST: ${{ secrets.SERVER_HOST }}
       SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
       SSH_USER: ${{ secrets.SERVER_USERNAME }}
     steps:
+      - name: Validate deployment inputs
+        run: |
+          [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::unexpected commit SHA"; exit 1; }
+          [[ "$MODE" =~ ^(dry-run|deploy)$ ]] || { echo "::error::mode must be dry-run or deploy"; exit 1; }
+          [[ "$API_HEALTH" =~ ^(auto|require|skip)$ ]] || { echo "::error::api_health must be auto, require or skip"; exit 1; }
+          {
+            echo "Commit: $SHA"
+            echo "Mode: $MODE (a dry-run never switches the live site)"
+            echo "Legacy API health check: $API_HEALTH"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Checkout pinned host key
         uses: actions/checkout@v4
         with:
@@ -212,12 +242,13 @@ jobs:
 
       - name: Activate release (${{ env.MODE }})
         run: |
+          # shellcheck disable=SC2029 # $SHA, $MODE and $API_HEALTH are validated above and meant to expand here
           ssh portfolio-production "set -euo pipefail
             cd \"\$HOME/.portfolio-artifacts\"
             sha256sum --quiet --check release-$SHA.sha256
             tar -xOzf release-$SHA.tar.gz ./.github/scripts/deploy-release.sh > deploy-release-$SHA.sh
             trap 'rm -f deploy-release-$SHA.sh' EXIT
-            bash deploy-release-$SHA.sh $MODE $SHA"
+            PORTFOLIO_HEALTH_API=$API_HEALTH bash deploy-release-$SHA.sh $MODE $SHA"
 
       - name: Remove SSH key
         if: always()
