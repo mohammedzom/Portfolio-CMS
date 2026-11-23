@@ -69,6 +69,22 @@ fi
     --optimize-autoloader --no-scripts
 )
 
+# 2b. Filament's compiled CSS/JS/fonts. Locally `composer install` publishes
+#     them through the filament:upgrade script, which --no-scripts skips; they
+#     are git-ignored, so the release gets them from the locked vendor/ here.
+#     The package caches written to boot artisan are removed again: the server
+#     rebuilds them per release (package:discover).
+if [[ -d "$SRC/vendor/filament/filament" ]]; then
+  (
+    cd "$SRC"
+    php artisan filament:assets --no-interaction --no-ansi
+    rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
+  )
+  for asset in public/js/filament/filament/app.js public/css/filament/filament/app.css; do
+    [[ -s "$SRC/$asset" ]] || { echo "filament:assets produced no $asset" >&2; exit 1; }
+  done
+fi
+
 # 3. Frontend assets, only when the commit has a Vite frontend.
 rm -rf -- "$SRC/public/build"
 if [[ -f "$SRC/package.json" ]]; then

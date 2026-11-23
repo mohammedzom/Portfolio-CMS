@@ -33,6 +33,15 @@ return [
     'api_key' => env('API_KEY'),
 
     /*
+     * E-mail addresses allowed into the admin panel (CMS_ADMIN_EMAILS, comma
+     * separated, case-insensitive). An empty list lets nobody in.
+     */
+    'admin_emails' => array_values(array_filter(array_map(
+        fn (string $email): string => strtolower(trim($email)),
+        explode(',', (string) env('CMS_ADMIN_EMAILS', '')),
+    ))),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------

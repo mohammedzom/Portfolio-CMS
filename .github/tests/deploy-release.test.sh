@@ -101,6 +101,8 @@ if [[ "$path" == /api/v1/portfolio ]]; then
   if [[ "$(sim api ok)" == ok ]]; then body='{"success":true,"data":[]}'; else code=500; body='{"success":false}'; fi
 fi
 if [[ "$path" == / && -n "$(sim redirect '')" ]]; then effective="$(sim redirect '')"; redirects=1; fi
+if [[ "$path" == /admin/login ]]; then body='<script src="https://x/livewire-0a1b2c3d/livewire.min.js?id=1"></script>'; fi
+if [[ "$path" == /livewire-* ]]; then code="$(sim livewire_http 200)"; fi
 [[ -n "$out" ]] && printf '%s' "$body" > "$out"
 fmt="${fmt//'%{http_code}'/$code}"; fmt="${fmt//'%{num_redirects}'/$redirects}"; fmt="${fmt//'%{url_effective}'/$effective}"
 printf '%s' "$fmt"
@@ -157,6 +159,9 @@ make_release() {
   [[ -f "$REPO/.github/scripts/smoke-release.php" ]] && cp "$REPO/.github/scripts/smoke-release.php" "$dir/.github/scripts/"
   printf 'sha=%s\nbuilt_at=2026-01-01T00:00:00Z\nfrontend=no\ngithub_run=test\n' "$sha" > "$dir/.release-manifest"
   printf '%s\n' "$@" > "$dir/.sim"
+  if grep -qx 'filament=1' "$dir/.sim"; then
+    mkdir -p "$dir/public/js/filament/filament"; printf 'js' > "$dir/public/js/filament/filament/app.js"
+  fi
   pack_release "$sha"
 }
 
@@ -339,6 +344,29 @@ t_api_failure_rolls_back() {
   make_release "$A"; run deploy "$A"
   make_release "$B" "api=fail"; run deploy "$B"; local s=$?
   expect_nonzero "$s"; expect_current "$A"
+}
+
+t_admin_checked_for_filament_release() {
+  make_release "$A" "filament=1"; run deploy "$A"; local s=$?
+  expect_exit "$s" 0; expect_current "$A"; expect_called "filament:optimize"
+  expect_called "GET /admin/login $A"; expect_called "GET /livewire-0a1b2c3d/livewire.min.js $A"
+  expect_called "GET /js/filament/filament/app.js $A"
+}
+
+t_admin_skipped_without_filament() {
+  make_release "$A"; run deploy "$A"; local s=$?
+  expect_exit "$s" 0; expect_not_called "filament:optimize"; expect_not_called "GET /admin/login"
+}
+
+t_livewire_script_failure_rolls_back() {
+  make_release "$A" "filament=1"; run deploy "$A"
+  make_release "$B" "filament=1" "livewire_http=404"; run deploy "$B"; local s=$?
+  expect_nonzero "$s"; expect_current "$A"; expect_log "livewire /livewire-0a1b2c3d/livewire.min.js FAILED -> 404"
+}
+
+t_filament_optimize_failure_blocks_activation() {
+  make_release "$A" "filament=1" "fail=filament:optimize"; run deploy "$A"; local s=$?
+  expect_nonzero "$s"; expect_current ../private; expect_log "php artisan filament:optimize failed"
 }
 
 t_checksum_mismatch() {
@@ -548,6 +576,10 @@ TESTS=(
   "unreachable web stack rolls back:t_unreachable_web_stack_rolls_back"
   "unconfirmed PHP-FPM reload rolls back:t_fpm_reload_unconfirmed_rolls_back"
   "failing API check rolls back:t_api_failure_rolls_back"
+  "a Filament release gets the admin, Livewire and asset checks:t_admin_checked_for_filament_release"
+  "a release without Filament skips the admin checks:t_admin_skipped_without_filament"
+  "an unreachable Livewire script rolls back:t_livewire_script_failure_rolls_back"
+  "a failing filament:optimize blocks activation:t_filament_optimize_failure_blocks_activation"
   "corrupted artifact is refused:t_checksum_mismatch"
   "missing artifact is refused:t_missing_artifact"
   "archive with an absolute path is refused:t_unsafe_absolute"

@@ -248,7 +248,7 @@ http_check() { # <label> <path> <expect: html|json> [header-file]
 }
 
 http_checks() { # <release-dir>
-  local release="$1" ok=0 key="" route asset image
+  local release="$1" ok=0 key="" route asset image livewire
   log "HTTP checks via the real web stack ($HEALTH_SCHEME://$DOMAIN @ $HEALTH_IP)"
   http_check health /up html || ok=1
   http_check web / html || ok=1
@@ -273,6 +273,24 @@ http_checks() { # <release-dir>
     [[ -n "$asset" ]] && { http_check asset "/build/$asset" html || ok=1; }
   else
     http_check static /robots.txt html || ok=1
+  fi
+  # Admin panel (releases that ship Filament): the sign-in page, Filament's
+  # published JS and the Livewire script it references. Livewire serves that
+  # script from a Laravel route, not a file, so this proves the web stack hands
+  # /livewire-<hash>/ requests to PHP.
+  if [[ -f "$release/public/js/filament/filament/app.js" ]]; then
+    if http_check admin /admin/login html; then
+      livewire="$(grep -oE '/livewire-[0-9a-f]+/livewire(\.min)?\.js' "$TMPDIR_PRIVATE/body" | head -n 1 || true)"
+      if [[ -n "$livewire" ]]; then
+        http_check livewire "$livewire" html || ok=1
+      else
+        log "  livewire script FAILED -> /admin/login does not reference it"
+        ok=1
+      fi
+    else
+      ok=1
+    fi
+    http_check filament /js/filament/filament/app.js html || ok=1
   fi
   image="$(cd "$SHARED/storage/app/public" && find . -type f \( -name '*.jpg' -o -name '*.png' -o -name '*.webp' \) |
     sed 's#^\./##' | grep -E '^[A-Za-z0-9._/-]+$' | sort | head -n 1 || true)"
@@ -363,6 +381,7 @@ build_release() {
   artisan_step route:cache
   artisan_step event:cache
   if [[ -d "$TARGET/resources/views" ]]; then artisan_step view:cache; fi
+  if [[ -f "$TARGET/public/js/filament/filament/app.js" ]]; then artisan_step filament:optimize; fi
   [[ "$(artisan route:list --json | "$PHP_BIN" -r 'echo count(json_decode(stream_get_contents(STDIN), true));')" -gt 0 ]] ||
     fail "no routes registered"
   API_ROUTE="$(release_api_route "$TARGET")"
